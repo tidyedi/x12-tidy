@@ -120,7 +120,7 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
     # --- retry exhausted: no candidate yields a 16-separator line ---
     ("no GS envelope, only a stray REF*GS* deep in the data",
      isa_segment() + b"~ST*850*1~REF*GS*99~SE*1*1~GE*1*1~IEA*1*1~" + b"P" * 60,
-     [Code.ISA_SEPARATOR_COUNT_HIGH], False),
+     [Code.ISA_NO_FUNCTIONAL_GROUP], False),
     ("only 14 element separators, every candidate tried",
      build_isa(elements=ISA_ELEMENTS[:13]),
      [Code.ISA_SEPARATOR_COUNT_LOW], False),

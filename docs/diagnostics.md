@@ -11,8 +11,8 @@ Every finding the linter can emit. Codes are `area.specific`; the `area` is the 
 | `isa.gs-not-found` | fatal | No GS header found after the ISA segment |
 | `isa.interchange-too-short` | fatal | Too short to be an X12 interchange |
 | `isa.leading-bytes` | warning | Bytes precede the ISA segment |
+| `isa.no-functional-group` | fatal | ISA segment is not bounded by a GS functional-group header |
 | `isa.no-tag` | fatal | No ISA segment tag in the file |
-| `isa.separator-count-high` | fatal | More than 16 element separators before GS |
 | `isa.separator-count-low` | fatal | Fewer than 16 element separators before GS |
 | `isa.tag-lowercase` | error | ISA segment tag is not uppercase |
 | `isa.tag-utf16` | fatal | File appears to be UTF-16 encoded |
@@ -35,17 +35,17 @@ Fewer than 109 bytes follow the 'ISA' tag -- not enough room for a 105-byte ISA 
 
 One or more bytes appear before the ISA segment. A conformant X12 file begins with 'ISA' as its very first byte. Common causes are a UTF-8 byte-order mark, whitespace, or transport headers left in by the sender. The linter strips them and continues; the reported bytes are what was removed.
 
+### `isa.no-functional-group`
+
+*fatal* — ISA segment is not bounded by a GS functional-group header
+
+Every ISA interchange opens a GS functional group, and the linter ends the ISA line at that GS header. A 'GS' + element separator was found, but the run of bytes to it holds more than the 16 element separators an ISA header has -- so it is not the header. Either there is no GS envelope and the match lies inside a later segment's data, or the element separator occurs inside ISA06 / ISA08 data (an unparseable segment). The ISA line cannot be bounded; not recoverable.
+
 ### `isa.no-tag`
 
 *fatal* — No ISA segment tag in the file
 
 The byte sequence 'ISA' does not appear anywhere in the file, so there is no X12 interchange to inspect. Nothing downstream can run.
-
-### `isa.separator-count-high`
-
-*fatal* — More than 16 element separators before GS
-
-An ISA header carries exactly 16 element separators; that count is part of the minimum bar for calling a run an ISA line. The run before the 'GS' header holds more -- the element separator occurs inside ISA06 / ISA08 data, or the run overshot the real 'GS'. Either way this is not an ISA line and cannot be recovered: a segment whose separator appears in its own data has no unambiguous parse. It is not sent to the recovery path.
 
 ### `isa.separator-count-low`
 
