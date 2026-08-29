@@ -145,23 +145,25 @@ META: dict[Code, CodeMeta] = {
         title="Fewer than 16 element separators before GS",
         explanation=(
             "An ISA header carries exactly 16 element separators (ISA*ISA01*.."
-            "*ISA16). The run of bytes before the 'GS' header holds fewer than "
-            "that, so it is not a valid ISA line -- either elements were "
-            "dropped, or the 'GS' the linter anchored on is a false match "
-            "inside earlier data. Every candidate ISA tag in the file was "
-            "tried; none produced a 16-separator line."
+            "*ISA16); that count is part of the minimum bar for calling a run "
+            "an ISA line at all. The run before the 'GS' header holds fewer -- "
+            "element separators were removed, or the 'GS' anchored on is a "
+            "false match inside earlier data. Every candidate ISA tag was "
+            "tried; none produced a 16-separator run. This is not an ISA line "
+            "and is not recoverable."
         ),
     ),
     Code.ISA_SEPARATOR_COUNT_HIGH: CodeMeta(
         default_severity="fatal",
         title="More than 16 element separators before GS",
         explanation=(
-            "The run before the 'GS' header holds more than the 16 element "
-            "separators an ISA header has. Either the element separator occurs "
-            "inside ISA06 / ISA08 data, or the linter ran past the real 'GS' "
-            "and anchored on a later one. A clean fixed-offset parse is not "
-            "possible; this is the case the recovery path (width-anchored "
-            "extraction) is being built to handle."
+            "An ISA header carries exactly 16 element separators; that count "
+            "is part of the minimum bar for calling a run an ISA line. The run "
+            "before the 'GS' header holds more -- the element separator occurs "
+            "inside ISA06 / ISA08 data, or the run overshot the real 'GS'. "
+            "Either way this is not an ISA line and cannot be recovered: a "
+            "segment whose separator appears in its own data has no "
+            "unambiguous parse. It is not sent to the recovery path."
         ),
     ),
 }

@@ -11,7 +11,7 @@ repos:
     hooks:
       - id: gen-diagnostics-docs
         name: regenerate docs/diagnostics.md from codes.py
-        entry: python scripts/gen_diagnostics_docs.py
+        entry: python3 scripts/gen_diagnostics_docs.py
         language: system
         # Run whenever the registry changes; the hook rewrites the doc and
         # stages nothing itself -- pre-commit re-adds a modified file and asks

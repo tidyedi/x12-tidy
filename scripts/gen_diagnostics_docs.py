@@ -18,7 +18,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from edi_linter.diagnostics import AREAS, all_codes, meta
+# Runnable from a plain checkout, without the package installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from edi_linter.diagnostics import AREAS, all_codes, meta  # noqa: E402
 
 BANNER = "<!-- GENERATED from src/edi_linter/diagnostics/codes.py -- do not edit -- run scripts/gen_diagnostics_docs.py -->"
 DOC_PATH = Path(__file__).resolve().parents[1] / "docs" / "diagnostics.md"
