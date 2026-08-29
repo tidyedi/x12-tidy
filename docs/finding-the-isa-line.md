@@ -1,13 +1,14 @@
-# Finding the ISA Line
+# Finding the Elusive ISA Line
 
 *An engineering note on Step 1 of the linter: extracting the X12 interchange
 envelope from files that violate the standard, and naming every deviation.*
 
 > **Read this as a web page:** <https://ubeast.github.io/edi-linter/finding-the-isa-line.html>
-> (served by GitHub Pages from [`docs/finding-the-isa-line.html`](finding-the-isa-line.html)).
-> This Markdown file is the version of record — keep both, and the figures under
-> `docs/figures/`, in sync with `src/edi_linter/isa/isa_line.py` when Step 1
-> changes.
+> (served by GitHub Pages from [`docs/finding-the-isa-line.html`](finding-the-isa-line.html);
+> clicking the `.html` file in the repo tree only shows its source — GitHub never
+> renders HTML there). This Markdown file is the version of record — keep it, the
+> HTML, and the figures under `docs/figures/` in sync with
+> `src/edi_linter/isa/isa_line.py` when Step 1 changes.
 
 A 1979 standard, fixed at 106 bytes, meets senders who strip it, prepend to it,
 and re-encode it. The byte offsets don't survive that. Neither does the regex

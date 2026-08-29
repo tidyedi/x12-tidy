@@ -8,14 +8,14 @@ from the standard rather than bailing on the first. The audience is a developer
 who received a bad file from a trading partner and needs to know exactly what is
 non-conformant.
 
-See [`docs/design.md`](docs/design.md) for the philosophy, architecture, and the
-diagnostic-code scheme. See [`docs/diagnostics.md`](docs/diagnostics.md) for
-every code the linter can emit (generated — do not edit by hand).
+📄 **[Finding the Elusive ISA Line](https://ubeast.github.io/edi-linter/finding-the-isa-line.html)**
+— a longer-form engineering note on Step 1: why the naive approaches (fixed
+offsets, a regex) fail, and the techniques that replace them. ([Markdown
+source](docs/finding-the-isa-line.md).)
 
-**[Finding the ISA Line](https://ubeast.github.io/edi-linter/finding-the-isa-line.html)**
-is a longer-form engineering note on Step 1 — why the naive approaches (fixed
-offsets, a regex) fail, and the techniques that replace them. Source:
-[`docs/finding-the-isa-line.md`](docs/finding-the-isa-line.md).
+See also [`docs/`](docs/) for [`design.md`](docs/design.md) (philosophy,
+architecture, the diagnostic-code scheme) and [`docs/diagnostics.md`](docs/diagnostics.md)
+(every code the linter can emit — generated, do not edit by hand).
 
 ## Status
 
