@@ -69,6 +69,18 @@ validate delimiters, elements, lengths, or the terminator — it only finds wher
 the ISA line begins and ends. See the module docstring for the step-by-step
 flow.
 
+**The minimum bar for "this run is an ISA line".** No component validation
+happens here, but a run must clear all three of these to be handed on:
+
+1. it begins with `ISA`
+2. it ends immediately before `GS` + the element separator
+3. it holds **exactly** 16 element separators
+
+A run that fails any of them is not an ISA line — reported fatal, and it does
+**not** go to recovery. Recovery (a later step) only ever sees runs that clear
+this bar but have other problems: wrong length, bad delimiters, bad element
+content.
+
 Key points:
 
 - The end of the ISA line is found by locating `GS` + element separator, not by
@@ -79,14 +91,16 @@ Key points:
   collects every `ISA` offset (capped at `MAX_ISA_CANDIDATES`) and tries each in
   turn; the first that yields a clean run wins, and the bytes before it become
   `isa.leading-bytes`.
-- **Exactly 16 element separators.** A candidate's run is accepted only if it
-  holds *exactly* 16 — not `>= 16`. Accepting `>= 16` let a stray `GS` deep in
-  the transaction body, or a junk `ISA*` prefix, produce a plausible-looking but
-  wrong run with no diagnostic. `< 16` → `isa.separator-count-low`; `> 16` →
-  `isa.separator-count-high` (the element separator occurs inside ISA06/ISA08
-  data, or the run overshot a real `GS`). Both route to recovery once it exists;
-  for now both are fatal. When no candidate yields exactly 16, the **first**
-  candidate's failure is what gets reported.
+- **Exactly 16 element separators, not `>= 16`.** Accepting `>= 16` let a stray
+  `GS` deep in the transaction body, or a junk `ISA*` prefix, produce a
+  plausible-looking but wrong run with no diagnostic. `< 16` →
+  `isa.separator-count-low` (separators removed, or a false `GS` match); `> 16` →
+  `isa.separator-count-high` (the element separator appears inside ISA06/ISA08
+  data, or the run overshot the real `GS`). Both are fatal and **terminal** — a
+  run with the wrong separator count is not an ISA line and cannot be recovered
+  (`> 16` in particular: a segment whose separator appears in its own data has
+  no unambiguous parse). When no candidate yields exactly 16, the **first**
+  candidate's failure is reported.
 - **Lowercase and wide encodings.** If there is no uppercase `ISA` tag: a
   NUL-interleaved `I S A` near the start → `isa.tag-utf16` (fatal, "re-export
   the file"); otherwise a lowercase `isa` anywhere → switch to case-insensitive

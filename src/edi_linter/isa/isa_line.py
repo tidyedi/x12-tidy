@@ -33,12 +33,20 @@ Flow
    become ``isa.leading-bytes`` (warning). If no candidate wins, the **first**
    candidate's failure is reported.
 
-Why "exactly 16": an ISA header has exactly 16 element separators. Accepting
-``>= 16`` let a stray ``GS`` deep in the transaction body, or leading junk that
-ends in ``ISA`` + a separator-like byte, produce a plausible-looking but wrong
-run with no diagnostic. Requiring exactly 16 -- and retrying from the next
-``ISA`` candidate -- turns those into either a clean recovery or an honest
-fatal.
+The minimum bar for "this run is an ISA line" -- Step 1 does no component
+validation, but a run must clear all three of these to be handed on: (1) it
+begins with ``ISA``, (2) it ends immediately before ``GS`` + the element
+separator, (3) it holds *exactly* 16 element separators. A run that fails any
+of them is not an ISA line: it is reported fatal and does **not** go to the
+recovery path. Recovery only ever sees runs that clear this bar but have other
+problems (wrong length, bad delimiters, bad element content).
+
+Why exactly 16 and not ``>= 16``: accepting ``>= 16`` let a stray ``GS`` deep in
+the transaction body, or leading junk ending in ``ISA`` + a separator-like
+byte, produce a plausible-looking but wrong run with no diagnostic. ``> 16`` is
+unrecoverable by definition -- a segment whose separator appears in its own data
+has no unambiguous parse. Retrying from the next ``ISA`` candidate turns a bad
+first guess into either a clean run or an honest fatal.
 
 The returned run **includes** the segment terminator and any trailing bytes
 (appended newlines, stray spaces) between it and ``GS``. Splitting that into
