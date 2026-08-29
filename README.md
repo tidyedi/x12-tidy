@@ -11,9 +11,11 @@ non-conformant.
 See [`docs/design.md`](docs/design.md) for the philosophy, architecture, and the
 diagnostic-code scheme. See [`docs/diagnostics.md`](docs/diagnostics.md) for
 every code the linter can emit (generated — do not edit by hand).
-[`docs/finding-the-isa-line.md`](docs/finding-the-isa-line.md) is a longer-form
-engineering note on Step 1 — why the naive approaches (fixed offsets, a regex)
-fail, and the techniques that replace them.
+
+**[Finding the ISA Line](https://ubeast.github.io/edi-linter/finding-the-isa-line.html)**
+is a longer-form engineering note on Step 1 — why the naive approaches (fixed
+offsets, a regex) fail, and the techniques that replace them. Source:
+[`docs/finding-the-isa-line.md`](docs/finding-the-isa-line.md).
 
 ## Status
 

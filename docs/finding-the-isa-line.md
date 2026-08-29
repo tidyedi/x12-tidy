@@ -3,10 +3,11 @@
 *An engineering note on Step 1 of the linter: extracting the X12 interchange
 envelope from files that violate the standard, and naming every deviation.*
 
-> A rendered version with figures is published as an Artifact:
-> <https://claude.ai/code/artifact/6b891e0c-09a3-4026-b049-b2d2617f790e>.
-> This file is the version of record — keep it in sync with
-> `src/edi_linter/isa/isa_line.py` when Step 1 changes.
+> **Read this as a web page:** <https://ubeast.github.io/edi-linter/finding-the-isa-line.html>
+> (served by GitHub Pages from [`docs/finding-the-isa-line.html`](finding-the-isa-line.html)).
+> This Markdown file is the version of record — keep both, and the figures under
+> `docs/figures/`, in sync with `src/edi_linter/isa/isa_line.py` when Step 1
+> changes.
 
 A 1979 standard, fixed at 106 bytes, meets senders who strip it, prepend to it,
 and re-encode it. The byte offsets don't survive that. Neither does the regex
@@ -29,12 +30,9 @@ width. The segment is exactly 105 bytes plus its terminator. The functional-grou
 header that follows, `GS` + the element separator, therefore begins at byte 106 —
 always, by rule.
 
-```
-byte:  0            3                                        104 105 106
-       ISA          *   ISA01 * ISA02 * … * ISA15 * ISA16    :   ~   GS*
-       └── tag ──┘  └sep┘└──────── 16 element separators ─────────┘   └ next segment
-       fixed widths: 2·10·2·10·2·15·2·15·6·4·1·5·9·1·1·1
-```
+![Anatomy of a conformant ISA line: the tag ISA at byte 0, the element separator
+at byte 3, sixteen fixed-width elements, the component separator at byte 104, the
+terminator at byte 105, and GS beginning at byte 106.](figures/isa-anatomy.svg)
 
 So the naive reader is one line: take `data[106:109]`, check it spells `GS*`,
 slice the ISA at fixed offsets. It works on conformant files. It fails on a large
@@ -113,6 +111,10 @@ fixed-offset reader; several break a delimiter-first reader too.
 | **The element separator inside element data** — a sender whose ID contains `*` while using `*` as the separator | The segment has 17 separators and no single correct parse |
 | **A stray `GS*` downstream** — the real functional-group envelope is missing, but a `REF*GS*…` element deep in a transaction set matches `b"GS*"` | The end of the ISA line is located inside transaction data |
 | **The bytes `ISA` in junk** — `SUBJECT: ISA FILE`, a path like `/feeds/ISA/…` | The first match is not the segment |
+
+![Two byte streams. In the conformant one, byte 106 lands on GS. In the received
+one, a 3-byte BOM plus a stripped element push byte 106 into the middle of an
+element.](figures/isa-fixed-offsets.svg)
 
 Three prepended bytes and one omitted element are enough to make `data[106:109]`
 land in the middle of an element. **The byte position is not an invariant. The
@@ -227,6 +229,11 @@ for isa_start in offsets:
     if first_failure is None:
         first_failure = (isa_start, attempt.failure)
 ```
+
+![The multi-candidate flow: dirty bytes yield ISA offsets; each candidate locates
+GS and counts separators; a junk candidate fails the exactly-16 gate and the next
+is tried; the real one passes and its run is returned with a leading-bytes
+warning.](figures/isa-multi-candidate.svg)
 
 The exactly-16 gate is what makes the retry safe: a candidate anchored in junk
 almost never has 16 separators followed by a `GS`, so it fails and the search
