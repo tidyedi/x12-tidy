@@ -4,6 +4,10 @@ The reference for *why* the linter is built the way it is. Mechanics live in
 module docstrings; this document holds the decisions that span modules. It gains
 one section per step as the project moves forward.
 
+For a narrative walk-through of Step 1 — the real-world violations, why fixed
+offsets and a regex both fail, and the five techniques — see
+[`finding-the-isa-line.md`](finding-the-isa-line.md).
+
 ---
 
 ## 1. Philosophy: permissive parse, strict report
