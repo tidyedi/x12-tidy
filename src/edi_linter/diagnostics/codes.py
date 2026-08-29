@@ -89,13 +89,13 @@ META: dict[Code, CodeMeta] = {
     ),
     Code.ISA_TAG_LOWERCASE: CodeMeta(
         default_severity="error",
-        title="ISA segment tag is lowercase",
+        title="ISA segment tag is not uppercase",
         explanation=(
-            "The segment tag was found as 'isa' (or mixed case). X12 segment "
-            "tags are uppercase. The linter matched it case-insensitively and "
-            "continued -- a file with a lowercase ISA tag almost certainly has "
-            "every other segment tag lowercase too, which downstream steps must "
-            "also tolerate."
+            "The segment tag was found as 'isa' or mixed case (e.g. 'Isa'). "
+            "X12 segment tags are uppercase. The linter matched it "
+            "case-insensitively and continued -- a file with a non-uppercase "
+            "ISA tag almost certainly has every other segment tag the same way, "
+            "which downstream steps must also tolerate."
         ),
     ),
     Code.ISA_TAG_UTF16: CodeMeta(

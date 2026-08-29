@@ -14,7 +14,7 @@ Every finding the linter can emit. Codes are `area.specific`; the `area` is the 
 | `isa.no-tag` | fatal | No ISA segment tag in the file |
 | `isa.separator-count-high` | fatal | More than 16 element separators before GS |
 | `isa.separator-count-low` | fatal | Fewer than 16 element separators before GS |
-| `isa.tag-lowercase` | error | ISA segment tag is lowercase |
+| `isa.tag-lowercase` | error | ISA segment tag is not uppercase |
 | `isa.tag-utf16` | fatal | File appears to be UTF-16 encoded |
 
 ### `isa.gs-not-found`
@@ -55,9 +55,9 @@ An ISA header carries exactly 16 element separators (ISA*ISA01*..*ISA16); that c
 
 ### `isa.tag-lowercase`
 
-*error* — ISA segment tag is lowercase
+*error* — ISA segment tag is not uppercase
 
-The segment tag was found as 'isa' (or mixed case). X12 segment tags are uppercase. The linter matched it case-insensitively and continued -- a file with a lowercase ISA tag almost certainly has every other segment tag lowercase too, which downstream steps must also tolerate.
+The segment tag was found as 'isa' or mixed case (e.g. 'Isa'). X12 segment tags are uppercase. The linter matched it case-insensitively and continued -- a file with a non-uppercase ISA tag almost certainly has every other segment tag the same way, which downstream steps must also tolerate.
 
 ### `isa.tag-utf16`
 
