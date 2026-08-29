@@ -39,9 +39,13 @@ uv run edi-linter explain isa.leading-bytes   # detail for one code
 
 ```bash
 uv sync --extra dev
+uv run pre-commit install     # once per clone: guards main, regenerates docs
 uv run pytest
 uv run python scripts/gen_diagnostics_docs.py   # after changing codes.py
 ```
+
+All work goes on a feature branch and merges via PR — the `no-commit-to-branch`
+hook blocks direct commits to `main`.
 
 Design conventions:
 
