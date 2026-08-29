@@ -1,6 +1,12 @@
-# Keeps docs/diagnostics.md in sync with the code registry.
 # Install once:  uv run pre-commit install
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # All work goes on a feature branch + PR -- never commit to main.
+      - id: no-commit-to-branch
+        args: [--branch, main]
+
   - repo: local
     hooks:
       - id: gen-diagnostics-docs
