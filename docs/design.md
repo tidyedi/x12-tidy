@@ -101,12 +101,15 @@ Key points:
   (`> 16` in particular: a segment whose separator appears in its own data has
   no unambiguous parse). When no candidate yields exactly 16, the **first**
   candidate's failure is reported.
-- **Lowercase and wide encodings.** If there is no uppercase `ISA` tag: a
-  NUL-interleaved `I S A` near the start → `isa.tag-utf16` (fatal, "re-export
-  the file"); otherwise a lowercase `isa` anywhere → switch to case-insensitive
-  matching (including for `GS`) and carry `isa.tag-lowercase` (error) — a file
-  with a lowercase ISA tag has lowercase tags throughout, which later steps must
-  tolerate too.
+- **Lowercase and wide encodings.** The uppercase `ISA` candidates are tried
+  first (no buffer copy). Only if none parse: a NUL-interleaved `I S A` near the
+  start → `isa.tag-utf16` (fatal, "re-export the file"); otherwise one
+  lower-case copy of the buffer, and the `isa` offsets are tried
+  case-insensitively (`GS` matched case-insensitively too) carrying
+  `isa.tag-lowercase` (error). This also rescues a lowercase segment sitting
+  behind junk that contains the literal uppercase word `ISA`. A file with a
+  non-uppercase ISA tag has non-uppercase tags throughout, which later steps
+  must tolerate.
 - The returned run **includes** the segment terminator and any trailing bytes
   (appended newlines, stray spaces, even a comment line) between it and `GS`.
   Splitting that run into ISA01–ISA16 + terminator + trailing junk is the next
@@ -115,6 +118,16 @@ Key points:
 Not caught here (Step 2's job): the element separator being alphanumeric or a
 control byte, the separator colliding with the terminator, element widths, a
 duplicated `ISA` tag inside an otherwise-16-separator run.
+
+**Residual limitation.** If leading junk is itself shaped *exactly* like an ISA
+line — the bytes `ISA`, then 16 element separators, then `GS` + that separator,
+spanning ≥ 109 bytes — Step 1 accepts it and returns it, with no diagnostic (or
+only `isa.leading-bytes` if it is not at offset 0). Real-world junk (BOMs, mail
+and transport headers, filenames, file magic) does not look like this; it takes
+something deliberately ISA-segment-shaped prepended to the file. The earlier,
+weaker form of this — junk merely *ending* in `ISA` + a separator-like byte — is
+handled: that junk does not carry 16 separators, so the retry moves on to the
+real segment.
 
 ### Recovery, and later steps
 

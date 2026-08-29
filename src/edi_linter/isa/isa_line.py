@@ -13,13 +13,19 @@ see ``docs/design.md``).
 
 Flow
 ----
-1. Collect every offset of ``ISA`` in the file (up to
-   :data:`MAX_ISA_CANDIDATES`). If there is none:
-     * NUL-interleaved ``I S A`` near the start -> ``isa.tag-utf16`` (fatal)
-     * a lowercase ``isa`` somewhere -> switch to case-insensitive matching
-       and carry an ``isa.tag-lowercase`` (error)
-     * otherwise -> ``isa.no-tag`` (fatal)
-2. Try each candidate in order. For one candidate:
+1. Collect every offset of the exact bytes ``ISA`` (up to
+   :data:`MAX_ISA_CANDIDATES`) and try each (step 3). The first that yields a
+   clean run wins.
+2. If none did: a NUL-interleaved ``I S A`` near the start -> ``isa.tag-utf16``
+   (fatal). Otherwise take one lower-case copy of the buffer, collect the
+   ``isa`` offsets, and try those case-insensitively (``GS`` matched
+   case-insensitively too), carrying ``isa.tag-lowercase`` (error). This also
+   rescues a lowercase segment that sits behind junk containing the literal
+   uppercase word ``ISA``. If that finds nothing usable either -> ``isa.no-tag``
+   (fatal) -- unless a lowercase candidate looked like a real segment start
+   (offset 0 or after a non-alphanumeric byte), in which case its failure is
+   reported with ``isa.tag-lowercase``.
+3. For one candidate:
      a. ``cleansed = dirty[isa_start:]``;  ``len < 109`` -> fail
         (``isa.interchange-too-short``)
      b. ``element_separator = cleansed[3:4]``;  ``gs = b"GS" + separator``
@@ -29,9 +35,13 @@ Flow
      d. ``isa_line = cleansed[:gs_pos]``;  it must hold **exactly 16** element
         separators -- ``< 16`` -> fail (``isa.separator-count-low``),
         ``> 16`` -> fail (``isa.separator-count-high``)
-3. The first candidate that yields an exactly-16 run wins. Any bytes before it
-   become ``isa.leading-bytes`` (warning). If no candidate wins, the **first**
-   candidate's failure is reported.
+   Any bytes before the winning candidate become ``isa.leading-bytes``
+   (warning). If no candidate wins, the **first** candidate's failure is
+   reported (with a note if the search cap was hit).
+
+Performance: the common path (an uppercase ``ISA`` that parses) never copies
+the buffer. The one full-buffer ``lower()`` happens only when every uppercase
+candidate has already failed.
 
 The minimum bar for "this run is an ISA line" -- Step 1 does no component
 validation, but a run must clear all three of these to be handed on: (1) it
@@ -174,30 +184,55 @@ def _try_candidate(
 
 def extract_isa_line(dirty: bytes) -> IsaLineResult:
     """Return the ISA line from ``dirty`` -- see the module docstring."""
-    offsets = _isa_offsets(dirty)
-    case_insensitive = False
+    # Fast path: exact uppercase ISA tags. The overwhelming common case, and it
+    # never copies the buffer.
+    upper = _isa_offsets(dirty, ISA_TAG)
+    result, upper_failure = _try_all(dirty, upper, case_insensitive=False)
+    if result is not None:
+        return result
 
-    if not offsets:
-        # No uppercase ISA tag. Two salvageable explanations before giving up.
-        if any(m in dirty[:_UTF16_SCAN_LEN] for m in _UTF16_MARKERS):
-            return IsaLineResult(None, -1, [Diagnostic(
-                Code.ISA_TAG_UTF16,
-                "the ISA tag appears with interleaved NUL bytes; the file looks "
-                "UTF-16 encoded. X12 requires a single-byte encoding.",
-                offset=0,
-            )])
-        # One full-buffer lower-case copy, only on this already-failed path.
-        lowered = dirty.lower()
-        if ISA_TAG.lower() in lowered:
-            offsets = _isa_offsets(lowered, ISA_TAG.lower())
-            case_insensitive = True
-        else:
-            return IsaLineResult(None, -1, [Diagnostic(
-                Code.ISA_NO_TAG,
-                "no 'ISA' segment tag anywhere in the file; not an X12 "
-                "interchange.",
-            )])
+    # No uppercase tag produced an ISA line. UTF-16 only matters when there is
+    # no uppercase tag at all.
+    if not upper and any(m in dirty[:_UTF16_SCAN_LEN] for m in _UTF16_MARKERS):
+        return IsaLineResult(None, -1, [Diagnostic(
+            Code.ISA_TAG_UTF16,
+            "the ISA tag appears with interleaved NUL bytes; the file looks "
+            "UTF-16 encoded. X12 requires a single-byte encoding.",
+            offset=0,
+        )])
 
+    # Case-insensitive fallback -- one full-buffer lower-case copy, only on this
+    # already-failed path. Handles a lowercase/mixed-case ISA tag, including one
+    # that sits behind junk containing the literal uppercase word "ISA".
+    lowered = dirty.lower()
+    ci_failure: tuple[int, Diagnostic] | None = None
+    if ISA_TAG.lower() in lowered:
+        ci_offsets = _isa_offsets(lowered, ISA_TAG.lower())
+        result, ci_failure = _try_all(dirty, ci_offsets, case_insensitive=True)
+        if result is not None:
+            return result
+
+    # Nothing produced an ISA line. Report the most useful failure.
+    if upper_failure is not None:
+        isa_start, failure = upper_failure          # an uppercase tag existed
+        return IsaLineResult(None, isa_start, _cap_note([failure], len(upper)))
+    if ci_failure is not None and _looks_like_segment_start(dirty, ci_failure[0]):
+        isa_start, failure = ci_failure             # a real lowercase attempt
+        return IsaLineResult(None, isa_start, [
+            _lowercase_tag_diagnostic(isa_start), failure,
+        ])
+    # "isa" only ever appeared inside a word, or not at all.
+    return IsaLineResult(None, -1, [Diagnostic(
+        Code.ISA_NO_TAG,
+        "no 'ISA' segment tag anywhere in the file; not an X12 interchange.",
+    )])
+
+
+def _try_all(
+    dirty: bytes, offsets: list[int], *, case_insensitive: bool
+) -> tuple[IsaLineResult | None, tuple[int, Diagnostic] | None]:
+    """Try each candidate. Return ``(result, None)`` on the first clean run, or
+    ``(None, first_failure)`` if every candidate failed / there were none."""
     first_failure: tuple[int, Diagnostic] | None = None
     for isa_start in offsets:
         attempt = _try_candidate(
@@ -208,17 +243,30 @@ def extract_isa_line(dirty: bytes) -> IsaLineResult:
                 attempt.isa_line,
                 isa_start,
                 _context_diagnostics(dirty, isa_start, case_insensitive),
-            )
+            ), None
         if first_failure is None:
             first_failure = (isa_start, attempt.failure)  # type: ignore[assignment]
+    return None, first_failure
 
-    assert first_failure is not None  # offsets is non-empty here
-    isa_start, failure = first_failure
-    diags: list[Diagnostic] = []
-    if case_insensitive:
-        diags.append(_lowercase_tag_diagnostic(isa_start))
-    diags.append(failure)
-    return IsaLineResult(None, isa_start, diags)
+
+def _looks_like_segment_start(dirty: bytes, offset: int) -> bool:
+    """Whether ``offset`` is where a segment could begin -- start of file, or
+    right after a non-alphanumeric byte. Distinguishes a real lowercase ``isa*``
+    from ``isa`` buried in a word like "advisable"."""
+    return offset == 0 or not dirty[offset - 1: offset].isalnum()
+
+
+def _cap_note(diags: list[Diagnostic], n_tried: int) -> list[Diagnostic]:
+    """Append a note to the last diagnostic if the candidate cap was reached."""
+    if n_tried < MAX_ISA_CANDIDATES or not diags:
+        return diags
+    last = diags[-1]
+    return diags[:-1] + [Diagnostic(
+        last.code,
+        f"{last.message} ({MAX_ISA_CANDIDATES} 'ISA' candidates tried, "
+        f"search cap reached -- a later one may be the real segment.)",
+        last.offset,
+    )]
 
 
 def _context_diagnostics(
@@ -240,7 +288,7 @@ def _context_diagnostics(
 def _lowercase_tag_diagnostic(isa_start: int) -> Diagnostic:
     return Diagnostic(
         Code.ISA_TAG_LOWERCASE,
-        "the ISA segment tag is lowercase; X12 segment tags are uppercase. "
-        "Parsed case-insensitively.",
+        "the ISA segment tag is not uppercase ('isa' or mixed case); X12 "
+        "segment tags are uppercase. Parsed case-insensitively.",
         offset=isa_start,
     )
