@@ -31,6 +31,12 @@ TRAILER = (
 )
 
 
+def isa_segment(sep: bytes = b"*", comp: bytes = b":",
+                elements: list[bytes] | None = None) -> bytes:
+    els = ISA_ELEMENTS if elements is None else elements
+    return sep.join([b"ISA", *els, comp])  # ISA .. ISA16, no terminator yet
+
+
 def build_isa(
     sep: bytes = b"*",
     term: bytes = b"~",
@@ -39,18 +45,19 @@ def build_isa(
     trailer: bytes = TRAILER,
     pre: bytes = b"",
 ) -> bytes:
-    els = ISA_ELEMENTS if elements is None else elements
-    segment = sep.join([b"ISA", *els, comp])  # ISA .. ISA16, no terminator yet
-    return pre + segment + term + trailer.replace(b"*", sep)
+    return pre + isa_segment(sep, comp, elements) + term + trailer.replace(b"*", sep)
 
 
 def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
+    """The run starts with an ISA tag, is a prefix of dirty[isa_start:], and is
+    immediately followed by a GS tag (case-insensitive -- a lowercase file is
+    parsed case-insensitively)."""
     if r.isa_line is None:
         return
-    assert r.isa_line.startswith(b"ISA")
+    assert r.isa_line[:3].upper() == b"ISA"
     cleansed = dirty[r.isa_start:]
     assert cleansed.startswith(r.isa_line)
-    assert cleansed[len(r.isa_line):].startswith(b"GS")
+    assert cleansed[len(r.isa_line):][:2].upper() == b"GS"
 
 
 # (name, dirty, expected_codes, isa_line_expected)
@@ -98,9 +105,33 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
                          b"240101", b"1200", b"U", b"00401", b"000000001",
                          b"0", b"P"]),
      [], True),
-    ("false 'ISA' match in leading junk (DISASTER)",
+
+    # --- retry: junk that contains 'ISA', real interchange follows ---
+    ("'ISA' in leading junk (DISASTER), then real interchange",
      b"THIS IS A DISASTER\n" + build_isa(),
-     [Code.ISA_LEADING_BYTES, Code.ISA_GS_NOT_FOUND], False),
+     [Code.ISA_LEADING_BYTES], True),
+    ("junk ends in 'ISA' + separator, then real interchange",
+     b"memo: ISA*" + build_isa(),
+     [Code.ISA_LEADING_BYTES], True),
+    ("first 'ISA' has no usable GS, second is the real one",
+     b"ISA is coming\n" + build_isa(),
+     [Code.ISA_LEADING_BYTES], True),
+
+    # --- retry exhausted: no candidate yields a 16-separator line ---
+    ("no GS envelope, only a stray REF*GS* deep in the data",
+     isa_segment() + b"~ST*850*1~REF*GS*99~SE*1*1~GE*1*1~IEA*1*1~" + b"P" * 60,
+     [Code.ISA_SEPARATOR_COUNT_HIGH], False),
+    ("only 14 element separators, every candidate tried",
+     build_isa(elements=ISA_ELEMENTS[:13]),
+     [Code.ISA_SEPARATOR_COUNT_LOW], False),
+
+    # --- lowercase / wide-encoding ---
+    ("lowercase 'isa' segment tag",
+     build_isa().lower(),
+     [Code.ISA_TAG_LOWERCASE], True),
+    ("UTF-16LE encoded file",
+     build_isa().decode().encode("utf-16-le"),
+     [Code.ISA_TAG_UTF16], False),
 ]
 
 

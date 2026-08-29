@@ -50,10 +50,13 @@ class Code(Enum):
 
     # -- isa: locating and bounding the ISA line (Step 1) --
     ISA_NO_TAG = "isa.no-tag"
+    ISA_TAG_LOWERCASE = "isa.tag-lowercase"
+    ISA_TAG_UTF16 = "isa.tag-utf16"
     ISA_LEADING_BYTES = "isa.leading-bytes"
     ISA_INTERCHANGE_TOO_SHORT = "isa.interchange-too-short"
     ISA_GS_NOT_FOUND = "isa.gs-not-found"
     ISA_SEPARATOR_COUNT_LOW = "isa.separator-count-low"
+    ISA_SEPARATOR_COUNT_HIGH = "isa.separator-count-high"
 
     @property
     def area(self) -> str:
@@ -82,6 +85,28 @@ META: dict[Code, CodeMeta] = {
         explanation=(
             "The byte sequence 'ISA' does not appear anywhere in the file, so "
             "there is no X12 interchange to inspect. Nothing downstream can run."
+        ),
+    ),
+    Code.ISA_TAG_LOWERCASE: CodeMeta(
+        default_severity="error",
+        title="ISA segment tag is lowercase",
+        explanation=(
+            "The segment tag was found as 'isa' (or mixed case). X12 segment "
+            "tags are uppercase. The linter matched it case-insensitively and "
+            "continued -- a file with a lowercase ISA tag almost certainly has "
+            "every other segment tag lowercase too, which downstream steps must "
+            "also tolerate."
+        ),
+    ),
+    Code.ISA_TAG_UTF16: CodeMeta(
+        default_severity="fatal",
+        title="File appears to be UTF-16 encoded",
+        explanation=(
+            "The bytes 'I', 'S', 'A' appear separated by NUL bytes near the "
+            "start of the file, which is what a UTF-16-encoded 'ISA' looks "
+            "like. X12 interchanges must use a single-byte encoding (ASCII, "
+            "Latin-1, or UTF-8 without a wide encoding). Re-export the file and "
+            "try again."
         ),
     ),
     Code.ISA_LEADING_BYTES: CodeMeta(
@@ -123,7 +148,20 @@ META: dict[Code, CodeMeta] = {
             "*ISA16). The run of bytes before the 'GS' header holds fewer than "
             "that, so it is not a valid ISA line -- either elements were "
             "dropped, or the 'GS' the linter anchored on is a false match "
-            "inside earlier data."
+            "inside earlier data. Every candidate ISA tag in the file was "
+            "tried; none produced a 16-separator line."
+        ),
+    ),
+    Code.ISA_SEPARATOR_COUNT_HIGH: CodeMeta(
+        default_severity="fatal",
+        title="More than 16 element separators before GS",
+        explanation=(
+            "The run before the 'GS' header holds more than the 16 element "
+            "separators an ISA header has. Either the element separator occurs "
+            "inside ISA06 / ISA08 data, or the linter ran past the real 'GS' "
+            "and anchored on a later one. A clean fixed-offset parse is not "
+            "possible; this is the case the recovery path (width-anchored "
+            "extraction) is being built to handle."
         ),
     ),
 }

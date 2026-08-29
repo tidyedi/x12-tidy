@@ -74,19 +74,33 @@ Key points:
 - The end of the ISA line is found by locating `GS` + element separator, not by
   trusting offset 105/106. Offset 106 is used only as a fast-path shortcut that
   yields the identical result.
-- `isa_line.count(element_separator) < 16` is fatal. An ISA header has exactly
-  16 element separators; a shorter run means either elements were dropped or the
-  `GS` anchored on is a false match inside earlier data. This one check does
-  double duty.
+- **Multi-candidate anchoring.** The file may contain the bytes `ISA` before the
+  real segment (in an email header, a filename, junk that ends in `ISA*`). Step 1
+  collects every `ISA` offset (capped at `MAX_ISA_CANDIDATES`) and tries each in
+  turn; the first that yields a clean run wins, and the bytes before it become
+  `isa.leading-bytes`.
+- **Exactly 16 element separators.** A candidate's run is accepted only if it
+  holds *exactly* 16 — not `>= 16`. Accepting `>= 16` let a stray `GS` deep in
+  the transaction body, or a junk `ISA*` prefix, produce a plausible-looking but
+  wrong run with no diagnostic. `< 16` → `isa.separator-count-low`; `> 16` →
+  `isa.separator-count-high` (the element separator occurs inside ISA06/ISA08
+  data, or the run overshot a real `GS`). Both route to recovery once it exists;
+  for now both are fatal. When no candidate yields exactly 16, the **first**
+  candidate's failure is what gets reported.
+- **Lowercase and wide encodings.** If there is no uppercase `ISA` tag: a
+  NUL-interleaved `I S A` near the start → `isa.tag-utf16` (fatal, "re-export
+  the file"); otherwise a lowercase `isa` anywhere → switch to case-insensitive
+  matching (including for `GS`) and carry `isa.tag-lowercase` (error) — a file
+  with a lowercase ISA tag has lowercase tags throughout, which later steps must
+  tolerate too.
 - The returned run **includes** the segment terminator and any trailing bytes
-  (appended newlines, stray spaces) between it and `GS`. Splitting that run into
-  ISA01–ISA16 + terminator + trailing junk is the next step.
+  (appended newlines, stray spaces, even a comment line) between it and `GS`.
+  Splitting that run into ISA01–ISA16 + terminator + trailing junk is the next
+  step.
 
-Accepted limitation: if leading junk ends in `ISA` followed by a byte that also
-works as the element separator, Step 1 anchors on the junk. The
-`isa.leading-bytes` warning always fires in that case, and the next step's
-element checks reject the result. A multi-candidate `ISA` anchor is a possible
-later refinement.
+Not caught here (Step 2's job): the element separator being alphanumeric or a
+control byte, the separator colliding with the terminator, element widths, a
+duplicated `ISA` tag inside an otherwise-16-separator run.
 
 ### Recovery, and later steps
 
