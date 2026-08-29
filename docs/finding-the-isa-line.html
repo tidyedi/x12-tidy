@@ -419,8 +419,9 @@
     </div>
     <div class="code-fig">
       <p class="code-cap">the pattern you would reach for</p>
-      <pre><code>rb<span class="s">"ISA(.)(?:.*?\1){16}GS\1"</span>
-<span class="c">#      ^ sep    ^ 16 lazy hops to the next sep    ^ GS + the same sep</span></code></pre>
+      <pre><code>rb<span class="s">"ISA(.)(?:.*?\1){15}.*?GS\1"</span>
+<span class="c">#      ^ capture the separator — (.) then \1 matches any byte literally,</span>
+<span class="c">#        metacharacters included, so it need not be hard-coded</span></code></pre>
     </div>
     <div class="prose">
       <p>It compiles. It even matches a clean file. It is still the wrong tool,
@@ -435,23 +436,32 @@
         you no position and no cause. You would end up writing one pattern per
         deviation and branching on which matched: a hand&#8209;rolled parser, with
         worse ergonomics than a real one.</li>
-      <li><b>"Exactly sixteen" fights a separator you don't know yet.</b> The
-        separator is whatever byte sits at position 3 of the match — any byte,
-        a regex metacharacter included, and sometimes a byte that also appears
-        inside the element data. <code>(?:.*?\1){16}</code> matches <em>at least</em>
-        sixteen and will happily anchor <code>GS\1</code> on a <code>GS*</code>
-        buried in a transaction set. The quantifier has no way to say
-        <em>exactly</em> sixteen while an element might legitimately hold the
-        separator.</li>
+      <li><b>"Exactly sixteen" is expressible; the ambiguity under it is not.</b>
+        You <em>can</em> force the count — <code>(?:(?!\1).)*\1</code> for "one
+        field, then the separator," sixteen times — and the capture handles any
+        separator byte without hard&#8209;coding it. But that assumes every
+        separator is a field boundary, and in the case the linter exists for, one
+        isn't: a sender whose ID holds the separator byte produces a segment that
+        is genuinely ambiguous — sixteen fields or seventeen, indistinguishable
+        from the bytes alone. A regex resolves that silently, matching <em>some</em>
+        boundary; the trailing <code>GS\1</code> then anchors early, or the match
+        fails, with no signal either way. The linter does the opposite: it counts
+        the separators, sees seventeen, and reports it
+        (<code>isa.no-functional-group</code>), naming both possible causes. And
+        <code>GS\1</code> matches a <code>GS</code> + separator <em>anywhere</em> —
+        inside ISA06 or ISA08 data as readily as in a transaction set. A match
+        gives you a boundary; it never gives you "this boundary is suspect, and
+        here is why."</li>
       <li><b>Choosing among candidates is a search, not a match.</b> When the
         bytes <code>ISA</code> turn up in junk, the logic is: try this offset; if
         the run is not a valid ISA line, anchor on the next <code>ISA</code>; if
         none work, report the <em>first</em> candidate's failure. That is a
         stateful search where every failure is inspected. A regex backtracks
         inside the engine and hands you nothing to look at.</li>
-      <li><b><code>{16}</code> plus <code>.*?</code> over megabytes backtracks
-        catastrophically.</b> On a large file with a near&#8209;miss, the exact
-        construct that expresses "sixteen separated fields" is the one that
+      <li><b>The counted, alternation&#8209;heavy construct backtracks
+        catastrophically.</b> On a large file with a near&#8209;miss, the very
+        pattern that expresses "sixteen separated fields" — nested quantifiers
+        over <code>.*?</code> or <code>(?:(?!\1).)*</code> — is the one that
         explodes. And the O(1) shortcut — is <code>GS</code> already at
         byte&nbsp;106? — has no regex equivalent; the engine scans from the start
         every time.</li>
@@ -500,9 +510,11 @@
       <li><b>The element separator inside element data.</b> A sender whose ID
         contains <code>*</code> while using <code>*</code> as the separator. The
         segment now has 17 separators and no single correct parse.</li>
-      <li><b>A stray <code>GS*</code> downstream.</b> The real functional&#8209;group
-        envelope is missing, but a <code>REF*GS*&#8230;</code> element deep in a
-        transaction set matches <code>b"GS*"</code> perfectly.</li>
+      <li><b>A <code>GS</code> + separator lookalike.</b> A <code>REF*GS*&#8230;</code>
+        element deep in a transaction set when the real functional&#8209;group
+        envelope is missing — or a sender ID ending in <code>GS</code> right
+        inside ISA06. Either matches <code>b"GS" + sep</code> before, or instead
+        of, the real header.</li>
       <li><b>The bytes <code>ISA</code> in junk.</b> An email subject line reading
         <code>SUBJECT: ISA FILE</code>, a path like <code>/feeds/ISA/&#8230;</code>.
         The first match is not the segment.</li>
@@ -613,6 +625,12 @@
       header begins. Byte&nbsp;106 is used only as a shortcut that produces the
       identical answer when the file happens to be conformant; when it doesn't,
       the code searches for the header by content.</p>
+      <p><code>find</code> is not a validator, though. <code>GS</code> + the
+      separator can occur <em>inside</em> the ISA line — a sender ID (ISA06) or
+      receiver ID (ISA08) ending in <code>GS</code>, followed by the element
+      separator, is enough. When the fast&#8209;path offset check has already
+      failed and <code>find</code> lands on one of those, the anchor is too early.
+      That is caught in 5.2, not here.</p>
     </div>
     <div class="code-fig">
       <p class="code-cap">edi_linter/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, steps b–c</p>
@@ -637,16 +655,19 @@ gs_identifier     = GS_TAG + element_separator
     <h3>5.2&nbsp;&nbsp;Require <em>exactly</em> 16 separators — not "at least"</h3>
     <div class="prose">
       <p>Once a candidate <code>GS</code> is found, the bytes before it are counted.
-      An early version accepted <code>&gt;= 16</code>. That let two different bugs
-      through silently: a stray <code>GS*</code> deep in transaction data, and
-      leading junk that ended in <code>ISA*</code>, both produced plausible&#8209;looking
-      runs with no diagnostic. Requiring the count to be exact turns the same
-      check into a false&#8209;anchor detector — and the diagnostic it raises names
-      the structural fault, not the count. Too few separators
-      (<code>isa.separator-count-low</code>) means the ISA segment lost elements;
-      too many (<code>isa.no-functional-group</code>) means the <code>GS</code>
-      that was found is not this ISA line's header — there is no functional&#8209;group
-      envelope, or the separator is inside the ISA's own data.</p>
+      An early version accepted <code>&gt;= 16</code>. That let three false anchors
+      through silently: a stray <code>GS*</code> deep in transaction data, leading
+      junk that ended in <code>ISA*</code>, and a <code>GS*</code> sitting inside
+      the ISA line's own ISA06/ISA08 data. Requiring the count to be <em>exact</em>
+      catches all three — and the diagnostic names the structural fault, not the
+      count:</p>
+      <ul style="margin:0.8rem 0 0; padding-left:1.2rem; font-family:'IBM Plex Serif',serif;">
+        <li>a <code>GS*</code> matched <b>inside</b> the ISA line (5.1) cuts the
+          run short → fewer than 16 separators → <code>isa.separator-count-low</code>;</li>
+        <li>a <code>GS*</code> matched <b>past</b> the real header (downstream, or a
+          decoy <code>ISA*</code> prefix) overshoots → more than 16 separators →
+          <code>isa.no-functional-group</code>.</li>
+      </ul>
     </div>
     <div class="code-fig">
       <p class="code-cap">edi_linter/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, step d</p>

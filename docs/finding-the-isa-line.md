@@ -54,8 +54,9 @@ right instinct to have — is a pattern: match the tag, capture whatever byte is
 acting as the separator, hop over sixteen fields, then find the header.
 
 ```
-rb"ISA(.)(?:.*?\1){16}GS\1"
-#      ^ sep    ^ 16 lazy hops to the next sep    ^ GS + the same sep
+rb"ISA(.)(?:.*?\1){15}.*?GS\1"
+#      ^ capture the separator — (.) then \1 matches any byte literally,
+#        metacharacters included, so it need not be hard-coded
 ```
 
 It compiles. It even matches a clean file. It is still the wrong tool, for four
@@ -69,13 +70,20 @@ reasons — and the first is fatal on its own:
    branching on which matched: a hand-rolled parser, with worse ergonomics than a
    real one.
 
-2. **"Exactly sixteen" fights a separator you don't know yet.** The separator is
-   whatever byte sits at position 3 of the match — any byte, a regex
-   metacharacter included, and sometimes a byte that also appears inside the
-   element data. `(?:.*?\1){16}` matches *at least* sixteen and will happily
-   anchor `GS\1` on a `GS*` buried in a transaction set. The quantifier has no
-   way to say *exactly* sixteen while an element might legitimately hold the
-   separator.
+2. **"Exactly sixteen" is expressible; the ambiguity under it is not.** You *can*
+   force the count — `(?:(?!\1).)*\1` for "one field, then the separator,"
+   repeated sixteen times — and the capture handles any separator byte without
+   hard-coding it. But that construction assumes every separator is a field
+   boundary, and in the case the linter exists for, one isn't: a sender whose ID
+   holds the separator byte produces a segment that is genuinely ambiguous —
+   sixteen fields or seventeen, indistinguishable from the bytes alone. A regex
+   resolves that silently, matching *some* boundary; the trailing `GS\1` then
+   anchors early, or the whole match fails, with no signal either way. The linter
+   does the opposite: it counts the separators, sees seventeen, and reports it
+   (`isa.no-functional-group`), naming both possible causes. And `GS\1` matches a
+   `GS` + separator *anywhere* — inside ISA06 or ISA08 element data as readily as
+   in a transaction set. A match gives you a boundary; it never gives you "this
+   boundary is suspect, and here is why."
 
 3. **Choosing among candidates is a search, not a match.** When the bytes `ISA`
    turn up in junk, the logic is: try this offset; if the run is not a valid ISA
@@ -83,11 +91,11 @@ reasons — and the first is fatal on its own:
    failure. That is a stateful search where every failure is inspected. A regex
    backtracks inside the engine and hands you nothing to look at.
 
-4. **`{16}` plus `.*?` over megabytes backtracks catastrophically.** On a large
-   file with a near-miss, the exact construct that expresses "sixteen separated
-   fields" is the one that explodes. And the O(1) shortcut — is `GS` already at
-   byte 106? — has no regex equivalent; the engine scans from the start every
-   time.
+4. **The counted, alternation-heavy construct backtracks catastrophically.** On a
+   large file with a near-miss, the very pattern that expresses "sixteen
+   separated fields" — nested quantifiers over `.*?` or `(?:(?!\1).)*` — is the
+   one that explodes. And the O(1) shortcut — is `GS` already at byte 106? — has
+   no regex equivalent; the engine scans from the start every time.
 
 The function that replaces the pattern is about forty lines. It never backtracks,
 it takes the O(1) shortcut when the file is clean, and every branch that
@@ -109,7 +117,7 @@ fixed-offset reader; several break a delimiter-first reader too.
 | **Non-uppercase tags** — `isa`, `Isa` | A case-sensitive `find(b"ISA")` reports an empty file |
 | **Wide encodings** — the file is UTF-16; the tag is `I 00 S 00 A 00` | Nothing matches `ISA` |
 | **The element separator inside element data** — a sender whose ID contains `*` while using `*` as the separator | The segment has 17 separators and no single correct parse |
-| **A stray `GS*` downstream** — the real functional-group envelope is missing, but a `REF*GS*…` element deep in a transaction set matches `b"GS*"` | The end of the ISA line is located inside transaction data |
+| **A `GS` + separator lookalike** — a `REF*GS*…` element deep in a transaction set (when the real functional-group envelope is missing), or a sender ID ending in `GS` right inside ISA06 | `b"GS" + sep` matches before, or instead of, the real header |
 | **The bytes `ISA` in junk** — `SUBJECT: ISA FILE`, a path like `/feeds/ISA/…` | The first match is not the segment |
 
 ![Two byte streams. In the conformant one, byte 106 lands on GS. In the received
@@ -159,6 +167,12 @@ The end of the ISA line is wherever the `GS` functional-group header begins. Byt
 happens to be conformant; when it doesn't, the code searches for the header by
 content.
 
+`find` is not a validator, though. `GS` + the separator can occur *inside* the
+ISA line — a sender ID (ISA06) or receiver ID (ISA08) ending in `GS`, followed by
+the element separator, is enough. When the fast-path offset check has already
+failed and `find` lands on one of those, the anchor is too early. That is not
+caught here; it is caught in 5.2.
+
 ```python
 # b. the element separator is, by rule, the 4th byte of the ISA segment
 element_separator = cleansed[3:4]
@@ -176,11 +190,16 @@ else:
 ### 5.2 Require *exactly* 16 separators — not "at least"
 
 Once a candidate `GS` is found, the bytes before it are counted. An early version
-accepted `>= 16`. That let two different bugs through silently: a stray `GS*` deep
-in transaction data, and leading junk that ended in `ISA*`, both produced
-plausible-looking runs with no diagnostic. Requiring the count to be exact turns
-the same check into a false-anchor detector — and the diagnostic it raises names
-the structural fault, not the count.
+accepted `>= 16`. That let three false anchors through silently: a stray `GS*`
+deep in transaction data, leading junk that ended in `ISA*`, and a `GS*` sitting
+inside the ISA line's own ISA06/ISA08 data. Requiring the count to be *exact*
+catches all three — and the diagnostic it raises names the structural fault, not
+the count:
+
+- a `GS*` matched **inside** the ISA line (5.1) cuts the run short → fewer than
+  16 separators → `isa.separator-count-low`;
+- a `GS*` matched **past** the real header (downstream, or a decoy `ISA*` prefix)
+  overshoots → more than 16 separators → `isa.no-functional-group`.
 
 ```python
 # d. the run must hold exactly 16 element separators
