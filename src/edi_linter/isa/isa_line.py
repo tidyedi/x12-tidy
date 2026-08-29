@@ -34,7 +34,8 @@ Flow
         (``isa.gs-not-found``)
      d. ``isa_line = cleansed[:gs_pos]``;  it must hold **exactly 16** element
         separators -- ``< 16`` -> fail (``isa.separator-count-low``),
-        ``> 16`` -> fail (``isa.separator-count-high``)
+        ``> 16`` -> fail (``isa.no-functional-group``: the GS we found is not
+        this ISA line's header)
    Any bytes before the winning candidate become ``isa.leading-bytes``
    (warning). If no candidate wins, the **first** candidate's failure is
    reported (with a note if the search cap was hit).
@@ -171,11 +172,14 @@ def _try_candidate(
         ))
     if separator_count > ISA_ELEMENT_SEPARATORS:
         return _Attempt(None, Diagnostic(
-            Code.ISA_SEPARATOR_COUNT_HIGH,
-            f"the bytes before {gs_identifier!r} hold {separator_count} element "
-            f"separator(s) ({element_separator!r}); an ISA header has exactly "
-            f"{ISA_ELEMENT_SEPARATORS}. The separator occurs inside ISA data, "
-            f"or the line ran past a stray 'GS'.",
+            Code.ISA_NO_FUNCTIONAL_GROUP,
+            f"a {gs_identifier!r} sequence sits {gs_pos} byte(s) past the ISA "
+            f"tag, but {separator_count} element separator(s) "
+            f"({element_separator!r}) precede it -- an ISA header has "
+            f"{ISA_ELEMENT_SEPARATORS}, so this is not the functional-group "
+            f"header. No GS envelope bounds the ISA segment (the match is "
+            f"inside a later segment), or {element_separator!r} occurs inside "
+            f"ISA06/ISA08 data.",
             offset=isa_start,
         ))
 

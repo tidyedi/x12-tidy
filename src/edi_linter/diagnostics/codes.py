@@ -56,7 +56,7 @@ class Code(Enum):
     ISA_INTERCHANGE_TOO_SHORT = "isa.interchange-too-short"
     ISA_GS_NOT_FOUND = "isa.gs-not-found"
     ISA_SEPARATOR_COUNT_LOW = "isa.separator-count-low"
-    ISA_SEPARATOR_COUNT_HIGH = "isa.separator-count-high"
+    ISA_NO_FUNCTIONAL_GROUP = "isa.no-functional-group"
 
     @property
     def area(self) -> str:
@@ -153,17 +153,18 @@ META: dict[Code, CodeMeta] = {
             "and is not recoverable."
         ),
     ),
-    Code.ISA_SEPARATOR_COUNT_HIGH: CodeMeta(
+    Code.ISA_NO_FUNCTIONAL_GROUP: CodeMeta(
         default_severity="fatal",
-        title="More than 16 element separators before GS",
+        title="ISA segment is not bounded by a GS functional-group header",
         explanation=(
-            "An ISA header carries exactly 16 element separators; that count "
-            "is part of the minimum bar for calling a run an ISA line. The run "
-            "before the 'GS' header holds more -- the element separator occurs "
-            "inside ISA06 / ISA08 data, or the run overshot the real 'GS'. "
-            "Either way this is not an ISA line and cannot be recovered: a "
-            "segment whose separator appears in its own data has no "
-            "unambiguous parse. It is not sent to the recovery path."
+            "Every ISA interchange opens a GS functional group, and the linter "
+            "ends the ISA line at that GS header. A 'GS' + element separator "
+            "was found, but the run of bytes to it holds more than the 16 "
+            "element separators an ISA header has -- so it is not the header. "
+            "Either there is no GS envelope and the match lies inside a later "
+            "segment's data, or the element separator occurs inside ISA06 / "
+            "ISA08 data (an unparseable segment). The ISA line cannot be "
+            "bounded; not recoverable."
         ),
     ),
 }

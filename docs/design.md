@@ -93,14 +93,20 @@ Key points:
   `isa.leading-bytes`.
 - **Exactly 16 element separators, not `>= 16`.** Accepting `>= 16` let a stray
   `GS` deep in the transaction body, or a junk `ISA*` prefix, produce a
-  plausible-looking but wrong run with no diagnostic. `< 16` →
-  `isa.separator-count-low` (separators removed, or a false `GS` match); `> 16` →
-  `isa.separator-count-high` (the element separator appears inside ISA06/ISA08
-  data, or the run overshot the real `GS`). Both are fatal and **terminal** — a
-  run with the wrong separator count is not an ISA line and cannot be recovered
-  (`> 16` in particular: a segment whose separator appears in its own data has
-  no unambiguous parse). When no candidate yields exactly 16, the **first**
-  candidate's failure is reported.
+  plausible-looking but wrong run with no diagnostic. Both directions are fatal
+  and **terminal** — a run with the wrong count is not an ISA line and does not
+  go to recovery:
+  - `< 16` → `isa.separator-count-low` — element separators were removed, or the
+    `GS` anchored on is a false match inside earlier data.
+  - `> 16` → `isa.no-functional-group` — the `GS` that was found is not this ISA
+    line's header (too many separators precede it). Either there is no GS
+    envelope and the match is inside a later segment, or the element separator
+    occurs inside ISA06/ISA08 data (an unparseable segment). The diagnostic
+    leads with the structural fact — no functional-group header — rather than
+    the separator count, which is the symptom.
+
+  When no candidate yields exactly 16, the **first** candidate's failure is
+  reported.
 - **Lowercase and wide encodings.** The uppercase `ISA` candidates are tried
   first (no buffer copy). Only if none parse: a NUL-interleaved `I S A` near the
   start → `isa.tag-utf16` (fatal, "re-export the file"); otherwise one
