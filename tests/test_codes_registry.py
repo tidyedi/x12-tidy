@@ -12,9 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from edi_linter.diagnostics import AREAS, Code, all_codes, meta
+from x12_tidy.diagnostics import AREAS, Code, all_codes, meta
 
-SRC = Path(__file__).resolve().parents[1] / "src" / "edi_linter"
+SRC = Path(__file__).resolve().parents[1] / "src" / "x12_tidy"
 
 _CODE_STRING = re.compile(r"^[a-z]+\.[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -50,7 +50,7 @@ def test_metadata_is_complete() -> None:
 
 
 def _emitted_codes() -> set[str]:
-    """Every ``Code.MEMBER`` referenced anywhere under src/edi_linter."""
+    """Every ``Code.MEMBER`` referenced anywhere under src/x12_tidy."""
     emitted: set[str] = set()
     for path in SRC.rglob("*.py"):
         tree = ast.parse(path.read_text(), filename=str(path))

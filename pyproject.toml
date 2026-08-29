@@ -1,14 +1,14 @@
 [project]
-name = "edi-linter"
-version = "0.0.1"
-description = "A piece-by-piece linter for X12 EDI flat files"
+name = "x12-tidy"
+version = "0.1.0"
+description = "Validate and repair malformed ANSI X12 EDI documents"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [{ name = "Michael Schertz", email = "michael.schertz@gmail.com" }]
 dependencies = []
 
 [project.scripts]
-edi-linter = "edi_linter.cli:main"
+x12-tidy = "x12_tidy.cli:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pre-commit>=3"]
@@ -18,7 +18,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/edi_linter"]
+packages = ["src/x12_tidy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
