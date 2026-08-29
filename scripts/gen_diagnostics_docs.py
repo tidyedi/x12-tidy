@@ -1,6 +1,6 @@
 """Generate ``docs/diagnostics.md`` from the code registry.
 
-The registry in :mod:`edi_linter.diagnostics.codes` is the single source of
+The registry in :mod:`x12_tidy.diagnostics.codes` is the single source of
 truth.  This script renders it to Markdown so the list is browsable in the repo
 and on GitHub with full history.  Never edit ``docs/diagnostics.md`` by hand --
 a pre-commit hook regenerates it when ``codes.py`` changes, and CI fails the
@@ -21,9 +21,9 @@ from pathlib import Path
 # Runnable from a plain checkout, without the package installed.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from edi_linter.diagnostics import AREAS, all_codes, meta  # noqa: E402
+from x12_tidy.diagnostics import AREAS, all_codes, meta  # noqa: E402
 
-BANNER = "<!-- GENERATED from src/edi_linter/diagnostics/codes.py -- do not edit -- run scripts/gen_diagnostics_docs.py -->"
+BANNER = "<!-- GENERATED from src/x12_tidy/diagnostics/codes.py -- do not edit -- run scripts/gen_diagnostics_docs.py -->"
 DOC_PATH = Path(__file__).resolve().parents[1] / "docs" / "diagnostics.md"
 
 

@@ -2,9 +2,9 @@
 
 ::
 
-    edi-linter check <file.edi>      run the checks built so far on a file
-    edi-linter codes [--area isa]     list every diagnostic code
-    edi-linter explain <code>         show the detail for one code
+    x12-tidy check <file.edi>      run the checks built so far on a file
+    x12-tidy codes [--area isa]     list every diagnostic code
+    x12-tidy explain <code>         show the detail for one code
 
 Exit codes for ``check``: 0 = clean, 1 = a fatal/error finding, 2 = usage / IO.
 """
@@ -15,8 +15,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from edi_linter.diagnostics import Code, all_codes, meta, resolved_severity
-from edi_linter.isa import extract_isa_line
+from x12_tidy.diagnostics import Code, all_codes, meta, resolved_severity
+from x12_tidy.isa import extract_isa_line
 
 
 def _cmd_check(path: Path) -> int:
@@ -65,7 +65,7 @@ def _cmd_explain(code_str: str) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="edi-linter", description=__doc__)
+    parser = argparse.ArgumentParser(prog="x12-tidy", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_check = sub.add_parser("check", help="run the checks on a file")

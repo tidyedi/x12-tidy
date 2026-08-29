@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from edi_linter.diagnostics import Code
-from edi_linter.isa import IsaLineResult, extract_isa_line
+from x12_tidy.diagnostics import Code
+from x12_tidy.isa import IsaLineResult, extract_isa_line
 
 # --- fixtures --------------------------------------------------------------
 

@@ -8,7 +8,7 @@ works from.
 This module does **not** parse or validate delimiters, elements, lengths, or
 the segment terminator. It only answers "where does the ISA line begin and
 end". Every non-conformance it has to tolerate to do that still produces a
-:class:`~edi_linter.diagnostics.Diagnostic` (permissive parse / strict report,
+:class:`~x12_tidy.diagnostics.Diagnostic` (permissive parse / strict report,
 see ``docs/design.md``).
 
 Flow
@@ -68,7 +68,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from edi_linter.diagnostics import Code, Diagnostic
+from x12_tidy.diagnostics import Code, Diagnostic
 
 ISA_TAG = b"ISA"
 GS_TAG = b"GS"

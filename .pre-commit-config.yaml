@@ -16,5 +16,5 @@ repos:
         # Run whenever the registry changes; the hook rewrites the doc and
         # stages nothing itself -- pre-commit re-adds a modified file and asks
         # you to commit again.
-        files: ^src/edi_linter/diagnostics/codes\.py$
+        files: ^src/x12_tidy/diagnostics/codes\.py$
         pass_filenames: false

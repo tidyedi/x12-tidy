@@ -6,6 +6,6 @@
 
 from __future__ import annotations
 
-from edi_linter.isa.isa_line import IsaLineResult, extract_isa_line
+from x12_tidy.isa.isa_line import IsaLineResult, extract_isa_line
 
 __all__ = ["IsaLineResult", "extract_isa_line"]

@@ -1,7 +1,7 @@
 """The :class:`Diagnostic` record -- one finding.
 
 Deliberately tiny and severity-free.  A diagnostic says *what* is wrong
-(:class:`~edi_linter.diagnostics.codes.Code`), *in prose* (``message``, built at
+(:class:`~x12_tidy.diagnostics.codes.Code`), *in prose* (``message``, built at
 the call site with the specifics of this occurrence), and *where* (``offset``, a
 byte position into the file).
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from edi_linter.diagnostics.codes import Code
+from x12_tidy.diagnostics.codes import Code
 
 
 @dataclass(frozen=True)

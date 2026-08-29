@@ -4,14 +4,14 @@
 * :class:`Code` -- the stable identity of every kind of finding.
 * :func:`meta`, :func:`all_codes` -- read the registry.
 
-The registry in :mod:`edi_linter.diagnostics.codes` is the single source of
-truth; ``docs/diagnostics.md`` and the ``edi-linter codes`` command are
+The registry in :mod:`x12_tidy.diagnostics.codes` is the single source of
+truth; ``docs/diagnostics.md`` and the ``x12-tidy codes`` command are
 generated from it.
 """
 
 from __future__ import annotations
 
-from edi_linter.diagnostics.codes import (
+from x12_tidy.diagnostics.codes import (
     AREAS,
     Code,
     CodeMeta,
@@ -20,7 +20,7 @@ from edi_linter.diagnostics.codes import (
     meta,
     resolved_severity,
 )
-from edi_linter.diagnostics.diagnostic import Diagnostic
+from x12_tidy.diagnostics.diagnostic import Diagnostic
 
 __all__ = [
     "AREAS",

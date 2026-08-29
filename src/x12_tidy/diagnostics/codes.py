@@ -2,7 +2,7 @@
 
 Every finding the linter can emit has an entry here.  Nothing else defines a
 code: modules reference the :class:`Code` members, tests assert on them, and the
-human-readable views (``docs/diagnostics.md``, ``edi-linter codes``) are
+human-readable views (``docs/diagnostics.md``, ``x12-tidy codes``) are
 *generated* from this file.  See ``docs/design.md`` for the full scheme.
 
 Rules
@@ -14,13 +14,13 @@ Rules
   ``isa.*``).
 * ``default_severity`` is a starting point; user config may override it
   per-code later (including to ``"ignore"``).  Severity is resolved at
-  *report* time, never stored on a :class:`~edi_linter.diagnostics.Diagnostic`.
+  *report* time, never stored on a :class:`~x12_tidy.diagnostics.Diagnostic`.
 * A retired code is never reused.  A material change in meaning is a new code;
   the old one stays here marked ``deprecated=True``.
 
 Adding a code
 -------------
-1. ``edi-linter codes --area <area>`` -- check nothing already covers it.
+1. ``x12-tidy codes --area <area>`` -- check nothing already covers it.
 2. Add a :class:`Code` member and a :class:`CodeMeta` row to :data:`META`.
 3. Build: the generated docs update, CI checks the registry stays consistent
    with what the modules actually emit.
@@ -68,8 +68,8 @@ class CodeMeta:
     """Everything about a code except its identity.
 
     ``title`` is a short, static, generic line (no per-occurrence detail --
-    that goes in the :class:`~edi_linter.diagnostics.Diagnostic` message).
-    ``explanation`` is the paragraph shown by ``edi-linter explain``.
+    that goes in the :class:`~x12_tidy.diagnostics.Diagnostic` message).
+    ``explanation`` is the paragraph shown by ``x12-tidy explain``.
     """
 
     default_severity: Severity
