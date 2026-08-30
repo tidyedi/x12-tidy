@@ -3,7 +3,7 @@ name: Release
 # Publishes to PyPI via Trusted Publishing (OIDC) -- no API token.
 # Set up once at https://pypi.org/manage/project/x12-tidy/settings/publishing/
 # (or a pending publisher before the project exists):
-#   owner: ubeast   repository: x12-tidy   workflow: release.yml   environment: pypi
+#   owner: tidyedi   repository: x12-tidy   workflow: release.yml   environment: pypi
 #
 # To cut a release: bump the version in pyproject.toml + src/x12_tidy/__init__.py,
 # commit, then push a tag:  git tag v0.1.0 && git push origin v0.1.0

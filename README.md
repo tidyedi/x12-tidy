@@ -8,7 +8,7 @@ from the standard rather than bailing on the first. The audience is a developer
 who received a bad file from a trading partner and needs to know exactly what is
 non-conformant.
 
-📄 **[Finding the Elusive ISA Line](https://ubeast.github.io/x12-tidy/finding-the-isa-line.html)**
+📄 **[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-isa-line.html)**
 — a longer-form engineering note on Step 1: why the naive approaches (fixed
 offsets, a regex) fail, and the techniques that replace them. ([Markdown
 source](docs/finding-the-isa-line.md).)
