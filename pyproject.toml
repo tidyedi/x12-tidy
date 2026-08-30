@@ -7,6 +7,11 @@ requires-python = ">=3.11"
 authors = [{ name = "Michael Schertz", email = "michael.schertz@gmail.com" }]
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/tidyedi/x12-tidy"
+Repository = "https://github.com/tidyedi/x12-tidy"
+Documentation = "https://docs.tidyedi.com/finding-the-isa-line.html"
+
 [project.scripts]
 x12-tidy = "x12_tidy.cli:main"
 
