@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """Diagnostics: the finding record and the code registry.
 
 * :class:`Diagnostic` -- one finding (code + message + offset), severity-free.

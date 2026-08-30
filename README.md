@@ -60,3 +60,10 @@ Design conventions:
   strings. Tests assert on the symbol.
 - `docs/diagnostics.md` is generated; a pre-commit hook and a CI check keep it
   in sync with `codes.py`.
+
+## License
+
+[Apache License 2.0](LICENSE) — © 2026 Michael Schertz. See [`NOTICE`](NOTICE).
+
+"TidyEDI" and the TidyEDI logo are trademarks of Michael Schertz; the license
+covers the code, not the name or the mark.

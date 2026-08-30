@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """Return the ISA line.
 
 That is the whole job of this module: given the raw file bytes, hand back the
