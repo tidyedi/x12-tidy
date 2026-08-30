@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """The code registry stays internally consistent and matched to what modules emit.
 
 This is the check that actually prevents drift -- not discipline, a failing

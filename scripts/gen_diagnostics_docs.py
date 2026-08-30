@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """Generate ``docs/diagnostics.md`` from the code registry.
 
 The registry in :mod:`x12_tidy.diagnostics.codes` is the single source of

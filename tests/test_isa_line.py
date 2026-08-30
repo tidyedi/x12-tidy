@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """Step 1 -- ``extract_isa_line`` returns the ISA line.
 
 Each case checks the diagnostic codes and, when a line is returned, the

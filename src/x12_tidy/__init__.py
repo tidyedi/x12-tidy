@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """x12-tidy: validate and repair malformed ANSI X12 EDI documents.
 
 The free command-line tool and Python library behind TidyEDI

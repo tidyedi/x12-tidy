@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """The diagnostic code registry -- the single source of truth.
 
 Every finding the linter can emit has an entry here.  Nothing else defines a

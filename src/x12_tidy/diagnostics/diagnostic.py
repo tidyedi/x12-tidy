@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 Michael Schertz
+
 """The :class:`Diagnostic` record -- one finding.
 
 Deliberately tiny and severity-free.  A diagnostic says *what* is wrong
