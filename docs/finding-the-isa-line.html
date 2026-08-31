@@ -10,7 +10,13 @@
 <meta property="og:title" content="Finding the Elusive ISA Line">
 <meta property="og:description" content="Why fixed byte offsets and a regex both fail at locating the X12 ISA line — and the defensive-parsing techniques that replace them.">
 <meta property="og:url" content="https://docs.tidyedi.com/finding-the-isa-line.html">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
@@ -62,6 +68,33 @@
 
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
+
+  .sitebar {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sitebar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  .sitebar svg { width: 26px; height: 26px; display: block; border-radius: 6px; }
+  .sitebar .edi { color: #1F6B4D; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .sitebar .edi { color: #5CBB8E; }
+  }
+  :root[data-theme="dark"] .sitebar .edi { color: #5CBB8E; }
+
   body {
     margin: 0;
     background: var(--paper);
@@ -300,6 +333,19 @@
 </style>
 </head>
 <body>
+
+<nav class="sitebar">
+  <a href="https://tidyedi.com">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#1F6B4D"/>
+      <rect x="11" y="15" width="35" height="5.4" rx="2.7" fill="#F3F8F5" opacity="0.34"/>
+      <rect x="18" y="26" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="37" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="48" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+    </svg>
+    <span>Tidy<span class="edi">EDI</span></span>
+  </a>
+</nav>
 
 <div class="wrap">
 
