@@ -4,10 +4,12 @@ The reference for *why* x12-tidy is built the way it is. Mechanics live in
 module docstrings; this document holds the decisions that span modules. It gains
 one section per step as the project moves forward.
 
-For a narrative walk-through of Step 1 — the real-world violations, why fixed
-offsets and a regex both fail, and the five techniques — see
-[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
-([source](finding-the-elusive-isa-line.md)).
+For narrative walk-throughs: [Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
+([source](finding-the-elusive-isa-line.md)) covers Step 1 — the real-world
+violations, why fixed offsets and a regex both fail, and the five techniques.
+[Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
+([source](those-pesky-delimiters.md)) covers Step 2 — recovering the four
+delimiters from a run whose byte offsets have all shifted.
 
 ---
 
@@ -140,11 +142,27 @@ weaker form of this — junk merely *ending* in `ISA` + a separator-like byte �
 handled: that junk does not carry 16 separators, so the retry moves on to the
 real segment.
 
-### Recovery, and later steps
+### Step 2 — decompose the run
 
-The recovery path and the decompose-and-validate step are drafted in scratch
-(`recover_isa_line.py`) but not yet packaged. They are the next design
-conversation.
+`x12_tidy.isa.split_isa_line(run) -> IsaDelimiters` is the first slice: recover
+the four X12 delimiters — element separator (`run[3]`), repetition separator
+(`ISA11`, only for version `00403`+), component separator (value of `ISA16`),
+segment terminator (one byte, by rule) — by splitting the run on the element
+separator rather than reading any byte offset. See
+[Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
+for the walk-through, and the module docstring for the flow.
+
+**Severity rule for delimiters.** A finding is fatal *at this step* only if it
+blocks parsing the interchange outright. The element separator and the segment
+terminator are needed by every segment → an unusable one is fatal. The component
+separator (composite elements) and the repetition separator (repeats) are
+conditional → an unusable one is an `error`, which the body parser escalates to
+fatal at the first segment that needs it.
+
+Still to come in Step 2: element-width validation, reconstructing the canonical
+105-byte line, and the round-trip acceptance test. The recovery path (a
+permissive re-parse when the standard gate fails) is drafted in scratch
+(`recover_isa_line.py`) and folds into this work.
 
 ---
 

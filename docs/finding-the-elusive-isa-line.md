@@ -361,6 +361,8 @@ Step 1 returns a run with the *shape* of an ISA line. It does not know whether t
 run has the *meaning* of one — whether `ISA01` is a real authorization qualifier,
 whether the fixed widths line up, whether the delimiters are legal bytes. That is
 the next step, and it is a genuine backstop.
+[Those Pesky Delimiters](those-pesky-delimiters.md) picks up here, with the four
+delimiters.
 
 The one place the seam is visible: leading junk shaped *exactly* like an ISA line
 — the bytes `ISA`, sixteen element separators, then `GS` + that separator, across

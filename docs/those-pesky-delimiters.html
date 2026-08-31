@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Those Pesky Delimiters</title>
+<meta name="description" content="The ISA line's job is to declare the four X12 delimiters. The senders who moved byte 106 moved bytes 3, 104 and 105 too. How x12-tidy reads the element, repetition, component and terminator bytes from structure instead of offsets.">
+<link rel="canonical" href="https://docs.tidyedi.com/those-pesky-delimiters.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Those Pesky Delimiters">
+<meta property="og:description" content="Reading the four X12 delimiters out of an ISA line that no longer sits where the standard says it should.">
+<meta property="og:url" content="https://docs.tidyedi.com/those-pesky-delimiters.html">
+<meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root {
+    --paper:   #edf0f2;
+    --surface:  #f8fafb;
+    --ink:      #17212b;
+    --ink-soft: #566470;
+    --rule:     #d2d8dc;
+    --accent:   #0e6f86;
+    --accent-soft: #dbeaee;
+    --valid:    #467a4e;
+    --deviation:#ac5230;
+    --code-bg:  #f1f4f5;
+    --code-ink: #223039;
+
+    --measure: 40rem;
+    --wide: 53rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #0f151b;
+      --surface:  #161f27;
+      --ink:      #dce4e9;
+      --ink-soft: #93a1ac;
+      --rule:     #2a343d;
+      --accent:   #45b8d0;
+      --accent-soft: #123039;
+      --valid:    #74b079;
+      --deviation:#dd8b64;
+      --code-bg:  #131b22;
+      --code-ink: #c9d5dc;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #0f151b;
+    --surface:  #161f27;
+    --ink:      #dce4e9;
+    --ink-soft: #93a1ac;
+    --rule:     #2a343d;
+    --accent:   #45b8d0;
+    --accent-soft: #123039;
+    --valid:    #74b079;
+    --deviation:#dd8b64;
+    --code-bg:  #131b22;
+    --code-ink: #c9d5dc;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  .sitebar {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sitebar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  .sitebar svg { width: 26px; height: 26px; display: block; border-radius: 6px; }
+  .sitebar .edi { color: #1F6B4D; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .sitebar .edi { color: #5CBB8E; }
+  }
+  :root[data-theme="dark"] .sitebar .edi { color: #5CBB8E; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 1.0625rem;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: 0 1.5rem; }
+  .prose { max-width: var(--measure); margin-inline: auto; }
+
+  /* ---- type ---- */
+  h1, h2, h3, .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0.6rem 0 0;
+  }
+  .thesis {
+    font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--ink);
+    font-style: italic;
+    max-width: 34rem;
+    margin: 1.6rem 0 0;
+  }
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+    position: relative;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2.4rem 0 0.4rem;
+    color: var(--ink);
+  }
+  p { margin: 1.1rem 0 0; }
+  .prose > p:first-child, section > p:first-of-type { margin-top: 1rem; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--accent-soft);
+    color: var(--ink);
+    padding: 0.08em 0.34em;
+    border-radius: 3px;
+  }
+
+  /* ---- section framing ---- */
+  section { margin-top: 4.5rem; }
+  .sec-head {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.4rem;
+  }
+  .sec-head .eyebrow { display: block; margin-bottom: 0.5rem; }
+  .sec-num {
+    color: var(--accent);
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+  }
+
+  /* ---- figures ---- */
+  figure {
+    margin: 2.4rem auto;
+    max-width: var(--wide);
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  .fig-frame {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.6rem 1.4rem 1.1rem;
+  }
+  .fig-label { display: block; margin-bottom: 1rem; }
+  figcaption {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 0.9rem;
+    max-width: 44rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* ---- code ---- */
+  .code-fig { margin: 2rem auto; max-width: var(--wide); }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 1.15rem 1.3rem;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    line-height: 1.62;
+    tab-size: 4;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .c  { color: var(--ink-soft); font-style: italic; }
+  .s  { color: var(--valid); }
+  .k  { color: var(--accent); font-weight: 500; }
+  .code-cap {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.55rem;
+  }
+  .code-cap b { color: var(--accent); font-weight: 500; }
+
+  /* ---- tables ---- */
+  .table-fig { margin: 2rem auto; max-width: var(--wide); overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink-soft);
+  }
+  td code, th code { font-size: 0.82em; background: var(--code-bg); }
+  .verdict { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; white-space: nowrap; }
+  .v-ok  { color: var(--valid); }
+  .v-flag{ color: var(--deviation); }
+
+  /* ---- callout ---- */
+  .note {
+    max-width: var(--measure);
+    margin: 1.8rem auto 0;
+    padding: 1rem 1.2rem;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+  .note .kicker { display:block; margin-bottom: 0.35rem; color: var(--accent); }
+
+  /* ---- lists ---- */
+  ul.plain { max-width: var(--measure); margin: 1.2rem auto 0; padding: 0; list-style: none; }
+  ul.plain li {
+    position: relative;
+    padding: 0.75rem 0 0.75rem 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  ul.plain li:last-child { border-bottom: 1px solid var(--rule); }
+  ul.plain li::before {
+    content: "";
+    position: absolute; left: 0; top: 1.15rem;
+    width: 7px; height: 7px;
+    background: var(--deviation);
+    border-radius: 1px;
+  }
+  ul.plain li b { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; }
+
+  /* ---- header / hero ---- */
+  header.hero {
+    padding: clamp(3.5rem, 9vw, 6rem) 0 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .byline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 2rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem;
+  }
+  footer {
+    margin-top: 5rem;
+    border-top: 1px solid var(--rule);
+    padding: 2.5rem 0 4rem;
+  }
+  footer p { max-width: var(--measure); margin-inline: auto; color: var(--ink-soft); font-size: 0.95rem; }
+
+  /* section number in margin on wide screens */
+  @media (min-width: 60rem) {
+    .sec-head { position: relative; }
+    .sec-head .sec-num-rail {
+      position: absolute;
+      left: -3.5rem;
+      top: 2.1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
+    }
+  }
+  .sec-num-rail { display: none; }
+  @media (min-width: 60rem) { .sec-num-rail { display: block; } .sec-head h2 .sec-num { display: none; } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: color 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="sitebar">
+  <a href="https://tidyedi.com">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#1F6B4D"/>
+      <rect x="11" y="15" width="35" height="5.4" rx="2.7" fill="#F3F8F5" opacity="0.34"/>
+      <rect x="18" y="26" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="37" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="48" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+    </svg>
+    <span>Tidy<span class="edi">EDI</span></span>
+  </a>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">X12 EDI &nbsp;·&nbsp; Defensive parsing</span>
+    <h1>Those Pesky&nbsp;Delimiters</h1>
+    <p class="thesis">The ISA line's job is to declare the four X12 delimiters.
+      The same senders who moved byte&nbsp;106 moved bytes&nbsp;3, 104 and&nbsp;105
+      too. Here is how to read the punctuation from structure instead of from
+      offsets that no longer hold.</p>
+    <div class="byline">
+      <span>Engineering note</span>
+      <span>x12&#8209;tidy&nbsp;/&nbsp;isa</span>
+      <span>~1,900 words</span>
+      <span><a href="finding-the-elusive-isa-line.html">&#8592; Finding the Elusive ISA Line</a></span>
+    </div>
+  </header>
+
+  <section id="declaration">
+    <div class="sec-head">
+      <span class="sec-num-rail">01</span>
+      <span class="eyebrow">The setup</span>
+      <h2><span class="sec-num">01&nbsp;&nbsp;</span>The ISA line is a delimiter declaration</h2>
+    </div>
+    <div class="prose">
+      <p>An X12 interchange is a stack of envelopes &mdash; <code>ISA</code> wraps
+      <code>GS</code> wraps <code>ST</code> &mdash; and every segment, element and
+      sub&#8209;element inside them is separated by a punctuation byte the sender
+      chose. Those bytes are not fixed by the standard. They are <em>declared</em>,
+      once, by the ISA segment:</p>
+    </div>
+
+    <ul class="plain">
+      <li><b>Element separator</b> &mdash; byte&nbsp;3, the fourth byte of
+        <code>ISA&#8230;</code></li>
+      <li><b>Component separator</b> &mdash; between the parts of a composite
+        element; the value of <code>ISA16</code>, at byte&nbsp;104</li>
+      <li><b>Segment terminator</b> &mdash; byte&nbsp;105</li>
+      <li><b>Repetition separator</b> &mdash; between repeated occurrences of one
+        element; the value of <code>ISA11</code>, but only for interchange version
+        <code>00403</code> and later</li>
+    </ul>
+
+    <div class="prose">
+      <p>Four delimiters, not three. And the ISA segment is a bootstrapping trick:
+      the segment that tells you how to split every other segment is itself split
+      by those same bytes, so it has to be readable <em>positionally</em>, at
+      fixed widths, before you know anything.</p>
+    </div>
+
+    <figure>
+      <div class="fig-frame">
+        <span class="fig-label">Fig. 1 &mdash; Where the standard puts them, and where a stripped file has them</span>
+        <img src="figures/delimiters-four.svg" alt="The four X12 delimiters. In a conformant ISA line the element separator is at byte 3, the repetition separator is ISA11, the component separator is at byte 104, and the segment terminator is at byte 105. In a received line whose ISA02 and ISA04 were stripped, byte 3 is unchanged but every other delimiter position has moved left.">
+      </div>
+      <figcaption>The senders who strip empty ISA elements &mdash; turning the
+        fixed 105&#8209;byte segment into something shorter &mdash; move byte&nbsp;104
+        and byte&nbsp;105 with everything else. <b><code>data[104]</code> is no
+        longer the component separator.</b> You cannot read a delimiter at an
+        offset the sender slid out from under you.</figcaption>
+    </figure>
+
+    <div class="prose">
+      <p>This is the same problem <a href="finding-the-elusive-isa-line.html">the
+      first note</a> describes, one layer down. That note ends with a run of bytes
+      &mdash; <code>ISA</code> up to just before <code>GS</code>, holding exactly
+      sixteen element separators. This note is about the first thing you do with
+      it.</p>
+    </div>
+  </section>
+
+  <section id="element">
+    <div class="sec-head">
+      <span class="sec-num-rail">02</span>
+      <span class="eyebrow">The one you can trust</span>
+      <h2><span class="sec-num">02&nbsp;&nbsp;</span>The element separator</h2>
+    </div>
+    <div class="prose">
+      <p>Byte&nbsp;3 does not move. The tag <code>ISA</code> is exactly three bytes
+      &mdash; it can't be stripped, padded or shifted, and it is the anchor
+      Step&nbsp;1 already used to find the line. Whatever byte sits at index&nbsp;3
+      of the run is the element separator, full stop. It is the one fixed offset
+      that survives, because it sits <em>before</em> the first variable&#8209;width
+      field.</p>
+      <p>From there, everything is a <code>split</code>.</p>
+    </div>
+
+    <div class="code-fig">
+      <p class="code-cap">from <b>delimiters.py</b></p>
+<pre><code><span class="k">element_separator</span> = run[<span class="s">3</span>:<span class="s">4</span>]
+parts = run.split(element_separator)
+<span class="c"># Step 1 guarantees exactly 16 element separators -&gt; 17 parts</span>
+</code></pre>
+    </div>
+
+    <div class="prose">
+      <p>Step&nbsp;1 guarantees the run holds <em>exactly</em> sixteen element
+      separators &mdash; that is <a href="finding-the-elusive-isa-line.html">its
+      minimum bar</a> for calling a run an ISA line at all &mdash; so the split
+      always yields seventeen pieces.</p>
+    </div>
+
+    <figure>
+      <div class="fig-frame">
+        <span class="fig-label">Fig. 2 &mdash; Splitting the run</span>
+        <img src="figures/delimiters-split.svg" alt="Splitting the ISA-line run on the element separator produces seventeen pieces: the literal ISA, then ISA01 through ISA15, and a seventeenth piece that is ISA16 followed by the segment terminator and any trailing bytes.">
+      </div>
+      <figcaption>Everything after this is read from the pieces &mdash; never from
+        byte&nbsp;104, never from byte&nbsp;105. A sender who stripped
+        <code>ISA02</code> and <code>ISA04</code> pulled the component separator
+        eleven bytes to the left, but it is still <code>parts[16][0]</code>,
+        because the <b>count</b> of separators and the position of <code>GS</code>
+        did not move.</figcaption>
+    </figure>
+
+    <div class="prose">
+      <p>The element separator is checked for one thing, and it is fatal: if it is
+      a letter or a digit it cannot be told apart from the data inside elements,
+      so no segment in the whole interchange splits cleanly. Step&nbsp;1 will have
+      <em>located</em> such a line &mdash; its job is permissive &mdash; but
+      Step&nbsp;2 refuses it.</p>
+    </div>
+  </section>
+
+  <section id="tail">
+    <div class="sec-head">
+      <span class="sec-num-rail">03</span>
+      <span class="eyebrow">The hard part</span>
+      <h2><span class="sec-num">03&nbsp;&nbsp;</span>The tail: component separator and terminator</h2>
+    </div>
+    <div class="prose">
+      <p>Call <code>parts[16]</code> the <em>tail</em>. It is <code>ISA16</code> +
+      the segment terminator + whatever sits between the terminator and
+      <code>GS</code>.</p>
+      <p><code>ISA16</code> is a strange field: <strong>its value is a
+      delimiter.</strong> The component separator is whatever single byte the
+      sender put there. So <code>tail[0]</code> is the component separator, and
+      <code>tail[1]</code> is the segment terminator.</p>
+      <p><code>tail[1]</code> &mdash; one byte. By rule, not by convenience. This
+      is the rule that earns its keep. Real files end segments with <code>~</code>,
+      or <code>~\r\n</code>, or a bare <code>\r\n</code>, or <code>~</code> then a
+      stray space, or <code>\n</code> alone. If you treat &ldquo;the
+      terminator&rdquo; as <em>everything between ISA16 and GS</em>, you cannot
+      tell a two&#8209;byte terminator from a one&#8209;byte terminator followed
+      by a newline the sender appended &mdash; and that ambiguity then propagates
+      to every segment in the file.</p>
+    </div>
+
+    <figure>
+      <div class="fig-frame">
+        <span class="fig-label">Fig. 3 &mdash; The one-byte rule, applied to four real terminators</span>
+        <img src="figures/delimiters-terminator.svg" alt="How the one-byte rule resolves four real-world segment terminators. The colon is ISA16. For a tilde: terminator is the tilde, no trailing. For tilde CR LF: terminator is the tilde, CR LF is trailing. For a bare CR LF: terminator is the CR, LF is trailing. For tilde then space: terminator is the tilde, the space is trailing.">
+      </div>
+      <figcaption>The terminator is <code>tail[1]</code>, one byte. Anything after
+        it and before <code>GS</code> is <b>trailing</b>, classified on its own:
+        carriage returns and line feeds are a newline the sender appended (a
+        warning); anything else is junk (an error). Both are stripped on
+        reconstruction.</figcaption>
+    </figure>
+
+    <div class="prose">
+      <p>Two things the tail tells you are seriously wrong:</p>
+    </div>
+
+    <div class="note">
+      <span class="kicker">The terminator was stripped</span>
+      The tail is one byte long &mdash; just the component separator, then
+      <code>GS</code>. Its position is known, so it is reconstructed as
+      <code>~</code> and flagged. Not fatal.
+    </div>
+
+    <div class="note">
+      <span class="kicker">The split landed on data</span>
+      <code>tail[0]</code> is a letter or a digit. The component separator is
+      never alphanumeric, so the decomposition is wrong &mdash; almost always
+      because an element separator byte occurs <em>inside</em> <code>ISA06</code>
+      or <code>ISA08</code> data, pulling every field after it out of alignment.
+      The line has the right <em>number</em> of separators but the wrong
+      <em>boundaries</em>. Terminal: any repair from here is a guess.
+    </div>
+  </section>
+
+  <section id="repetition">
+    <div class="sec-head">
+      <span class="sec-num-rail">04</span>
+      <span class="eyebrow">The fourth one</span>
+      <h2><span class="sec-num">04&nbsp;&nbsp;</span>A version number three fields away</h2>
+    </div>
+    <div class="prose">
+      <p><code>ISA11</code> is the awkward one. Through interchange version
+      <code>00402</code> it is the &ldquo;Interchange Control Standards
+      Identifier,&rdquo; and its value is the single letter <code>U</code>. From
+      version <code>00403</code> (004030) onward the field was repurposed to hold
+      the <strong>repetition separator</strong>.</p>
+      <p>So whether the ISA line even <em>has</em> a fourth delimiter depends on
+      <code>ISA12</code> &mdash; the version code, two fields further along.</p>
+    </div>
+
+    <div class="table-fig">
+      <table>
+        <thead><tr><th><code>ISA12</code></th><th>what <code>ISA11</code> is</th></tr></thead>
+        <tbody>
+          <tr><td><code>00200</code> &ndash; <code>00402</code></td>
+              <td>the standards identifier <code>U</code>; there is <b>no</b> repetition separator</td></tr>
+          <tr><td><code>00403</code> and later<br><span style="color:var(--ink-soft)">incl. <code>00501</code>, HIPAA <code>005010</code> where it is <code>^</code></span></td>
+              <td>the repetition separator</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <p>Version <code>00402</code> does not have a repetition separator &mdash; a
+      common misconception, worth stating plainly.</p>
+      <p>And <code>ISA11</code> is never guessed at. If <code>ISA12</code> is an
+      older version and <code>ISA11</code> holds something other than
+      <code>U</code>, that is a wrong value in an informational field &mdash; an
+      error, not a delimiter. x12-tidy does not decide the sender &ldquo;meant&rdquo;
+      it as a repetition separator, because on that version the field is not one.
+      If <code>ISA12</code> is not a recognizable five&#8209;digit version code at
+      all, <code>ISA11</code> is left opaque.</p>
+    </div>
+  </section>
+
+  <section id="fatal">
+    <div class="sec-head">
+      <span class="sec-num-rail">05</span>
+      <span class="eyebrow">The severity rule</span>
+      <h2><span class="sec-num">05&nbsp;&nbsp;</span>When is a bad delimiter fatal?</h2>
+    </div>
+    <div class="prose">
+      <p>Not &ldquo;when it is non&#8209;conformant.&rdquo; A delimiter finding is
+      fatal <em>at this step</em> only if it blocks parsing the interchange
+      outright.</p>
+    </div>
+
+    <div class="table-fig">
+      <table>
+        <thead><tr><th>delimiter</th><th>needed by</th><th>an unusable value is</th></tr></thead>
+        <tbody>
+          <tr><td>element separator</td><td>every segment</td><td class="verdict v-flag">fatal</td></tr>
+          <tr><td>segment terminator</td><td>every segment</td><td class="verdict v-flag">fatal</td></tr>
+          <tr><td>component separator</td><td>composite elements only</td><td class="verdict">error &#8594; fatal at the first composite</td></tr>
+          <tr><td>repetition separator</td><td>repeated elements only</td><td class="verdict">error &#8594; fatal at the first repeat</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <p>An alphanumeric element separator is fatal: nothing splits. An
+      alphanumeric <em>component</em> separator is only a problem if some segment
+      carries a composite element &mdash; and many interchanges carry none. So
+      <code>split_isa_line</code> records it as an error and hands the delimiters
+      back. If the body parser later reaches a composite it cannot split,
+      <em>it</em> raises the fatal &mdash; at that segment, where the evidence is.
+      The repetition separator works the same way.</p>
+      <p>This is why <code>split_isa_line</code> returns a populated result with a
+      severity&#8209;free diagnostic list rather than a bare pass/fail: the
+      finding's weight is settled later, at report time, against what the rest of
+      the file turns out to need.</p>
+    </div>
+  </section>
+
+  <section id="proof">
+    <div class="sec-head">
+      <span class="sec-num-rail">06</span>
+      <span class="eyebrow">Proving it</span>
+      <h2><span class="sec-num">06&nbsp;&nbsp;</span>The delimiters don't move</h2>
+    </div>
+    <div class="prose">
+      <p>The claim the whole approach rests on is that stripped and re&#8209;padded
+      elements do not change the delimiters. That is a property you can test, not
+      a hope:</p>
+    </div>
+
+    <div class="note">
+      For any ISA line &mdash; conformant, elements stripped to nothing, elements
+      padded wide &mdash; <code>split_isa_line</code> returns the same four
+      delimiters.
+    </div>
+
+    <div class="prose">
+      <p>The test builds all three and asserts equality. Then an adversarial sweep:
+      roughly 180,000 inputs &mdash; every byte of a valid interchange mutated at
+      random, delimiters drawn from arbitrary bytes, the file truncated at every
+      possible length &mdash; each checked against the invariants: no crash; a
+      returned run starts with <code>ISA</code>, is a prefix of the input, is
+      followed by <code>GS</code>, holds exactly sixteen separators; and any
+      delimiter that comes back as usable is exactly one byte, with the element,
+      component and terminator mutually distinct.</p>
+      <p>The sweep found a real bug. When an element separator had been dropped and
+      <code>ISA11</code> swallowed the following field,
+      <code>split_isa_line</code> returned a two&#8209;byte &ldquo;repetition
+      separator&rdquo; with no complaint. A two&#8209;byte delimiter is not a
+      delimiter. <code>ISA11</code> is a fixed one&#8209;byte field; the fix makes
+      anything else in it &mdash; too long, alphanumeric, colliding with another
+      delimiter &mdash; a reported finding with the repetition separator coming
+      back as <em>none</em>. The invariant now holds: <strong>a returned delimiter
+      is either absent or exactly one usable byte.</strong></p>
+    </div>
+  </section>
+
+  <footer>
+    <p><span class="eyebrow" style="display:block;margin-bottom:0.6rem">The pattern</span>
+      Read the element separator at the one offset that cannot move &mdash; the
+      byte before the first variable&#8209;width field. Recover everything else
+      from the split, anchored on the guaranteed separator count and the
+      <code>GS</code> boundary, never a byte number. Make the segment terminator
+      one byte by rule, so a two&#8209;byte terminator and a trailing newline stop
+      being the same thing. Let the version number decide whether the fourth
+      delimiter exists; do not infer intent. And hold the fatal for the delimiters
+      the interchange genuinely cannot be read without &mdash; report the rest,
+      and let the segment that needs a broken delimiter be the one that fails.</p>
+  </footer>
+
+</div>
+</body>
+</html>
