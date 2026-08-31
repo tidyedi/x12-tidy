@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" role="img" aria-label="How the one-byte rule resolves four real-world segment terminators. The colon is ISA16. For a tilde: terminator is the tilde, no trailing. For tilde CR LF: terminator is the tilde, CR LF is trailing. For a bare CR LF: terminator is the CR, LF is trailing. For tilde then space: terminator is the tilde, the space is trailing.">
+  <style>
+    :root {
+      --fg: #3d4450; --muted: #6b7280; --rule: #d0d7de;
+      --accent: #0e6f86; --accent-soft: #ddf4ff;
+      --valid: #1a7f37; --deviation: #cf222e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #adbac7; --muted: #8b949e; --rule: #373e47;
+        --accent: #45b8d0; --accent-soft: #1c2b3a;
+        --valid: #57ab5a; --deviation: #e5534b;
+      }
+    }
+    text { fill: var(--fg); font-family: ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", monospace; }
+    .lbl  { fill: var(--muted); font-size: 10px; letter-spacing: 0.08em; }
+    .cell { fill: none; stroke: var(--fg); stroke-width: 1.1; }
+    .comp { fill: none; stroke: var(--muted); stroke-width: 1.1; }
+    .term { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.3; }
+    .trail{ fill: none; stroke: var(--muted); stroke-width: 1.1; stroke-dasharray: 2 2; }
+    .h    { fill: var(--muted); font-size: 9px; letter-spacing: 0.08em; }
+    .note { fill: var(--muted); font-size: 10px; }
+  </style>
+
+  <text class="lbl" x="10" y="22">THE TAIL AFTER ISA16 &#8212; terminator is tail[1], one byte; the rest is trailing</text>
+
+  <text class="h" x="14"  y="48">RECEIVED</text>
+  <text class="h" x="250" y="48">TERMINATOR</text>
+  <text class="h" x="380" y="48">TRAILING</text>
+  <text class="h" x="520" y="48">FINDING</text>
+
+  <!-- row helper geometry: cells 22 wide from x=14 -->
+  <g font-size="11">
+
+    <!-- row 1: :~ -->
+    <g transform="translate(0,60)">
+      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
+      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle">~</text>
+      <rect class="comp" x="58" y="0" width="34" height="26" stroke="var(--valid)"/><text x="75" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="250" y="18">~</text>
+      <text x="380" y="18" class="note">&#8212;</text>
+      <text x="520" y="18" fill="var(--valid)" font-size="10">conformant</text>
+    </g>
+
+    <!-- row 2: :~CRLF -->
+    <g transform="translate(0,98)">
+      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
+      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle">~</text>
+      <rect class="trail" x="58" y="0" width="44" height="26"/><text x="80" y="18" text-anchor="middle" font-size="9" fill="var(--muted)">CR LF</text>
+      <rect class="comp" x="102" y="0" width="34" height="26" stroke="var(--valid)"/><text x="119" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="250" y="18">~</text>
+      <text x="380" y="18" font-size="10" fill="var(--muted)">CR LF</text>
+      <text x="520" y="18" font-size="10">trailing newline &#183; warning</text>
+    </g>
+
+    <!-- row 3: :CRLF -->
+    <g transform="translate(0,136)">
+      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
+      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle" font-size="9">CR</text>
+      <rect class="trail" x="58" y="0" width="22" height="26"/><text x="69" y="18" text-anchor="middle" font-size="9" fill="var(--muted)">LF</text>
+      <rect class="comp" x="80" y="0" width="34" height="26" stroke="var(--valid)"/><text x="97" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="250" y="18" font-size="10">CR</text>
+      <text x="380" y="18" font-size="10" fill="var(--muted)">LF</text>
+      <text x="520" y="18" font-size="10">non-canonical term + trailing newline</text>
+    </g>
+
+    <!-- row 4: :~SPACE -->
+    <g transform="translate(0,174)">
+      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
+      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle">~</text>
+      <rect class="trail" x="58" y="0" width="22" height="26"/><text x="69" y="18" text-anchor="middle" font-size="9" fill="var(--muted)">SP</text>
+      <rect class="comp" x="80" y="0" width="34" height="26" stroke="var(--valid)"/><text x="97" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="250" y="18">~</text>
+      <text x="380" y="18" font-size="10" fill="var(--muted)">SP</text>
+      <text x="520" y="18" font-size="10" fill="var(--deviation)">trailing junk &#183; error</text>
+    </g>
+
+  </g>
+
+  <text class="note" x="14" y="222">The colon is ISA16 (the component separator). Its position varies; the rule does not.</text>
+</svg>
