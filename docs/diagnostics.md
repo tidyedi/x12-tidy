@@ -2,7 +2,7 @@
 
 # Diagnostic codes
 
-Every finding the linter can emit. Codes are `area.specific`; the `area` is the subject of the finding. `default severity` is a starting point that user config can override per-code (including to `ignore`).
+Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the subject of the finding. `default severity` is a starting point that user config can override per-code (including to `ignore`).
 
 ## `isa`
 
@@ -21,7 +21,7 @@ Every finding the linter can emit. Codes are `area.specific`; the `area` is the 
 
 *fatal* — No GS header found after the ISA segment
 
-The linter locates the end of the ISA line by finding the 'GS' functional-group header that follows it (matched as 'GS' plus the element separator). No such header was found, so the ISA line cannot be bounded.
+x12-tidy locates the end of the ISA line by finding the 'GS' functional-group header that follows it (matched as 'GS' plus the element separator). No such header was found, so the ISA line cannot be bounded.
 
 ### `isa.interchange-too-short`
 
@@ -33,13 +33,13 @@ Fewer than 109 bytes follow the 'ISA' tag -- not enough room for a 105-byte ISA 
 
 *warning* — Bytes precede the ISA segment
 
-One or more bytes appear before the ISA segment. A conformant X12 file begins with 'ISA' as its very first byte. Common causes are a UTF-8 byte-order mark, whitespace, or transport headers left in by the sender. The linter strips them and continues; the reported bytes are what was removed.
+One or more bytes appear before the ISA segment. A conformant X12 file begins with 'ISA' as its very first byte. Common causes are a UTF-8 byte-order mark, whitespace, or transport headers left in by the sender. x12-tidy strips them and continues; the reported bytes are what was removed.
 
 ### `isa.no-functional-group`
 
 *fatal* — ISA segment is not bounded by a GS functional-group header
 
-Every ISA interchange opens a GS functional group, and the linter ends the ISA line at that GS header. A 'GS' + element separator was found, but the run of bytes to it holds more than the 16 element separators an ISA header has -- so it is not the header. Either there is no GS envelope and the match lies inside a later segment's data, or the element separator occurs inside ISA06 / ISA08 data (an unparseable segment). The ISA line cannot be bounded; not recoverable.
+Every ISA interchange opens a GS functional group, and x12-tidy ends the ISA line at that GS header. A 'GS' + element separator was found, but the run of bytes to it holds more than the 16 element separators an ISA header has -- so it is not the header. Either there is no GS envelope and the match lies inside a later segment's data, or the element separator occurs inside ISA06 / ISA08 data (an unparseable segment). The ISA line cannot be bounded; not recoverable.
 
 ### `isa.no-tag`
 
@@ -57,7 +57,7 @@ An ISA header carries exactly 16 element separators (ISA*ISA01*..*ISA16); that c
 
 *error* — ISA segment tag is not uppercase
 
-The segment tag was found as 'isa' or mixed case (e.g. 'Isa'). X12 segment tags are uppercase. The linter matched it case-insensitively and continued -- a file with a non-uppercase ISA tag almost certainly has every other segment tag the same way, which downstream steps must also tolerate.
+The segment tag was found as 'isa' or mixed case (e.g. 'Isa'). X12 segment tags are uppercase. x12-tidy matched it case-insensitively and continued -- a file with a non-uppercase ISA tag almost certainly has every other segment tag the same way, which downstream steps must also tolerate.
 
 ### `isa.tag-utf16`
 

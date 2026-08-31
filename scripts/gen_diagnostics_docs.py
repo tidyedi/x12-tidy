@@ -36,7 +36,7 @@ def render() -> str:
         "",
         "# Diagnostic codes",
         "",
-        "Every finding the linter can emit. Codes are `area.specific`; the "
+        "Every finding x12-tidy can emit. Codes are `area.specific`; the "
         "`area` is the subject of the finding. `default severity` is a starting "
         "point that user config can override per-code (including to `ignore`).",
         "",

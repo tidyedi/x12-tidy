@@ -1,12 +1,15 @@
 # x12-tidy
 
-A linter for X12 EDI flat files, built piece by piece.
+Validate and repair malformed ANSI X12 EDI, built piece by piece.
 
-It parses **permissively** and reports **strictly**: it locates the interchange
-envelope even in a malformed file, then emits a `Diagnostic` for every deviation
-from the standard rather than bailing on the first. The audience is a developer
-who received a bad file from a trading partner and needs to know exactly what is
-non-conformant.
+x12-tidy parses **permissively** and reports **strictly**: it locates the
+interchange envelope even in a malformed file and emits a `Diagnostic` for every
+deviation from the standard rather than bailing on the first. As it grows, each
+piece also reconstructs the structure it parsed into a clean, conformant form —
+so the end state is not just "here is what is wrong" but "here is a fixed copy."
+The audience is a developer who received a bad file from a trading partner and
+needs to know exactly what is non-conformant. (If "X12 linter" is what you
+searched for, yes, that too.)
 
 📄 **[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-isa-line.html)**
 — a longer-form engineering note on Step 1: why the naive approaches (fixed
@@ -15,7 +18,7 @@ source](docs/finding-the-isa-line.md).)
 
 See also [`docs/`](docs/) for [`design.md`](docs/design.md) (philosophy,
 architecture, the diagnostic-code scheme) and [`docs/diagnostics.md`](docs/diagnostics.md)
-(every code the linter can emit — generated, do not edit by hand).
+(every code x12-tidy can emit — generated, do not edit by hand).
 
 ## Status
 
