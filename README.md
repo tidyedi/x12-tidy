@@ -1,5 +1,8 @@
 # x12-tidy
 
+[![CI](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
 Validate and repair malformed ANSI X12 EDI, built piece by piece.
 
 x12-tidy parses **permissively** and reports **strictly**: it locates the
