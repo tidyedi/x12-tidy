@@ -56,7 +56,7 @@ uv run python scripts/gen_diagnostics_docs.py   # after changing codes.py
 ```
 
 All work goes on a feature branch and merges via PR — the `no-commit-to-branch`
-hook blocks direct commits to `main`.
+hook blocks direct commits to `main`. Cutting a release: [`docs/RELEASING.md`](docs/RELEASING.md).
 
 Design conventions:
 
