@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from edi_linter.envelope import check_isa
+from x12_tidy.envelope import check_isa
 
 
 def build_isa(
