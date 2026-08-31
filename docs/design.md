@@ -6,8 +6,8 @@ one section per step as the project moves forward.
 
 For a narrative walk-through of Step 1 — the real-world violations, why fixed
 offsets and a regex both fail, and the five techniques — see
-[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-isa-line.html)
-([source](finding-the-isa-line.md)).
+[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
+([source](finding-the-elusive-isa-line.md)).
 
 ---
 

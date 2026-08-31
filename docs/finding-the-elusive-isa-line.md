@@ -5,8 +5,8 @@
 *An engineering note on Step 1 of x12-tidy: extracting the X12 interchange
 envelope from files that violate the standard, and naming every deviation.*
 
-> **Read this as a web page:** <https://docs.tidyedi.com/finding-the-isa-line.html>
-> (served by GitHub Pages from [`docs/finding-the-isa-line.html`](finding-the-isa-line.html);
+> **Read this as a web page:** <https://docs.tidyedi.com/finding-the-elusive-isa-line.html>
+> (served by GitHub Pages from [`docs/finding-the-elusive-isa-line.html`](finding-the-elusive-isa-line.html);
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/figures/` in sync with

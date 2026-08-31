@@ -12,7 +12,7 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/tidyedi/x12-tidy"
 Repository = "https://github.com/tidyedi/x12-tidy"
-Documentation = "https://docs.tidyedi.com/finding-the-isa-line.html"
+Documentation = "https://docs.tidyedi.com/finding-the-elusive-isa-line.html"
 
 [project.scripts]
 x12-tidy = "x12_tidy.cli:main"
