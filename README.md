@@ -17,10 +17,10 @@ The audience is a developer who received a bad file from a trading partner and
 needs to know exactly what is non-conformant. (If "X12 linter" is what you
 searched for, yes, that too.)
 
-📄 **[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-isa-line.html)**
+📄 **[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)**
 — a longer-form engineering note on Step 1: why the naive approaches (fixed
 offsets, a regex) fail, and the techniques that replace them. ([Markdown
-source](docs/finding-the-isa-line.md).)
+source](docs/finding-the-elusive-isa-line.md).)
 
 See also [`docs/`](docs/) for [`design.md`](docs/design.md) (philosophy,
 architecture, the diagnostic-code scheme) and [`docs/diagnostics.md`](docs/diagnostics.md)
