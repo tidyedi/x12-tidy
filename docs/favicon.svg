@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="TidyEDI">
+  <title>TidyEDI</title>
+  <!-- Favicon build: 3 heavier bars so the top-bar overhang + fade survive at 16px. -->
+  <rect width="64" height="64" rx="13" fill="#1F6B4D"/>
+  <rect x="9" y="15" width="38" height="7" rx="3.5" fill="#F3F8F5" opacity="0.36"/>
+  <rect x="17" y="28.5" width="30" height="7" rx="3.5" fill="#F3F8F5"/>
+  <rect x="17" y="42" width="30" height="7" rx="3.5" fill="#F3F8F5"/>
+</svg>
