@@ -1,89 +1,83 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" role="img" aria-label="Splitting the ISA-line run on the element separator. The run is ISA followed by sixteen separators; splitting yields seventeen pieces: the literal ISA, then ISA01 through ISA15, and a seventeenth piece that is ISA16 followed by the segment terminator and any trailing bytes.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 270" role="img" aria-label="Splitting the ISA-line run on the element separator yields seventeen pieces: the literal ISA, ISA01 through ISA15, and a seventeenth piece that is ISA16 plus the segment terminator plus any trailing bytes.">
   <style>
+    svg { color: #17212b; }
     :root {
-      --fg: #3d4450; --muted: #6b7280; --rule: #d0d7de;
-      --accent: #0e6f86; --accent-soft: #ddf4ff;
-      --valid: #1a7f37; --deviation: #cf222e;
+      --ink-soft: #566470; --rule: #d2d8dc;
+      --accent: #0e6f86; --accent-soft: #dbeaee;
+      --valid: #467a4e; --deviation: #ac5230;
     }
     @media (prefers-color-scheme: dark) {
+      svg { color: #dce4e9; }
       :root {
-        --fg: #adbac7; --muted: #8b949e; --rule: #373e47;
-        --accent: #45b8d0; --accent-soft: #1c2b3a;
-        --valid: #57ab5a; --deviation: #e5534b;
+        --ink-soft: #93a1ac; --rule: #2a343d;
+        --accent: #45b8d0; --accent-soft: #123039;
+        --valid: #74b079; --deviation: #dd8b64;
       }
     }
-    text { fill: var(--fg); font-family: ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", monospace; }
-    .lbl { fill: var(--muted); font-size: 10px; letter-spacing: 0.08em; }
-    .cell { fill: none; stroke: var(--fg); stroke-width: 1.1; }
-    .sep { fill: var(--accent); font-size: 11px; }
-    .tail { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+    text { font-family: 'IBM Plex Mono', ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", monospace; }
   </style>
 
-  <!-- the run -->
-  <text class="lbl" x="10" y="24">THE RUN &#8212; ISA &#8230; up to GS, exactly 16 element separators</text>
-  <g transform="translate(10,34)" font-size="11">
-    <rect class="cell" x="0" y="0" width="44" height="30"/>
-    <text x="22" y="20" text-anchor="middle">ISA</text>
-    <text class="sep" x="52" y="20">*</text>
-    <rect class="cell" x="62" y="0" width="150" height="30" stroke-dasharray="3 3"/>
-    <text x="137" y="20" text-anchor="middle" fill="var(--muted)" font-size="10">ISA01 * ISA02 * &#8230;</text>
-    <text class="sep" x="222" y="20">*</text>
-    <rect class="cell" x="232" y="0" width="120" height="30" stroke-dasharray="3 3"/>
-    <text x="292" y="20" text-anchor="middle" fill="var(--muted)" font-size="10">&#8230; * ISA15</text>
-    <text class="sep" x="362" y="20">*</text>
-    <rect class="cell" x="372" y="0" width="18" height="30"/>
-    <text x="381" y="20" text-anchor="middle" font-size="10">:</text>
-    <rect class="cell" x="390" y="0" width="18" height="30"/>
-    <text x="399" y="20" text-anchor="middle" font-size="10">~</text>
-    <rect class="cell" x="408" y="0" width="30" height="30" stroke-dasharray="2 2"/>
-    <text x="423" y="20" text-anchor="middle" fill="var(--muted)" font-size="9">CR LF</text>
-    <rect class="cell" x="438" y="0" width="40" height="30" stroke="var(--valid)"/>
-    <text x="458" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
-  </g>
+  <g font-family="'IBM Plex Mono', monospace">
 
-  <text x="380" y="96" text-anchor="middle" fill="var(--muted)" font-size="11">run.split(b"*")  &#8594;  17 pieces</text>
-  <path d="M380 78 L380 104" stroke="var(--muted)" stroke-width="1" marker-end="url(#a)"/>
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-      <path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/>
-    </marker>
-  </defs>
-
-  <!-- the 17 pieces -->
-  <g transform="translate(10,120)" font-size="10">
-    <g>
-      <rect class="cell" x="0" y="0" width="52" height="34"/>
-      <text x="26" y="15" text-anchor="middle" font-size="8" fill="var(--muted)">parts[0]</text>
-      <text x="26" y="28" text-anchor="middle">ISA</text>
+    <text x="12" y="18" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">THE RUN &#8212; ISA &#8230; up to GS, exactly 16 element separators</text>
+    <g transform="translate(12,30)" font-size="12.5">
+      <rect x="0" y="0" width="50" height="34" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <text x="25" y="22" text-anchor="middle" fill="currentColor">ISA</text>
+      <text x="60" y="22" fill="var(--accent)" font-weight="700">*</text>
+      <rect x="72" y="0" width="180" height="34" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="162" y="22" text-anchor="middle" fill="currentColor">ISA01 * ISA02 * &#8230;</text>
+      <text x="262" y="22" fill="var(--accent)" font-weight="700">*</text>
+      <rect x="274" y="0" width="130" height="34" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="339" y="22" text-anchor="middle" fill="currentColor">&#8230; * ISA15</text>
+      <text x="414" y="22" fill="var(--accent)" font-weight="700">*</text>
+      <rect x="426" y="0" width="22" height="34" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="437" y="22" text-anchor="middle" fill="var(--accent)">:</text>
+      <rect x="448" y="0" width="22" height="34" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="459" y="22" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="470" y="0" width="40" height="34" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <text x="490" y="22" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">CR LF</text>
+      <rect x="510" y="0" width="46" height="34" fill="none" stroke="var(--valid)" stroke-width="1.6"/>
+      <text x="533" y="22" text-anchor="middle" fill="var(--valid)">GS*</text>
     </g>
-    <g transform="translate(58,0)">
-      <rect class="cell" x="0" y="0" width="330" height="34" stroke-dasharray="3 3"/>
-      <text x="165" y="15" text-anchor="middle" font-size="8" fill="var(--muted)">parts[1] &#8230; parts[15]</text>
-      <text x="165" y="28" text-anchor="middle">ISA01 &#8230; ISA15</text>
+
+    <text x="300" y="98" text-anchor="middle" fill="currentColor" font-size="12">run.split(element_separator) &#8594; 17 pieces</text>
+    <path d="M300 78 L300 106" fill="none" stroke="var(--ink-soft)" stroke-width="1.4" marker-end="url(#pk-arrow)"/>
+    <defs>
+      <marker id="pk-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0 1 L9 5 L0 9" fill="none" stroke="var(--ink-soft)" stroke-width="1.6"/>
+      </marker>
+    </defs>
+
+    <g transform="translate(12,124)" font-size="12">
+      <rect x="0" y="0" width="58" height="38" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <text x="29" y="16" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">parts[0]</text>
+      <text x="29" y="30" text-anchor="middle" fill="currentColor">ISA</text>
+
+      <rect x="66" y="0" width="330" height="38" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="231" y="16" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">parts[1] &#8230; parts[15]</text>
+      <text x="231" y="30" text-anchor="middle" fill="currentColor">ISA01 &#8230; ISA15</text>
+
+      <rect x="404" y="0" width="352" height="38" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="580" y="16" text-anchor="middle" font-size="9.5" fill="var(--accent)">parts[16] &#8212; the tail</text>
+      <text x="580" y="30" text-anchor="middle" fill="currentColor">ISA16 + terminator + trailing</text>
     </g>
-    <g transform="translate(396,0)">
-      <rect class="tail" x="0" y="0" width="300" height="34"/>
-      <text x="150" y="15" text-anchor="middle" font-size="8" fill="var(--accent)">parts[16]  &#8212; &#8220;the tail&#8221;</text>
-      <text x="150" y="28" text-anchor="middle">ISA16 + terminator + trailing</text>
+
+    <g transform="translate(416,196)" font-size="12">
+      <path d="M164 -22 L164 -6" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+      <rect x="30" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="46" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <text x="46" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[0]</text>
+      <text x="46" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">component</text>
+
+      <rect x="128" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="144" y="20" text-anchor="middle" fill="currentColor">~</text>
+      <text x="144" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[1]</text>
+      <text x="144" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">terminator</text>
+
+      <rect x="226" y="0" width="110" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <text x="281" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR LF &#8230;</text>
+      <text x="281" y="46" text-anchor="middle" font-size="10.5" fill="currentColor">tail[2:]</text>
+      <text x="281" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">trailing</text>
     </g>
-  </g>
-
-  <!-- tail breakdown -->
-  <g transform="translate(406,180)" font-size="10">
-    <path d="M150 -22 L150 -8" stroke="var(--accent)" stroke-width="1" fill="none"/>
-    <rect class="cell" x="20" y="0" width="30" height="26" stroke="var(--accent)"/>
-    <text x="35" y="17" text-anchor="middle">:</text>
-    <text x="35" y="40" text-anchor="middle" font-size="8.5" fill="var(--accent)">tail[0]</text>
-    <text x="35" y="52" text-anchor="middle" font-size="8.5" fill="var(--muted)">component</text>
-
-    <rect class="cell" x="110" y="0" width="30" height="26" stroke="var(--accent)"/>
-    <text x="125" y="17" text-anchor="middle">~</text>
-    <text x="125" y="40" text-anchor="middle" font-size="8.5" fill="var(--accent)">tail[1]</text>
-    <text x="125" y="52" text-anchor="middle" font-size="8.5" fill="var(--muted)">terminator</text>
-
-    <rect class="cell" x="200" y="0" width="100" height="26" stroke-dasharray="2 2"/>
-    <text x="250" y="17" text-anchor="middle" font-size="9" fill="var(--muted)">CR LF &#8230;</text>
-    <text x="250" y="40" text-anchor="middle" font-size="8.5">tail[2:]</text>
-    <text x="250" y="52" text-anchor="middle" font-size="8.5" fill="var(--muted)">trailing</text>
   </g>
 </svg>

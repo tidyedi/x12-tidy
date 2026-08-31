@@ -399,7 +399,90 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 &mdash; Where the standard puts them, and where a stripped file has them</span>
-        <img src="figures/delimiters-four.svg" alt="The four X12 delimiters. In a conformant ISA line the element separator is at byte 3, the repetition separator is ISA11, the component separator is at byte 104, and the segment terminator is at byte 105. In a received line whose ISA02 and ISA04 were stripped, byte 3 is unchanged but every other delimiter position has moved left.">
+        <svg viewBox="0 0 780 320" role="img" aria-label="The four X12 delimiters. In a conformant ISA line the element separator is at byte 3, ISA11 is the repetition separator, the component separator is at byte 104, the segment terminator is at byte 105. In a line whose ISA02 and ISA04 were stripped, byte 3 is unchanged and every other delimiter has moved left.">
+  <g font-family="'IBM Plex Mono', monospace" font-size="12.5">
+
+    <text x="12" y="20" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">CONFORMANT &#8212; where the standard puts them</text>
+    <g transform="translate(0,34)">
+      <rect x="12" y="0" width="52" height="40" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <text x="38" y="25" text-anchor="middle" fill="currentColor">ISA</text>
+
+      <rect x="64" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="76" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">*</text>
+
+      <rect x="88" y="0" width="352" height="40" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="264" y="25" text-anchor="middle" fill="currentColor">ISA01 * &#8230; * ISA10 *</text>
+
+      <rect x="440" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="452" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">^</text>
+
+      <rect x="464" y="0" width="176" height="40" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="552" y="25" text-anchor="middle" fill="currentColor">ISA12 * &#8230; * ISA15</text>
+
+      <rect x="640" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="652" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">:</text>
+      <rect x="664" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="676" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">~</text>
+
+      <rect x="688" y="0" width="56" height="40" fill="none" stroke="var(--valid)" stroke-width="1.6"/>
+      <text x="716" y="25" text-anchor="middle" fill="var(--valid)">GS*</text>
+
+      <g font-size="11.5">
+        <path d="M76 40 L76 62" fill="none" stroke="var(--ink-soft)" stroke-width="1.3"/>
+        <text x="76" y="80" text-anchor="middle" fill="currentColor">byte 3</text>
+        <text x="76" y="96" text-anchor="middle" fill="var(--accent)">element</text>
+
+        <path d="M452 40 L452 62" fill="none" stroke="var(--ink-soft)" stroke-width="1.3"/>
+        <text x="452" y="80" text-anchor="middle" fill="currentColor">ISA11</text>
+        <text x="452" y="96" text-anchor="middle" fill="var(--accent)">repetition</text>
+
+        <path d="M652 40 L652 52 L590 52 L590 62" fill="none" stroke="var(--ink-soft)" stroke-width="1.3"/>
+        <text x="590" y="80" text-anchor="middle" fill="currentColor">byte 104</text>
+        <text x="590" y="96" text-anchor="middle" fill="var(--accent)">component</text>
+
+        <path d="M676 40 L676 52 L730 52 L730 62" fill="none" stroke="var(--ink-soft)" stroke-width="1.3"/>
+        <text x="730" y="80" text-anchor="middle" fill="currentColor">byte 105</text>
+        <text x="730" y="96" text-anchor="middle" fill="var(--accent)">terminator</text>
+      </g>
+    </g>
+
+    <line x1="12" y1="190" x2="768" y2="190" stroke="var(--rule)" stroke-width="1.2"/>
+
+    <text x="12" y="222" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">RECEIVED &#8212; ISA02 and ISA04 stripped: byte 3 holds, the rest moved</text>
+    <g transform="translate(0,236)">
+      <rect x="12" y="0" width="52" height="40" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <text x="38" y="25" text-anchor="middle" fill="currentColor">ISA</text>
+
+      <rect x="64" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="76" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">*</text>
+
+      <rect x="88" y="0" width="300" height="40" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="238" y="25" text-anchor="middle" fill="currentColor">ISA01 ** &#8230; * ISA10 *</text>
+
+      <rect x="388" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="400" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">^</text>
+
+      <rect x="412" y="0" width="150" height="40" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="487" y="25" text-anchor="middle" fill="currentColor">ISA12 * &#8230; * ISA15</text>
+
+      <rect x="562" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="574" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">:</text>
+      <rect x="586" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="598" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">~</text>
+
+      <rect x="610" y="0" width="56" height="40" fill="none" stroke="var(--valid)" stroke-width="1.6"/>
+      <text x="638" y="25" text-anchor="middle" fill="var(--valid)">GS*</text>
+
+      <g font-size="11.5">
+        <path d="M76 40 L76 60" fill="none" stroke="var(--valid)" stroke-width="1.3"/>
+        <text x="76" y="78" text-anchor="middle" fill="var(--valid)">byte 3 &#10003;</text>
+
+        <path d="M574 40 L574 60" fill="none" stroke="var(--deviation)" stroke-width="1.3"/>
+        <text x="574" y="78" text-anchor="middle" fill="var(--deviation)">was byte 104</text>
+      </g>
+    </g>
+  </g>
+        </svg>
       </div>
       <figcaption>The senders who strip empty ISA elements &mdash; turning the
         fixed 105&#8209;byte segment into something shorter &mdash; move byte&nbsp;104
@@ -451,7 +534,71 @@ parts = run.split(element_separator)
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 2 &mdash; Splitting the run</span>
-        <img src="figures/delimiters-split.svg" alt="Splitting the ISA-line run on the element separator produces seventeen pieces: the literal ISA, then ISA01 through ISA15, and a seventeenth piece that is ISA16 followed by the segment terminator and any trailing bytes.">
+        <svg viewBox="0 0 780 270" role="img" aria-label="Splitting the ISA-line run on the element separator yields seventeen pieces: the literal ISA, ISA01 through ISA15, and a seventeenth piece that is ISA16 plus the segment terminator plus any trailing bytes.">
+  <g font-family="'IBM Plex Mono', monospace">
+
+    <text x="12" y="18" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">THE RUN &#8212; ISA &#8230; up to GS, exactly 16 element separators</text>
+    <g transform="translate(12,30)" font-size="12.5">
+      <rect x="0" y="0" width="50" height="34" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <text x="25" y="22" text-anchor="middle" fill="currentColor">ISA</text>
+      <text x="60" y="22" fill="var(--accent)" font-weight="700">*</text>
+      <rect x="72" y="0" width="180" height="34" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="162" y="22" text-anchor="middle" fill="currentColor">ISA01 * ISA02 * &#8230;</text>
+      <text x="262" y="22" fill="var(--accent)" font-weight="700">*</text>
+      <rect x="274" y="0" width="130" height="34" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="339" y="22" text-anchor="middle" fill="currentColor">&#8230; * ISA15</text>
+      <text x="414" y="22" fill="var(--accent)" font-weight="700">*</text>
+      <rect x="426" y="0" width="22" height="34" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="437" y="22" text-anchor="middle" fill="var(--accent)">:</text>
+      <rect x="448" y="0" width="22" height="34" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+      <text x="459" y="22" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="470" y="0" width="40" height="34" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <text x="490" y="22" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">CR LF</text>
+      <rect x="510" y="0" width="46" height="34" fill="none" stroke="var(--valid)" stroke-width="1.6"/>
+      <text x="533" y="22" text-anchor="middle" fill="var(--valid)">GS*</text>
+    </g>
+
+    <text x="300" y="98" text-anchor="middle" fill="currentColor" font-size="12">run.split(element_separator) &#8594; 17 pieces</text>
+    <path d="M300 78 L300 106" fill="none" stroke="var(--ink-soft)" stroke-width="1.4" marker-end="url(#pk-arrow)"/>
+    <defs>
+      <marker id="pk-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0 1 L9 5 L0 9" fill="none" stroke="var(--ink-soft)" stroke-width="1.6"/>
+      </marker>
+    </defs>
+
+    <g transform="translate(12,124)" font-size="12">
+      <rect x="0" y="0" width="58" height="38" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <text x="29" y="16" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">parts[0]</text>
+      <text x="29" y="30" text-anchor="middle" fill="currentColor">ISA</text>
+
+      <rect x="66" y="0" width="330" height="38" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
+      <text x="231" y="16" text-anchor="middle" font-size="9.5" fill="var(--ink-soft)">parts[1] &#8230; parts[15]</text>
+      <text x="231" y="30" text-anchor="middle" fill="currentColor">ISA01 &#8230; ISA15</text>
+
+      <rect x="404" y="0" width="352" height="38" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="580" y="16" text-anchor="middle" font-size="9.5" fill="var(--accent)">parts[16] &#8212; the tail</text>
+      <text x="580" y="30" text-anchor="middle" fill="currentColor">ISA16 + terminator + trailing</text>
+    </g>
+
+    <g transform="translate(416,196)" font-size="12">
+      <path d="M164 -22 L164 -6" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+      <rect x="30" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="46" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <text x="46" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[0]</text>
+      <text x="46" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">component</text>
+
+      <rect x="128" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="144" y="20" text-anchor="middle" fill="currentColor">~</text>
+      <text x="144" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[1]</text>
+      <text x="144" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">terminator</text>
+
+      <rect x="226" y="0" width="110" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/>
+      <text x="281" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR LF &#8230;</text>
+      <text x="281" y="46" text-anchor="middle" font-size="10.5" fill="currentColor">tail[2:]</text>
+      <text x="281" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">trailing</text>
+    </g>
+  </g>
+        </svg>
       </div>
       <figcaption>Everything after this is read from the pieces &mdash; never from
         byte&nbsp;104, never from byte&nbsp;105. A sender who stripped
@@ -497,7 +644,61 @@ parts = run.split(element_separator)
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 3 &mdash; The one-byte rule, applied to four real terminators</span>
-        <img src="figures/delimiters-terminator.svg" alt="How the one-byte rule resolves four real-world segment terminators. The colon is ISA16. For a tilde: terminator is the tilde, no trailing. For tilde CR LF: terminator is the tilde, CR LF is trailing. For a bare CR LF: terminator is the CR, LF is trailing. For tilde then space: terminator is the tilde, the space is trailing.">
+        <svg viewBox="0 0 780 250" role="img" aria-label="How the one-byte rule resolves four real segment terminators. The colon is ISA16. Tilde: terminator is the tilde, nothing trailing. Tilde CR LF: terminator is the tilde, CR LF trailing. Bare CR LF: terminator is the CR, LF trailing. Tilde space: terminator is the tilde, the space trailing.">
+  <g font-family="'IBM Plex Mono', monospace" font-size="12.5">
+    <text x="12" y="18" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">THE TAIL AFTER ISA16 &#8212; terminator is tail[1], one byte; the rest is trailing</text>
+
+    <g font-size="10.5" fill="var(--ink-soft)" letter-spacing="0.06em">
+      <text x="14"  y="44">RECEIVED</text>
+      <text x="270" y="44">TERMINATOR</text>
+      <text x="400" y="44">TRAILING</text>
+      <text x="540" y="44">FINDING</text>
+    </g>
+    <line x1="12" y1="52" x2="768" y2="52" stroke="var(--rule)" stroke-width="1.1"/>
+
+    <!-- row 1 -->
+    <g transform="translate(0,60)">
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="66" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="86" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" fill="currentColor">~</text>
+      <text x="400" y="20" fill="var(--ink-soft)">&#8212;</text>
+      <text x="540" y="20" fill="var(--valid)" font-size="11.5">conformant</text>
+    </g>
+    <!-- row 2 -->
+    <g transform="translate(0,102)">
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="66" y="0" width="48" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="90" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR LF</text>
+      <rect x="114" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="134" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" fill="currentColor">~</text>
+      <text x="400" y="20" fill="currentColor">CR LF</text>
+      <text x="540" y="20" font-size="11.5" fill="currentColor">trailing newline &#183; warning</text>
+    </g>
+    <!-- row 3 -->
+    <g transform="translate(0,144)">
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" font-size="10.5" fill="var(--accent)">CR</text>
+      <rect x="66" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">LF</text>
+      <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" font-size="11.5" fill="currentColor">CR</text>
+      <text x="400" y="20" font-size="11.5" fill="currentColor">LF</text>
+      <text x="540" y="20" font-size="11.5" fill="currentColor">non-canonical term + newline</text>
+    </g>
+    <!-- row 4 -->
+    <g transform="translate(0,186)">
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="66" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">SP</text>
+      <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" fill="currentColor">~</text>
+      <text x="400" y="20" fill="currentColor">SP</text>
+      <text x="540" y="20" font-size="11.5" fill="var(--deviation)">trailing junk &#183; error</text>
+    </g>
+
+    <text x="14" y="238" fill="var(--ink-soft)" font-size="10.5">The colon is ISA16. Its position varies; the one-byte rule does not.</text>
+  </g>
+        </svg>
       </div>
       <figcaption>The terminator is <code>tail[1]</code>, one byte. Anything after
         it and before <code>GS</code> is <b>trailing</b>, classified on its own:
