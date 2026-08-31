@@ -263,8 +263,16 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
                 "interchange.",
                 offset=base_offset,
             ))
+        elif len(isa11) != 1:
+            # ISA11 is a fixed 1-byte field; a longer value means an element
+            # separator was dropped and ISA11 has swallowed following data.
+            diags.append(Diagnostic(
+                Code.ISA_REPETITION_SEPARATOR_INVALID,
+                f"the repetition separator (ISA11) is {isa11!r}, {len(isa11)} "
+                "bytes; it must be exactly one. Repetition is unusable.",
+                offset=base_offset,
+            ))
         elif _is_alnum(isa11):
-            repetition_separator = isa11
             diags.append(Diagnostic(
                 Code.ISA_REPETITION_SEPARATOR_INVALID,
                 f"the repetition separator (ISA11) is {isa11!r}, an "
@@ -272,16 +280,17 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
                 "segment repeats a data element.",
                 offset=base_offset,
             ))
+        elif isa11 in (element_separator, component_separator,
+                       segment_terminator):
+            diags.append(Diagnostic(
+                Code.ISA_REPETITION_SEPARATOR_INVALID,
+                f"the repetition separator (ISA11) is {isa11!r}, the same byte "
+                "as another delimiter. Fatal only if a segment repeats a data "
+                "element.",
+                offset=base_offset,
+            ))
         else:
             repetition_separator = isa11
-            if isa11 in (component_separator, segment_terminator):
-                diags.append(Diagnostic(
-                    Code.ISA_REPETITION_SEPARATOR_INVALID,
-                    f"the repetition separator (ISA11) is {isa11!r}, the same "
-                    "byte as another delimiter. Fatal only if a segment "
-                    "repeats a data element.",
-                    offset=base_offset,
-                ))
     else:
         if isa11 != STANDARDS_IDENTIFIER:
             diags.append(Diagnostic(

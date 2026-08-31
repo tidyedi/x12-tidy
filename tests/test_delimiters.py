@@ -162,9 +162,18 @@ def test_repetition_separator_missing_on_a_version_that_has_one() -> None:
 
 def test_alphanumeric_repetition_separator_is_error_not_fatal() -> None:
     d = split_isa_line(run_of(elements=elements_with(isa11=b"R", isa12=b"00501")))
-    assert d.repetition_separator == b"R"
+    assert d.repetition_separator is None  # never hand back a garbage delimiter
     assert codes(d.diagnostics) == [Code.ISA_REPETITION_SEPARATOR_INVALID]
-    assert d.usable
+    assert d.usable  # error -- body parser escalates iff a segment repeats
+
+
+def test_multibyte_isa11_is_reported_not_handed_back() -> None:
+    # a dropped element separator lets ISA11 swallow the next field
+    run = _run([b"x"] * 10 + [b"^GARBAGE", b"00501"] + [b"x"] * 3 + [b":~"])
+    d = split_isa_line(run)
+    assert d.repetition_separator is None
+    assert Code.ISA_REPETITION_SEPARATOR_INVALID in codes(d.diagnostics)
+    assert d.usable  # still only an error at this stage
 
 
 def test_isa11_not_u_on_an_older_version_is_error() -> None:
