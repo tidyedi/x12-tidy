@@ -18,8 +18,20 @@ import argparse
 import sys
 from pathlib import Path
 
-from x12_tidy.diagnostics import Code, all_codes, meta, resolved_severity
-from x12_tidy.isa import extract_isa_line
+from x12_tidy.diagnostics import Code, Diagnostic, all_codes, meta, resolved_severity
+from x12_tidy.isa import extract_isa_line, split_isa_line
+
+
+def _report(diags: list[Diagnostic]) -> bool:
+    """Print each diagnostic to the right stream. Return True if any was a
+    fatal or error after severity resolution."""
+    saw_problem = False
+    for diag in diags:
+        severity = resolved_severity(diag.code)
+        stream = sys.stdout if severity == "warning" else sys.stderr
+        print(f"[{severity.upper()} {diag.code.value}] {diag.message}", file=stream)
+        saw_problem |= severity in ("fatal", "error")
+    return saw_problem
 
 
 def _cmd_check(path: Path) -> int:
@@ -30,17 +42,23 @@ def _cmd_check(path: Path) -> int:
         return 2
 
     result = extract_isa_line(data)
-    worst = "warning"
-    for diag in result.diagnostics:
-        severity = resolved_severity(diag.code)
-        stream = sys.stdout if severity == "warning" else sys.stderr
-        print(f"[{severity.upper()} {diag.code.value}] {diag.message}", file=stream)
-        if severity in ("fatal", "error"):
-            worst = "error"
+    worst_problem = _report(result.diagnostics)
 
-    if result.isa_line is not None:
-        print(f"isa_line: {len(result.isa_line)} bytes  {result.isa_line!r}")
-    return 1 if worst == "error" else 0
+    if result.isa_line is None:
+        return 1 if worst_problem else 0
+
+    print(f"isa_line: {len(result.isa_line)} bytes  {result.isa_line!r}")
+
+    delimiters = split_isa_line(result.isa_line, base_offset=result.isa_start)
+    worst_problem |= _report(delimiters.diagnostics)
+    print(
+        "delimiters: "
+        f"element={delimiters.element_separator!r} "
+        f"repetition={delimiters.repetition_separator!r} "
+        f"component={delimiters.component_separator!r} "
+        f"terminator={delimiters.segment_terminator!r}"
+    )
+    return 1 if worst_problem else 0
 
 
 def _cmd_codes(area: str | None) -> int:
