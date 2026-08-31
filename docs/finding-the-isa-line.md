@@ -1,3 +1,5 @@
+<a href="https://tidyedi.com"><img src="brand/tidyedi-mark.png" alt="TidyEDI" width="36" height="36"></a>
+
 # Finding the Elusive ISA Line
 
 *An engineering note on Step 1 of x12-tidy: extracting the X12 interchange
