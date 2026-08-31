@@ -1,81 +1,73 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 250" role="img" aria-label="How the one-byte rule resolves four real-world segment terminators. The colon is ISA16. For a tilde: terminator is the tilde, no trailing. For tilde CR LF: terminator is the tilde, CR LF is trailing. For a bare CR LF: terminator is the CR, LF is trailing. For tilde then space: terminator is the tilde, the space is trailing.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 250" role="img" aria-label="How the one-byte rule resolves four real segment terminators. The colon is ISA16. Tilde: terminator is the tilde, nothing trailing. Tilde CR LF: terminator is the tilde, CR LF trailing. Bare CR LF: terminator is the CR, LF trailing. Tilde space: terminator is the tilde, the space trailing.">
   <style>
+    svg { color: #17212b; }
     :root {
-      --fg: #3d4450; --muted: #6b7280; --rule: #d0d7de;
-      --accent: #0e6f86; --accent-soft: #ddf4ff;
-      --valid: #1a7f37; --deviation: #cf222e;
+      --ink-soft: #566470; --rule: #d2d8dc;
+      --accent: #0e6f86; --accent-soft: #dbeaee;
+      --valid: #467a4e; --deviation: #ac5230;
     }
     @media (prefers-color-scheme: dark) {
+      svg { color: #dce4e9; }
       :root {
-        --fg: #adbac7; --muted: #8b949e; --rule: #373e47;
-        --accent: #45b8d0; --accent-soft: #1c2b3a;
-        --valid: #57ab5a; --deviation: #e5534b;
+        --ink-soft: #93a1ac; --rule: #2a343d;
+        --accent: #45b8d0; --accent-soft: #123039;
+        --valid: #74b079; --deviation: #dd8b64;
       }
     }
-    text { fill: var(--fg); font-family: ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", monospace; }
-    .lbl  { fill: var(--muted); font-size: 10px; letter-spacing: 0.08em; }
-    .cell { fill: none; stroke: var(--fg); stroke-width: 1.1; }
-    .comp { fill: none; stroke: var(--muted); stroke-width: 1.1; }
-    .term { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.3; }
-    .trail{ fill: none; stroke: var(--muted); stroke-width: 1.1; stroke-dasharray: 2 2; }
-    .h    { fill: var(--muted); font-size: 9px; letter-spacing: 0.08em; }
-    .note { fill: var(--muted); font-size: 10px; }
+    text { font-family: 'IBM Plex Mono', ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", monospace; }
   </style>
 
-  <text class="lbl" x="10" y="22">THE TAIL AFTER ISA16 &#8212; terminator is tail[1], one byte; the rest is trailing</text>
+  <g font-family="'IBM Plex Mono', monospace" font-size="12.5">
+    <text x="12" y="18" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">AFTER ISA16 &#8212; the segment terminator is one byte; the rest is trailing</text>
 
-  <text class="h" x="14"  y="48">RECEIVED</text>
-  <text class="h" x="250" y="48">TERMINATOR</text>
-  <text class="h" x="380" y="48">TRAILING</text>
-  <text class="h" x="520" y="48">FINDING</text>
+    <g font-size="10.5" fill="var(--ink-soft)" letter-spacing="0.06em">
+      <text x="14"  y="44">RECEIVED</text>
+      <text x="270" y="44">TERMINATOR</text>
+      <text x="400" y="44">TRAILING</text>
+      <text x="540" y="44">FINDING</text>
+    </g>
+    <line x1="12" y1="52" x2="768" y2="52" stroke="var(--rule)" stroke-width="1.1"/>
 
-  <!-- row helper geometry: cells 22 wide from x=14 -->
-  <g font-size="11">
-
-    <!-- row 1: :~ -->
+    <!-- row 1 -->
     <g transform="translate(0,60)">
-      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
-      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle">~</text>
-      <rect class="comp" x="58" y="0" width="34" height="26" stroke="var(--valid)"/><text x="75" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="250" y="18">~</text>
-      <text x="380" y="18" class="note">&#8212;</text>
-      <text x="520" y="18" fill="var(--valid)" font-size="10">conformant</text>
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="66" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="86" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" fill="currentColor">~</text>
+      <text x="400" y="20" fill="var(--ink-soft)">&#8212;</text>
+      <text x="540" y="20" fill="var(--valid)" font-size="11.5">conformant</text>
+    </g>
+    <!-- row 2 -->
+    <g transform="translate(0,102)">
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="66" y="0" width="48" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="90" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR LF</text>
+      <rect x="114" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="134" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" fill="currentColor">~</text>
+      <text x="400" y="20" fill="currentColor">CR LF</text>
+      <text x="540" y="20" font-size="11.5" fill="currentColor">trailing newline &#183; warning</text>
+    </g>
+    <!-- row 3 -->
+    <g transform="translate(0,144)">
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" font-size="10.5" fill="var(--accent)">CR</text>
+      <rect x="66" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">LF</text>
+      <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" font-size="11.5" fill="currentColor">CR</text>
+      <text x="400" y="20" font-size="11.5" fill="currentColor">LF</text>
+      <text x="540" y="20" font-size="11.5" fill="currentColor">non-canonical term + newline</text>
+    </g>
+    <!-- row 4 -->
+    <g transform="translate(0,186)">
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="66" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">SP</text>
+      <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="270" y="20" fill="currentColor">~</text>
+      <text x="400" y="20" fill="currentColor">SP</text>
+      <text x="540" y="20" font-size="11.5" fill="var(--deviation)">trailing junk &#183; error</text>
     </g>
 
-    <!-- row 2: :~CRLF -->
-    <g transform="translate(0,98)">
-      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
-      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle">~</text>
-      <rect class="trail" x="58" y="0" width="44" height="26"/><text x="80" y="18" text-anchor="middle" font-size="9" fill="var(--muted)">CR LF</text>
-      <rect class="comp" x="102" y="0" width="34" height="26" stroke="var(--valid)"/><text x="119" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="250" y="18">~</text>
-      <text x="380" y="18" font-size="10" fill="var(--muted)">CR LF</text>
-      <text x="520" y="18" font-size="10">trailing newline &#183; warning</text>
-    </g>
-
-    <!-- row 3: :CRLF -->
-    <g transform="translate(0,136)">
-      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
-      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle" font-size="9">CR</text>
-      <rect class="trail" x="58" y="0" width="22" height="26"/><text x="69" y="18" text-anchor="middle" font-size="9" fill="var(--muted)">LF</text>
-      <rect class="comp" x="80" y="0" width="34" height="26" stroke="var(--valid)"/><text x="97" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="250" y="18" font-size="10">CR</text>
-      <text x="380" y="18" font-size="10" fill="var(--muted)">LF</text>
-      <text x="520" y="18" font-size="10">non-canonical term + trailing newline</text>
-    </g>
-
-    <!-- row 4: :~SPACE -->
-    <g transform="translate(0,174)">
-      <rect class="comp" x="14" y="0" width="22" height="26"/><text x="25" y="18" text-anchor="middle">:</text>
-      <rect class="term" x="36" y="0" width="22" height="26"/><text x="47" y="18" text-anchor="middle">~</text>
-      <rect class="trail" x="58" y="0" width="22" height="26"/><text x="69" y="18" text-anchor="middle" font-size="9" fill="var(--muted)">SP</text>
-      <rect class="comp" x="80" y="0" width="34" height="26" stroke="var(--valid)"/><text x="97" y="18" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="250" y="18">~</text>
-      <text x="380" y="18" font-size="10" fill="var(--muted)">SP</text>
-      <text x="520" y="18" font-size="10" fill="var(--deviation)">trailing junk &#183; error</text>
-    </g>
-
+    <text x="14" y="238" fill="var(--ink-soft)" font-size="10.5">The colon is ISA16. Its position varies; the one-byte rule does not.</text>
   </g>
-
-  <text class="note" x="14" y="222">The colon is ISA16 (the component separator). Its position varies; the rule does not.</text>
 </svg>
