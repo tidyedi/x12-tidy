@@ -1,6 +1,6 @@
 # x12-tidy design
 
-The reference for *why* the linter is built the way it is. Mechanics live in
+The reference for *why* x12-tidy is built the way it is. Mechanics live in
 module docstrings; this document holds the decisions that span modules. It gains
 one section per step as the project moves forward.
 
@@ -13,12 +13,12 @@ offsets and a regex both fail, and the five techniques — see
 
 ## 1. Philosophy: permissive parse, strict report
 
-The linter exists because many real-world X12 senders violate the standard. The
+x12-tidy exists because many real-world X12 senders violate the standard. The
 audience is a developer who has received a bad file from a trading partner and
 needs to know *exactly* what is non-conformant — so they can push back on the
 sender or handle it deliberately.
 
-So the linter does **not** fail fast on the first problem. It parses
+So x12-tidy does **not** fail fast on the first problem. It parses
 permissively — locating the ISA segment, the delimiters, the structure even in a
 malformed file — and emits a `Diagnostic` for **every** deviation it finds along
 the way. Nothing is silently repaired: every recovery step that tolerates a
@@ -28,7 +28,7 @@ It does **not** rely on fixed byte offsets (e.g. "the segment terminator is at
 offset 105"), because senders strip empty elements and every offset after that
 point shifts.
 
-Observed violations the linter must catch:
+Observed violations x12-tidy must catch:
 
 - a byte-order mark or stray bytes before the ISA segment
 - stripped empty ISA elements — the ISA segment is no longer its standard

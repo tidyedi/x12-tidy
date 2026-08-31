@@ -406,7 +406,7 @@
       </div>
       <figcaption>The ISA segment is positional, not delimited-and-free: <b>16 fixed-width
         elements</b>, a component separator, a one-byte terminator, and then <code>GS*</code>
-        at byte&nbsp;106. The linter's Step&nbsp;1 returns the run from <code>ISA</code> up to
+        at byte&nbsp;106. x12-tidy's Step&nbsp;1 returns the run from <code>ISA</code> up to
         (not including) that <code>GS</code> — terminator and any trailing bytes included;
         splitting the run into elements is a later step.</figcaption>
     </figure>
@@ -447,12 +447,12 @@
         You <em>can</em> force the count — <code>(?:(?!\1).)*\1</code> for "one
         field, then the separator," sixteen times — and the capture handles any
         separator byte without hard&#8209;coding it. But that assumes every
-        separator is a field boundary, and in the case the linter exists for, one
+        separator is a field boundary, and in the case x12-tidy exists for, one
         isn't: a sender whose ID holds the separator byte produces a segment that
         is genuinely ambiguous — sixteen fields or seventeen, indistinguishable
         from the bytes alone. A regex resolves that silently, matching <em>some</em>
         boundary; the trailing <code>GS\1</code> then anchors early, or the match
-        fails, with no signal either way. The linter does the opposite: it counts
+        fails, with no signal either way. x12-tidy does the opposite: it counts
         the separators, sees seventeen, and reports it
         (<code>isa.no-functional-group</code>), naming both possible causes. And
         <code>GS\1</code> matches a <code>GS</code> + separator <em>anywhere</em> —

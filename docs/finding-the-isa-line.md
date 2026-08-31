@@ -1,6 +1,6 @@
 # Finding the Elusive ISA Line
 
-*An engineering note on Step 1 of the linter: extracting the X12 interchange
+*An engineering note on Step 1 of x12-tidy: extracting the X12 interchange
 envelope from files that violate the standard, and naming every deviation.*
 
 > **Read this as a web page:** <https://docs.tidyedi.com/finding-the-isa-line.html>
@@ -75,11 +75,11 @@ reasons — and the first is fatal on its own:
    force the count — `(?:(?!\1).)*\1` for "one field, then the separator,"
    repeated sixteen times — and the capture handles any separator byte without
    hard-coding it. But that construction assumes every separator is a field
-   boundary, and in the case the linter exists for, one isn't: a sender whose ID
+   boundary, and in the case x12-tidy exists for, one isn't: a sender whose ID
    holds the separator byte produces a segment that is genuinely ambiguous —
    sixteen fields or seventeen, indistinguishable from the bytes alone. A regex
    resolves that silently, matching *some* boundary; the trailing `GS\1` then
-   anchors early, or the whole match fails, with no signal either way. The linter
+   anchors early, or the whole match fails, with no signal either way. x12-tidy
    does the opposite: it counts the separators, sees seventeen, and reports it
    (`isa.no-functional-group`), naming both possible causes. And `GS\1` matches a
    `GS` + separator *anywhere* — inside ISA06 or ISA08 element data as readily as

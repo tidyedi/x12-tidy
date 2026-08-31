@@ -3,7 +3,7 @@
 
 """The diagnostic code registry -- the single source of truth.
 
-Every finding the linter can emit has an entry here.  Nothing else defines a
+Every finding x12-tidy can emit has an entry here.  Nothing else defines a
 code: modules reference the :class:`Code` members, tests assert on them, and the
 human-readable views (``docs/diagnostics.md``, ``x12-tidy codes``) are
 *generated* from this file.  See ``docs/design.md`` for the full scheme.
@@ -95,7 +95,7 @@ META: dict[Code, CodeMeta] = {
         title="ISA segment tag is not uppercase",
         explanation=(
             "The segment tag was found as 'isa' or mixed case (e.g. 'Isa'). "
-            "X12 segment tags are uppercase. The linter matched it "
+            "X12 segment tags are uppercase. x12-tidy matched it "
             "case-insensitively and continued -- a file with a non-uppercase "
             "ISA tag almost certainly has every other segment tag the same way, "
             "which downstream steps must also tolerate."
@@ -119,7 +119,7 @@ META: dict[Code, CodeMeta] = {
             "One or more bytes appear before the ISA segment. A conformant X12 "
             "file begins with 'ISA' as its very first byte. Common causes are a "
             "UTF-8 byte-order mark, whitespace, or transport headers left in by "
-            "the sender. The linter strips them and continues; the reported "
+            "the sender. x12-tidy strips them and continues; the reported "
             "bytes are what was removed."
         ),
     ),
@@ -137,7 +137,7 @@ META: dict[Code, CodeMeta] = {
         default_severity="fatal",
         title="No GS header found after the ISA segment",
         explanation=(
-            "The linter locates the end of the ISA line by finding the 'GS' "
+            "x12-tidy locates the end of the ISA line by finding the 'GS' "
             "functional-group header that follows it (matched as 'GS' plus the "
             "element separator). No such header was found, so the ISA line "
             "cannot be bounded."
@@ -160,7 +160,7 @@ META: dict[Code, CodeMeta] = {
         default_severity="fatal",
         title="ISA segment is not bounded by a GS functional-group header",
         explanation=(
-            "Every ISA interchange opens a GS functional group, and the linter "
+            "Every ISA interchange opens a GS functional group, and x12-tidy "
             "ends the ISA line at that GS header. A 'GS' + element separator "
             "was found, but the run of bytes to it holds more than the 16 "
             "element separators an ISA header has -- so it is not the header. "
