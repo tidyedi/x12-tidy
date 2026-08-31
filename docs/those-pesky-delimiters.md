@@ -90,21 +90,23 @@ such a line — its job is permissive — but Step 2 refuses it.
 
 ---
 
-## 3. The tail: component separator and terminator
+## 3. The last piece: component separator and terminator
 
-Call `parts[16]` the *tail*. It is `ISA16 + segment terminator + whatever sits
-between the terminator and GS`.
+The last of the seventeen pieces, `parts[16]`, is `ISA16` + the segment
+terminator + whatever sits between the terminator and `GS`.
 
 `ISA16` is a strange field: **its value is a delimiter.** The component separator
-is whatever single byte the sender put there. So `tail[0]` is the component
-separator, and `tail[1]` is the segment terminator.
+is whatever single byte the sender put there. So the first byte of `parts[16]`
+is the component separator (`ISA16` itself), and the second is the segment
+terminator.
 
-`tail[1]` — one byte. By rule, not by convenience. This is the rule that earns
-its keep. Real files end segments with `~`, or `~\r\n`, or a bare `\r\n`, or `~`
-then a stray space, or `\n` alone. If you treat "the terminator" as *everything
-between ISA16 and GS*, you cannot tell a two-byte terminator from a one-byte
-terminator followed by a newline the sender appended — and that ambiguity then
-propagates to every segment in the file. The one-byte rule cuts it:
+That second byte — one byte, by rule, not by convenience. This is the rule that
+earns its keep. Real files end segments with `~`, or `~\r\n`, or a bare `\r\n`,
+or `~` then a stray space, or `\n` alone. If you treat "the terminator" as
+*everything between ISA16 and GS*, you cannot tell a two-byte terminator from a
+one-byte terminator followed by a newline the sender appended — and that
+ambiguity then propagates to every segment in the file. The one-byte rule cuts
+it:
 
 ![How the one-byte rule resolves each real-world terminator. The colon is ISA16.
 For a tilde, the terminator is the tilde and there is no trailing. For tilde-CR-LF
@@ -112,18 +114,19 @@ the terminator is the tilde and CR-LF is trailing. For a bare CR-LF the terminat
 is the CR and the LF is trailing. For tilde-space the terminator is the tilde and
 the space is trailing.](figures/delimiters-terminator.svg)
 
-The terminator is `tail[1]`, exactly one byte. Anything after it and before `GS`
-is *trailing* — classified on its own: carriage returns and line feeds are a
-newline the sender appended (a warning), anything else is junk (an error). Both
-are stripped when the line is reconstructed.
+The terminator is that one byte. Anything after it and before `GS` is *trailing*
+— classified on its own: carriage returns and line feeds are a newline the
+sender appended (a warning), anything else is junk (an error). Both are stripped
+when the line is reconstructed.
 
-Two things the tail tells you are seriously wrong:
+Two things `parts[16]` tells you are seriously wrong:
 
-**The terminator was stripped.** The tail is one byte long — just the component
-separator, then `GS`. The sender dropped the terminator entirely. Its position is
-known, so it is reconstructed as `~` and flagged; this is not fatal.
+**The terminator was stripped.** `parts[16]` is one byte long — just the
+component separator, then `GS`. The sender dropped the terminator entirely. Its
+position is known, so it is reconstructed as `~` and flagged; this is not fatal.
 
-**The split landed on data.** `tail[0]` is a letter or a digit. The component
+**The split landed on data.** The first byte of `parts[16]` is a letter or a
+digit. The component
 separator is never alphanumeric, so the decomposition is wrong — almost always
 because an element separator byte occurs *inside* `ISA06` or `ISA08` data, which
 pulled every field after it out of alignment. The line has the right *number* of

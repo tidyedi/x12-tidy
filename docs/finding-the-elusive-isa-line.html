@@ -330,6 +330,16 @@
   @media (prefers-reduced-motion: no-preference) {
     a { transition: color 0.15s ease; }
   }
+
+  @media print {
+    .sitebar { padding-top: 0.4rem; }
+    header.hero { padding: 1rem 0; }
+    section { margin-top: 2rem; }
+    figure, .fig-frame, pre, table, .note, .table-fig, .code-fig { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    a { color: inherit; }
+    .byline a { text-decoration: underline; }
+  }
 </style>
 </head>
 <body>
@@ -360,6 +370,7 @@
       <span>Engineering note</span>
       <span>x12&#8209;tidy&nbsp;/&nbsp;isa</span>
       <span>~2,400 words</span>
+      <span><a href="finding-the-elusive-isa-line.pdf">PDF</a></span>
     </div>
   </header>
 

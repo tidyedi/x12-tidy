@@ -131,20 +131,20 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
 
     version = parts[12]
     isa11 = parts[11]
-    tail = parts[16]  # ISA16 + terminator + trailing
-    tail_offset = base_offset + len(run) - len(tail)
+    last_piece = parts[16]  # ISA16 + terminator + trailing
+    last_piece_offset = base_offset + len(run) - len(last_piece)
 
-    if not tail:
+    if not last_piece:
         diags.append(Diagnostic(
             Code.ISA_ISA16_MISSING,
             "nothing follows ISA15 in the run: no ISA16, component separator, "
             "or segment terminator.",
-            offset=tail_offset,
+            offset=last_piece_offset,
         ))
         return IsaDelimiters(element_separator, None, b"", b"", b"", diags)
 
-    component_separator = tail[0:1]
-    after = tail[1:]
+    component_separator = last_piece[0:1]
+    after = last_piece[1:]
 
     if not after:
         # Only the component separator is present; GS came straight after it.
@@ -154,7 +154,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
             Code.ISA_SEGMENT_TERMINATOR_STRIPPED,
             "no segment terminator after ISA16 -- GS followed immediately. "
             f"Reconstructed as {CANONICAL_TERMINATOR!r}.",
-            offset=tail_offset + 1,
+            offset=last_piece_offset + 1,
         ))
     else:
         segment_terminator = after[0:1]
@@ -178,10 +178,10 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
         diags.append(Diagnostic(
             Code.ISA_DELIMITER_MISALIGNED,
             "the bytes where the component separator and segment terminator "
-            f"belong ({tail[:2]!r}) are both alphanumeric; the ISA line cannot "
+            f"belong ({last_piece[:2]!r}) are both alphanumeric; the ISA line cannot "
             "be decomposed (an element separator most likely occurs inside "
             "ISA06 or ISA08 data).",
-            offset=tail_offset,
+            offset=last_piece_offset,
         ))
     else:
         if component_alnum:
@@ -190,7 +190,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
                 f"the component separator (ISA16) is {component_separator!r}, "
                 "an alphanumeric byte; it collides with data. This is fatal "
                 "only if a segment carries a composite element.",
-                offset=tail_offset,
+                offset=last_piece_offset,
             ))
         elif component_separator == b" ":
             diags.append(Diagnostic(
@@ -198,7 +198,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
                 "the component separator (ISA16) is a space; it collides with "
                 "element padding. Fatal only if a segment carries a composite "
                 "element.",
-                offset=tail_offset,
+                offset=last_piece_offset,
             ))
         if after and terminator_alnum:
             diags.append(Diagnostic(
@@ -206,7 +206,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
                 f"the segment terminator is {segment_terminator!r}, an "
                 "alphanumeric byte -- it is data, not a delimiter. Segments "
                 "cannot be split.",
-                offset=tail_offset + 1,
+                offset=last_piece_offset + 1,
             ))
 
     # --- non-canonical but usable terminator (\r, \n, |, ...) ---
@@ -222,7 +222,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
             Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL,
             f"the segment terminator is {segment_terminator!r}, not "
             f"{CANONICAL_TERMINATOR!r}; it is usable but will be normalised.",
-            offset=tail_offset + 1,
+            offset=last_piece_offset + 1,
         ))
 
     # --- collisions that block parsing outright ---
@@ -232,7 +232,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
             f"the segment terminator and the element separator are the same "
             f"byte ({segment_terminator!r}); segment and element boundaries "
             "are indistinguishable.",
-            offset=tail_offset + 1,
+            offset=last_piece_offset + 1,
         ))
     if segment_terminator and segment_terminator == component_separator:
         diags.append(Diagnostic(
@@ -240,7 +240,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
             f"the segment terminator and the component separator are the same "
             f"byte ({segment_terminator!r}); segment and composite boundaries "
             "are indistinguishable.",
-            offset=tail_offset + 1,
+            offset=last_piece_offset + 1,
         ))
 
     # --- repetition separator (ISA11), gated on the ISA12 version code ---
@@ -303,7 +303,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
 
     # --- trailing bytes between the terminator and GS ---
     if trailing:
-        trailing_offset = tail_offset + 2
+        trailing_offset = last_piece_offset + 2
         if all(byte in b"\r\n" for byte in trailing):
             diags.append(Diagnostic(
                 Code.ISA_TRAILING_NEWLINE,

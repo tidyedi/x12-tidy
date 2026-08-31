@@ -330,6 +330,16 @@
   @media (prefers-reduced-motion: no-preference) {
     a { transition: color 0.15s ease; }
   }
+
+  @media print {
+    .sitebar { padding-top: 0.4rem; }
+    header.hero { padding: 1rem 0; }
+    section { margin-top: 2rem; }
+    figure, .fig-frame, pre, table, .note, .table-fig, .code-fig { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    a { color: inherit; }
+    .byline a { text-decoration: underline; }
+  }
 </style>
 </head>
 <body>
@@ -360,6 +370,7 @@
       <span>Engineering note</span>
       <span>x12&#8209;tidy&nbsp;/&nbsp;isa</span>
       <span>~1,900 words</span>
+      <span><a href="those-pesky-delimiters.pdf">PDF</a></span>
       <span><a href="finding-the-elusive-isa-line.html">&#8592; Finding the Elusive ISA Line</a></span>
     </div>
   </header>
@@ -399,7 +410,7 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 &mdash; Where the standard puts them, and where a stripped file has them</span>
-        <svg viewBox="0 0 780 320" role="img" aria-label="The four X12 delimiters. In a conformant ISA line the element separator is at byte 3, ISA11 is the repetition separator, the component separator is at byte 104, the segment terminator is at byte 105. In a line whose ISA02 and ISA04 were stripped, byte 3 is unchanged and every other delimiter has moved left.">
+        <svg viewBox="0 0 800 320" role="img" aria-label="The four X12 delimiters. In a conformant ISA line the element separator is at byte 3, ISA11 is the repetition separator, ISA16 (the component separator) is at byte 104, and the segment terminator is a separate byte at 105. In a line whose ISA02 and ISA04 were stripped, byte 3 is unchanged and every other delimiter has moved left.">
   <g font-family="'IBM Plex Mono', monospace" font-size="12.5">
 
     <text x="12" y="20" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">CONFORMANT &#8212; where the standard puts them</text>
@@ -417,7 +428,7 @@
       <text x="452" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">^</text>
 
       <rect x="464" y="0" width="176" height="40" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
-      <text x="552" y="25" text-anchor="middle" fill="currentColor">ISA12 * &#8230; * ISA15</text>
+      <text x="552" y="25" text-anchor="middle" fill="currentColor">ISA12 * &#8230; * ISA15 *</text>
 
       <rect x="640" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
       <text x="652" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">:</text>
@@ -437,7 +448,7 @@
         <text x="452" y="96" text-anchor="middle" fill="var(--accent)">repetition</text>
 
         <path d="M652 40 L652 52 L590 52 L590 62" fill="none" stroke="var(--ink-soft)" stroke-width="1.3"/>
-        <text x="590" y="80" text-anchor="middle" fill="currentColor">byte 104</text>
+        <text x="590" y="80" text-anchor="middle" fill="currentColor">ISA16 &#183; byte 104</text>
         <text x="590" y="96" text-anchor="middle" fill="var(--accent)">component</text>
 
         <path d="M676 40 L676 52 L730 52 L730 62" fill="none" stroke="var(--ink-soft)" stroke-width="1.3"/>
@@ -463,7 +474,7 @@
       <text x="400" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">^</text>
 
       <rect x="412" y="0" width="150" height="40" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 3"/>
-      <text x="487" y="25" text-anchor="middle" fill="currentColor">ISA12 * &#8230; * ISA15</text>
+      <text x="487" y="25" text-anchor="middle" fill="currentColor">ISA12 * &#8230; * ISA15 *</text>
 
       <rect x="562" y="0" width="24" height="40" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
       <text x="574" y="26" text-anchor="middle" fill="var(--accent)" font-weight="700">:</text>
@@ -576,7 +587,7 @@ parts = run.split(element_separator)
       <text x="231" y="30" text-anchor="middle" fill="currentColor">ISA01 &#8230; ISA15</text>
 
       <rect x="404" y="0" width="352" height="38" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
-      <text x="580" y="16" text-anchor="middle" font-size="9.5" fill="var(--accent)">parts[16] &#8212; the tail</text>
+      <text x="580" y="16" text-anchor="middle" font-size="9.5" fill="var(--accent)">parts[16] &#8212; the last of the 17 pieces</text>
       <text x="580" y="30" text-anchor="middle" fill="currentColor">ISA16 + terminator + trailing</text>
     </g>
 
@@ -584,17 +595,17 @@ parts = run.split(element_separator)
       <path d="M164 -22 L164 -6" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
       <rect x="30" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
       <text x="46" y="20" text-anchor="middle" fill="currentColor">:</text>
-      <text x="46" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[0]</text>
+      <text x="46" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">parts[16][0]</text>
       <text x="46" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">component</text>
 
       <rect x="128" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
       <text x="144" y="20" text-anchor="middle" fill="currentColor">~</text>
-      <text x="144" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[1]</text>
+      <text x="144" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">parts[16][1]</text>
       <text x="144" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">terminator</text>
 
       <rect x="226" y="0" width="110" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/>
       <text x="281" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR LF &#8230;</text>
-      <text x="281" y="46" text-anchor="middle" font-size="10.5" fill="currentColor">tail[2:]</text>
+      <text x="281" y="46" text-anchor="middle" font-size="10.5" fill="currentColor">parts[16][2:]</text>
       <text x="281" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">trailing</text>
     </g>
   </g>
@@ -617,21 +628,22 @@ parts = run.split(element_separator)
     </div>
   </section>
 
-  <section id="tail">
+  <section id="last-piece">
     <div class="sec-head">
       <span class="sec-num-rail">03</span>
       <span class="eyebrow">The hard part</span>
-      <h2><span class="sec-num">03&nbsp;&nbsp;</span>The tail: component separator and terminator</h2>
+      <h2><span class="sec-num">03&nbsp;&nbsp;</span>The last piece: component separator and terminator</h2>
     </div>
     <div class="prose">
-      <p>Call <code>parts[16]</code> the <em>tail</em>. It is <code>ISA16</code> +
-      the segment terminator + whatever sits between the terminator and
-      <code>GS</code>.</p>
+      <p>The last of the seventeen pieces, <code>parts[16]</code>, is
+      <code>ISA16</code> + the segment terminator + whatever sits between the
+      terminator and <code>GS</code>.</p>
       <p><code>ISA16</code> is a strange field: <strong>its value is a
       delimiter.</strong> The component separator is whatever single byte the
-      sender put there. So <code>tail[0]</code> is the component separator, and
-      <code>tail[1]</code> is the segment terminator.</p>
-      <p><code>tail[1]</code> &mdash; one byte. By rule, not by convenience. This
+      sender put there. So the first byte of <code>parts[16]</code> is the
+      component separator (<code>ISA16</code> itself), and the second is the
+      segment terminator.</p>
+      <p>That second byte &mdash; one byte, by rule, not by convenience. This
       is the rule that earns its keep. Real files end segments with <code>~</code>,
       or <code>~\r\n</code>, or a bare <code>\r\n</code>, or <code>~</code> then a
       stray space, or <code>\n</code> alone. If you treat &ldquo;the
@@ -646,7 +658,7 @@ parts = run.split(element_separator)
         <span class="fig-label">Fig. 3 &mdash; The one-byte rule, applied to four real terminators</span>
         <svg viewBox="0 0 780 250" role="img" aria-label="How the one-byte rule resolves four real segment terminators. The colon is ISA16. Tilde: terminator is the tilde, nothing trailing. Tilde CR LF: terminator is the tilde, CR LF trailing. Bare CR LF: terminator is the CR, LF trailing. Tilde space: terminator is the tilde, the space trailing.">
   <g font-family="'IBM Plex Mono', monospace" font-size="12.5">
-    <text x="12" y="18" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">THE TAIL AFTER ISA16 &#8212; terminator is tail[1], one byte; the rest is trailing</text>
+    <text x="12" y="18" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">AFTER ISA16 &#8212; the segment terminator is one byte; the rest is trailing</text>
 
     <g font-size="10.5" fill="var(--ink-soft)" letter-spacing="0.06em">
       <text x="14"  y="44">RECEIVED</text>
@@ -700,27 +712,28 @@ parts = run.split(element_separator)
   </g>
         </svg>
       </div>
-      <figcaption>The terminator is <code>tail[1]</code>, one byte. Anything after
-        it and before <code>GS</code> is <b>trailing</b>, classified on its own:
-        carriage returns and line feeds are a newline the sender appended (a
-        warning); anything else is junk (an error). Both are stripped on
+      <figcaption>The terminator is that one byte. Anything after it and before
+        <code>GS</code> is <b>trailing</b>, classified on its own: carriage
+        returns and line feeds are a newline the sender appended (a warning);
+        anything else is junk (an error). Both are stripped on
         reconstruction.</figcaption>
     </figure>
 
     <div class="prose">
-      <p>Two things the tail tells you are seriously wrong:</p>
+      <p>Two things <code>parts[16]</code> tells you are seriously wrong:</p>
     </div>
 
     <div class="note">
       <span class="kicker">The terminator was stripped</span>
-      The tail is one byte long &mdash; just the component separator, then
-      <code>GS</code>. Its position is known, so it is reconstructed as
-      <code>~</code> and flagged. Not fatal.
+      <code>parts[16]</code> is one byte long &mdash; just the component
+      separator, then <code>GS</code>. Its position is known, so it is
+      reconstructed as <code>~</code> and flagged. Not fatal.
     </div>
 
     <div class="note">
       <span class="kicker">The split landed on data</span>
-      <code>tail[0]</code> is a letter or a digit. The component separator is
+      The first byte of <code>parts[16]</code> is a letter or a digit. The
+      component separator is
       never alphanumeric, so the decomposition is wrong &mdash; almost always
       because an element separator byte occurs <em>inside</em> <code>ISA06</code>
       or <code>ISA08</code> data, pulling every field after it out of alignment.

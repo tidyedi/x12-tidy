@@ -58,7 +58,7 @@
       <text x="231" y="30" text-anchor="middle" fill="currentColor">ISA01 &#8230; ISA15</text>
 
       <rect x="404" y="0" width="352" height="38" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
-      <text x="580" y="16" text-anchor="middle" font-size="9.5" fill="var(--accent)">parts[16] &#8212; the tail</text>
+      <text x="580" y="16" text-anchor="middle" font-size="9.5" fill="var(--accent)">parts[16] &#8212; the last of the 17 pieces</text>
       <text x="580" y="30" text-anchor="middle" fill="currentColor">ISA16 + terminator + trailing</text>
     </g>
 
@@ -66,17 +66,17 @@
       <path d="M164 -22 L164 -6" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
       <rect x="30" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
       <text x="46" y="20" text-anchor="middle" fill="currentColor">:</text>
-      <text x="46" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[0]</text>
+      <text x="46" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">parts[16][0]</text>
       <text x="46" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">component</text>
 
       <rect x="128" y="0" width="32" height="30" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
       <text x="144" y="20" text-anchor="middle" fill="currentColor">~</text>
-      <text x="144" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">tail[1]</text>
+      <text x="144" y="46" text-anchor="middle" font-size="10.5" fill="var(--accent)">parts[16][1]</text>
       <text x="144" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">terminator</text>
 
       <rect x="226" y="0" width="110" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/>
       <text x="281" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR LF &#8230;</text>
-      <text x="281" y="46" text-anchor="middle" font-size="10.5" fill="currentColor">tail[2:]</text>
+      <text x="281" y="46" text-anchor="middle" font-size="10.5" fill="currentColor">parts[16][2:]</text>
       <text x="281" y="60" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">trailing</text>
     </g>
   </g>
