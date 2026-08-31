@@ -61,6 +61,22 @@ class Code(Enum):
     ISA_SEPARATOR_COUNT_LOW = "isa.separator-count-low"
     ISA_NO_FUNCTIONAL_GROUP = "isa.no-functional-group"
 
+    # -- isa: parsing the delimiters out of the ISA line (Step 2, slice 1) --
+    ISA_ISA16_MISSING = "isa.isa16-missing"
+    ISA_DELIMITER_MISALIGNED = "isa.delimiter-misaligned"
+    ISA_DELIMITER_COLLISION = "isa.delimiter-collision"
+    ISA_ELEMENT_SEPARATOR_INVALID = "isa.element-separator-invalid"
+    ISA_COMPONENT_SEPARATOR_INVALID = "isa.component-separator-invalid"
+    ISA_REPETITION_SEPARATOR_INVALID = "isa.repetition-separator-invalid"
+    ISA_REPETITION_SEPARATOR_MISSING = "isa.repetition-separator-missing"
+    ISA_ISA11_NOT_STANDARDS_ID = "isa.isa11-not-standards-id"
+    ISA_SEGMENT_TERMINATOR_INVALID = "isa.segment-terminator-invalid"
+    ISA_SEGMENT_TERMINATOR_STRIPPED = "isa.segment-terminator-stripped"
+    ISA_SEGMENT_TERMINATOR_NONCANONICAL = "isa.segment-terminator-noncanonical"
+    ISA_VERSION_UNRECOGNIZED = "isa.version-unrecognized"
+    ISA_TRAILING_NEWLINE = "isa.trailing-newline"
+    ISA_TRAILING_JUNK = "isa.trailing-junk"
+
     @property
     def area(self) -> str:
         return self.value.split(".", 1)[0]
@@ -168,6 +184,153 @@ META: dict[Code, CodeMeta] = {
             "segment's data, or the element separator occurs inside ISA06 / "
             "ISA08 data (an unparseable segment). The ISA line cannot be "
             "bounded; not recoverable."
+        ),
+    ),
+
+    # -- isa: parsing the delimiters (Step 2, slice 1) --
+    Code.ISA_ISA16_MISSING: CodeMeta(
+        default_severity="fatal",
+        title="Nothing follows ISA15 in the ISA line",
+        explanation=(
+            "After the 16th element separator there are no bytes at all -- no "
+            "ISA16 (which carries the component separator), no segment "
+            "terminator. The ISA line ends where ISA16 should begin, so none "
+            "of the trailing delimiters can be recovered."
+        ),
+    ),
+    Code.ISA_DELIMITER_MISALIGNED: CodeMeta(
+        default_severity="fatal",
+        title="The ISA line cannot be decomposed at the element separator",
+        explanation=(
+            "Splitting the ISA line on the element separator did not land the "
+            "component separator and segment terminator on delimiter-shaped "
+            "bytes. The usual cause is an element separator byte occurring "
+            "inside ISA06 or ISA08 data, which shifts every field after it. "
+            "The line holds the right number of separators but the wrong "
+            "boundaries, so it cannot be trusted."
+        ),
+    ),
+    Code.ISA_DELIMITER_COLLISION: CodeMeta(
+        default_severity="fatal",
+        title="Two delimiters are the same byte",
+        explanation=(
+            "The segment terminator is the same byte as the element separator "
+            "or the component separator. Segment boundaries then cannot be "
+            "told apart from element or composite boundaries anywhere in the "
+            "interchange, so it cannot be parsed."
+        ),
+    ),
+    Code.ISA_ELEMENT_SEPARATOR_INVALID: CodeMeta(
+        default_severity="fatal",
+        title="The element separator is an alphanumeric byte",
+        explanation=(
+            "The 4th byte of the ISA segment -- the element separator -- is a "
+            "letter or digit. It cannot be distinguished from the data inside "
+            "elements, so no segment in the interchange can be split reliably. "
+            "X12 element separators are non-alphanumeric (commonly '*')."
+        ),
+    ),
+    Code.ISA_COMPONENT_SEPARATOR_INVALID: CodeMeta(
+        default_severity="error",
+        title="The component separator is not a usable delimiter",
+        explanation=(
+            "ISA16 -- the component (sub-element) separator -- is an "
+            "alphanumeric byte or a space, so it collides with element data or "
+            "padding. This is reported as an error here because many "
+            "interchanges carry no composite elements; the body parser "
+            "escalates it to fatal at the first segment that does."
+        ),
+    ),
+    Code.ISA_REPETITION_SEPARATOR_INVALID: CodeMeta(
+        default_severity="error",
+        title="The repetition separator is not a usable delimiter",
+        explanation=(
+            "ISA11 -- the repetition separator, for ISA12 version 00403 and "
+            "later -- is an alphanumeric byte or is the same byte as another "
+            "delimiter. It is reported as an error here because repetition is "
+            "optional; the body parser escalates it to fatal at the first "
+            "segment that repeats a data element."
+        ),
+    ),
+    Code.ISA_REPETITION_SEPARATOR_MISSING: CodeMeta(
+        default_severity="error",
+        title="No repetition separator for a version that has one",
+        explanation=(
+            "ISA12 is version 00403 or later, where ISA11 is the repetition "
+            "separator, but ISA11 is blank or still holds the old standards "
+            "identifier 'U'. Repeated data elements cannot be parsed; "
+            "downstream must treat repetition as unsupported."
+        ),
+    ),
+    Code.ISA_ISA11_NOT_STANDARDS_ID: CodeMeta(
+        default_severity="error",
+        title="ISA11 is not the standards identifier on an older version",
+        explanation=(
+            "ISA12 is a version before 00403, where ISA11 is the Interchange "
+            "Control Standards Identifier and must be 'U'. It holds something "
+            "else. ISA11 is informational on these versions -- it is not used "
+            "to parse anything -- so this does not block the interchange, but "
+            "the value is wrong."
+        ),
+    ),
+    Code.ISA_SEGMENT_TERMINATOR_INVALID: CodeMeta(
+        default_severity="fatal",
+        title="The segment terminator is an alphanumeric byte",
+        explanation=(
+            "The byte after ISA16 -- the segment terminator -- is a letter or "
+            "digit, so it is data, not a delimiter. Every segment in the "
+            "interchange ends with this byte, so none of them can be split. "
+            "The terminator was probably stripped by the sender."
+        ),
+    ),
+    Code.ISA_SEGMENT_TERMINATOR_STRIPPED: CodeMeta(
+        default_severity="error",
+        title="No segment terminator after ISA16",
+        explanation=(
+            "The GS functional-group header follows ISA16 with no segment "
+            "terminator between them. The position is structurally known, so "
+            "the terminator is reconstructed as '~', but the sender's file "
+            "does not conform."
+        ),
+    ),
+    Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL: CodeMeta(
+        default_severity="warning",
+        title="The segment terminator is not the tilde",
+        explanation=(
+            "The segment terminator is a usable non-alphanumeric byte -- often "
+            "a carriage return or line feed -- but not '~'. The interchange "
+            "parses; the reconstructed ISA line normalises the terminator to "
+            "'~'."
+        ),
+    ),
+    Code.ISA_VERSION_UNRECOGNIZED: CodeMeta(
+        default_severity="warning",
+        title="ISA12 is not a recognised version code",
+        explanation=(
+            "ISA12 -- the Interchange Control Version Number -- is not a "
+            "5-digit code. Whether ISA11 is a repetition separator depends on "
+            "this value, so ISA11 is left opaque and not treated as a "
+            "delimiter."
+        ),
+    ),
+    Code.ISA_TRAILING_NEWLINE: CodeMeta(
+        default_severity="warning",
+        title="Line breaks between the segment terminator and GS",
+        explanation=(
+            "One or more carriage-return or line-feed bytes sit between the "
+            "ISA segment terminator and the GS header. X12 joins segments with "
+            "the terminator alone; the sender has appended a newline. Common "
+            "and harmless, but non-conformant -- stripped on reconstruction."
+        ),
+    ),
+    Code.ISA_TRAILING_JUNK: CodeMeta(
+        default_severity="error",
+        title="Unexpected bytes between the segment terminator and GS",
+        explanation=(
+            "Bytes that are not line breaks sit between the ISA segment "
+            "terminator and the GS header -- stray spaces, a comment, or "
+            "transport framing. They are not part of the interchange and are "
+            "stripped on reconstruction."
         ),
     ),
 }
