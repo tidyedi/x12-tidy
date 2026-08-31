@@ -18,7 +18,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-OUT = Path("/Users/michaelschertz/git_apps/edi-linter/docs/rules.xlsx")
+OUT = Path(__file__).resolve().parent.parent / "docs" / "rules.xlsx"
 
 TOP = Alignment(wrap_text=True, vertical="top")
 HEADER_FILL = PatternFill("solid", fgColor="1F2A44")

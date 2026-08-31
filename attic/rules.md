@@ -1,4 +1,4 @@
-# edi-linter — rule catalog
+# x12-tidy — rule catalog
 
 One table per build piece. Every row is a single check the linter performs:
 its severity, what the emitted message should tell the reader, and any safe
@@ -54,7 +54,7 @@ automatic fix; the developer must go back to the sender.
 
 ## Piece 1 — ISA envelope bootstrap
 
-`edi_linter.envelope.check_isa(data: bytes) -> IsaResult`
+`x12_tidy.envelope.check_isa(data: bytes) -> IsaResult`
 
 An X12 interchange begins with a single fixed-layout `ISA` segment. Its
 delimiters are declared positionally inside it, which lets the linter discover

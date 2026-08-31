@@ -54,7 +54,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from edi_linter.diagnostics import Diagnostic
+from x12_tidy.diagnostics import Diagnostic
 
 _ISA_TAG = b"ISA"
 _ELEMENT_SEPARATOR_OFFSET = 3  # 4th byte of the segment, 0-indexed
