@@ -7,7 +7,8 @@
 | [design.md](design.md) | The *why* behind the architecture and the diagnostic-code scheme — decisions that span modules. |
 | [diagnostics.md](diagnostics.md) | Every diagnostic code x12-tidy can emit. **Generated** from `src/x12_tidy/diagnostics/codes.py` — do not edit by hand. |
 
-`figures/` holds the SVG figures for both engineering notes. The `.html` files
-are the pages GitHub Pages serves — opening one from the repo file tree only
-shows its source, because GitHub does not render HTML there; use the Pages links
+This folder is served at **[docs.tidyedi.com](https://docs.tidyedi.com)** by
+GitHub Pages; [`index.html`](index.html) is the landing page. `figures/` holds
+the SVG figures for the engineering notes. Opening a `.html` from the repo file
+tree only shows its source — GitHub does not render HTML there; use the links
 above.
