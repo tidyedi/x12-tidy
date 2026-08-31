@@ -79,9 +79,10 @@ segment terminator and any trailing bytes before GS.](figures/delimiters-split.s
 Everything after this is read from those pieces — never from byte 104, never from
 byte 105. A sender who stripped `ISA02` and `ISA04` down to nothing pulled the
 component separator eleven bytes to the left of where the standard puts it, but
-it is still `parts[16][0]`, because the *count* of separators and the position of
-`GS` did not move. This is the same move as Step 1: **anchor on a structural
-invariant, never on a byte position the sender can shift.**
+it is still the first byte of the last piece, because the *count* of separators
+and the position of `GS` did not move. This is the same move as Step 1:
+**anchor on a structural invariant, never on a byte position the sender can
+shift.**
 
 There is one thing the element separator is checked for, and it is fatal: if it
 is a letter or a digit, it cannot be told apart from the data inside elements, so
@@ -92,13 +93,13 @@ such a line — its job is permissive — but Step 2 refuses it.
 
 ## 3. The last piece: component separator and terminator
 
-The last of the seventeen pieces, `parts[16]`, is `ISA16` + the segment
-terminator + whatever sits between the terminator and `GS`.
+The last of the seventeen pieces is `ISA16`, then the segment terminator, then
+whatever sits between the terminator and `GS` — the split runs straight past
+ISA16 because nothing stops it.
 
 `ISA16` is a strange field: **its value is a delimiter.** The component separator
-is whatever single byte the sender put there. So the first byte of `parts[16]`
-is the component separator (`ISA16` itself), and the second is the segment
-terminator.
+is whatever single byte the sender put there. So this piece *begins* with `ISA16`
+(the component separator); its next byte is the segment terminator.
 
 That second byte — one byte, by rule, not by convenience. This is the rule that
 earns its keep. Real files end segments with `~`, or `~\r\n`, or a bare `\r\n`,
@@ -119,14 +120,14 @@ The terminator is that one byte. Anything after it and before `GS` is *trailing*
 sender appended (a warning), anything else is junk (an error). Both are stripped
 when the line is reconstructed.
 
-Two things `parts[16]` tells you are seriously wrong:
+Two things this last piece tells you are seriously wrong:
 
-**The terminator was stripped.** `parts[16]` is one byte long — just the
+**The terminator was stripped.** The last piece is one byte long — just the
 component separator, then `GS`. The sender dropped the terminator entirely. Its
 position is known, so it is reconstructed as `~` and flagged; this is not fatal.
 
-**The split landed on data.** The first byte of `parts[16]` is a letter or a
-digit. The component
+**The split landed on data.** The last piece's first byte — where `ISA16` should
+be — is a letter or a digit. The component
 separator is never alphanumeric, so the decomposition is wrong — almost always
 because an element separator byte occurs *inside* `ISA06` or `ISA08` data, which
 pulled every field after it out of alignment. The line has the right *number* of
