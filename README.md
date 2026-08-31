@@ -17,15 +17,18 @@ The audience is a developer who received a bad file from a trading partner and
 needs to know exactly what is non-conformant. (If "X12 linter" is what you
 searched for, yes, that too.)
 
-📄 Engineering notes: **[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)**
-(Step 1 — why fixed offsets and a regex both fail at *locating* the line) and
-**[Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)**
-(Step 2 — reading the four delimiters from a line whose byte offsets have all
-moved). Markdown sources in [`docs/`](docs/).
+## Docs
 
-See also [`docs/`](docs/) for [`design.md`](docs/design.md) (philosophy,
-architecture, the diagnostic-code scheme) and [`docs/diagnostics.md`](docs/diagnostics.md)
-(every code x12-tidy can emit — generated, do not edit by hand).
+**Engineering notes** — one per build step, at [docs.tidyedi.com](https://docs.tidyedi.com):
+
+- [Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
+  — Step 1: locating the ISA line when fixed byte offsets and a regex both fail
+- [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
+  — Step 2: reading the four delimiters from a line whose byte offsets have moved
+
+**Reference** — [`design.md`](docs/design.md) (architecture, the diagnostic-code
+scheme) · [`docs/diagnostics.md`](docs/diagnostics.md) (every code, generated) ·
+the [`docs/`](docs/) folder holds the Markdown sources and PDFs.
 
 ## Status
 

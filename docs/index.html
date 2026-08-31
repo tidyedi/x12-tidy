@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TidyEDI Docs</title>
+<meta name="description" content="Engineering notes and reference documentation for x12-tidy — the free CLI and Python library that validates and repairs malformed ANSI X12 EDI.">
+<link rel="canonical" href="https://docs.tidyedi.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TidyEDI Docs">
+<meta property="og:description" content="Engineering notes and reference docs for x12-tidy — validate and repair malformed ANSI X12 EDI.">
+<meta property="og:url" content="https://docs.tidyedi.com/">
+<meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root {
+    --paper:   #edf0f2;
+    --surface:  #f8fafb;
+    --ink:      #17212b;
+    --ink-soft: #566470;
+    --rule:     #d2d8dc;
+    --accent:   #0e6f86;
+    --accent-soft: #dbeaee;
+    --valid:    #467a4e;
+    --deviation:#ac5230;
+    --code-bg:  #f1f4f5;
+    --code-ink: #223039;
+
+    --measure: 40rem;
+    --wide: 53rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #0f151b;
+      --surface:  #161f27;
+      --ink:      #dce4e9;
+      --ink-soft: #93a1ac;
+      --rule:     #2a343d;
+      --accent:   #45b8d0;
+      --accent-soft: #123039;
+      --valid:    #74b079;
+      --deviation:#dd8b64;
+      --code-bg:  #131b22;
+      --code-ink: #c9d5dc;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #0f151b;
+    --surface:  #161f27;
+    --ink:      #dce4e9;
+    --ink-soft: #93a1ac;
+    --rule:     #2a343d;
+    --accent:   #45b8d0;
+    --accent-soft: #123039;
+    --valid:    #74b079;
+    --deviation:#dd8b64;
+    --code-bg:  #131b22;
+    --code-ink: #c9d5dc;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  .sitebar {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sitebar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  .sitebar svg { width: 26px; height: 26px; display: block; border-radius: 6px; }
+  .sitebar .edi { color: #1F6B4D; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .sitebar .edi { color: #5CBB8E; }
+  }
+  :root[data-theme="dark"] .sitebar .edi { color: #5CBB8E; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 1.0625rem;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: 0 1.5rem; }
+  .prose { max-width: var(--measure); margin-inline: auto; }
+
+  /* ---- type ---- */
+  h1, h2, h3, .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0.6rem 0 0;
+  }
+  .thesis {
+    font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--ink);
+    font-style: italic;
+    max-width: 34rem;
+    margin: 1.6rem 0 0;
+  }
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+    position: relative;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2.4rem 0 0.4rem;
+    color: var(--ink);
+  }
+  p { margin: 1.1rem 0 0; }
+  .prose > p:first-child, section > p:first-of-type { margin-top: 1rem; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--accent-soft);
+    color: var(--ink);
+    padding: 0.08em 0.34em;
+    border-radius: 3px;
+  }
+
+  /* ---- section framing ---- */
+  section { margin-top: 4.5rem; }
+  .sec-head {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.4rem;
+  }
+  .sec-head .eyebrow { display: block; margin-bottom: 0.5rem; }
+  .sec-num {
+    color: var(--accent);
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+  }
+
+  /* ---- figures ---- */
+  figure {
+    margin: 2.4rem auto;
+    max-width: var(--wide);
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  .fig-frame {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.6rem 1.4rem 1.1rem;
+  }
+  .fig-label { display: block; margin-bottom: 1rem; }
+  figcaption {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 0.9rem;
+    max-width: 44rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* ---- code ---- */
+  .code-fig { margin: 2rem auto; max-width: var(--wide); }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 1.15rem 1.3rem;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    line-height: 1.62;
+    tab-size: 4;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .c  { color: var(--ink-soft); font-style: italic; }
+  .s  { color: var(--valid); }
+  .k  { color: var(--accent); font-weight: 500; }
+  .code-cap {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.55rem;
+  }
+  .code-cap b { color: var(--accent); font-weight: 500; }
+
+  /* ---- tables ---- */
+  .table-fig { margin: 2rem auto; max-width: var(--wide); overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink-soft);
+  }
+  td code, th code { font-size: 0.82em; background: var(--code-bg); }
+  .verdict { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; white-space: nowrap; }
+  .v-ok  { color: var(--valid); }
+  .v-flag{ color: var(--deviation); }
+
+  /* ---- callout ---- */
+  .note {
+    max-width: var(--measure);
+    margin: 1.8rem auto 0;
+    padding: 1rem 1.2rem;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+  .note .kicker { display:block; margin-bottom: 0.35rem; color: var(--accent); }
+
+  /* ---- lists ---- */
+  ul.plain { max-width: var(--measure); margin: 1.2rem auto 0; padding: 0; list-style: none; }
+  ul.plain li {
+    position: relative;
+    padding: 0.75rem 0 0.75rem 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  ul.plain li:last-child { border-bottom: 1px solid var(--rule); }
+  ul.plain li::before {
+    content: "";
+    position: absolute; left: 0; top: 1.15rem;
+    width: 7px; height: 7px;
+    background: var(--deviation);
+    border-radius: 1px;
+  }
+  ul.plain li b { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; }
+
+  /* ---- header / hero ---- */
+  header.hero {
+    padding: clamp(3.5rem, 9vw, 6rem) 0 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .byline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 2rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem;
+  }
+  footer {
+    margin-top: 5rem;
+    border-top: 1px solid var(--rule);
+    padding: 2.5rem 0 4rem;
+  }
+  footer p { max-width: var(--measure); margin-inline: auto; color: var(--ink-soft); font-size: 0.95rem; }
+
+  /* section number in margin on wide screens */
+  @media (min-width: 60rem) {
+    .sec-head { position: relative; }
+    .sec-head .sec-num-rail {
+      position: absolute;
+      left: -3.5rem;
+      top: 2.1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
+    }
+  }
+  .sec-num-rail { display: none; }
+  @media (min-width: 60rem) { .sec-num-rail { display: block; } .sec-head h2 .sec-num { display: none; } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: color 0.15s ease; }
+  }
+
+  @media print {
+    .sitebar { padding-top: 0.4rem; }
+    header.hero { padding: 1rem 0; }
+    section { margin-top: 2rem; }
+    figure, .fig-frame, pre, table, .note, .table-fig, .code-fig { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    a { color: inherit; }
+    .byline a { text-decoration: underline; }
+  }
+</style>
+<style>
+  .doc-list { list-style: none; padding: 0; margin: 2rem auto 0; max-width: var(--measure); }
+  .doc-list li { border-top: 1px solid var(--rule); padding: 1.1rem 0; }
+  .doc-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .doc-link { text-decoration: none; }
+  .doc-title {
+    font-family: "IBM Plex Sans", sans-serif; font-weight: 600;
+    font-size: 1.12rem; letter-spacing: -0.01em; color: var(--ink);
+    transition: color 0.15s ease;
+  }
+  .doc-link:hover .doc-title { color: var(--accent); }
+  .doc-step {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.72rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+    margin-left: 0.6rem;
+  }
+  .doc-desc { color: var(--ink-soft); font-size: 0.96rem; margin-top: 0.3rem; }
+  .doc-meta {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.75rem;
+    color: var(--ink-soft); margin-top: 0.45rem;
+  }
+  .doc-meta a { color: var(--ink-soft); }
+  .ref { max-width: var(--measure); margin: 2.5rem auto 0; }
+  .ref h2 {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.75rem; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+    border: 0; margin: 0 0 0.8rem;
+  }
+  .ref ul { padding-left: 1.1rem; margin: 0; }
+  .ref li { margin: 0.35rem 0; color: var(--ink-soft); }
+  .soon { color: var(--ink-soft); font-style: italic; }
+</style>
+</head>
+<body>
+
+<nav class="sitebar">
+  <a href="https://tidyedi.com">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#1F6B4D"/>
+      <rect x="11" y="15" width="35" height="5.4" rx="2.7" fill="#F3F8F5" opacity="0.34"/>
+      <rect x="18" y="26" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="37" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="48" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+    </svg>
+    <span>Tidy<span class="edi">EDI</span></span>
+  </a>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">x12&#8209;tidy &nbsp;&middot;&nbsp; Documentation</span>
+    <h1>Docs</h1>
+    <p class="thesis">Engineering notes on how x12-tidy reads a malformed X12
+      interchange &mdash; one per build step &mdash; plus the design and
+      diagnostic-code reference.</p>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Engineering notes</span>
+      <h2>How each piece works</h2>
+    </div>
+
+    <ul class="doc-list">
+      <li>
+        <a class="doc-link" href="finding-the-elusive-isa-line.html"><span class="doc-title">Finding the Elusive ISA Line</span></a><span class="doc-step">Step&nbsp;1</span>
+        <div class="doc-desc">Locating the ISA line in a file that strips it, prepends to it and
+          re-encodes it &mdash; why fixed byte offsets and a regex both fail, and the five
+          techniques that replace them.</div>
+        <div class="doc-meta">~2,400 words &nbsp;&middot;&nbsp;
+          <a href="finding-the-elusive-isa-line.md">Markdown</a> &nbsp;&middot;&nbsp;
+          <a href="finding-the-elusive-isa-line.pdf">PDF</a></div>
+      </li>
+      <li>
+        <a class="doc-link" href="those-pesky-delimiters.html"><span class="doc-title">Those Pesky Delimiters</span></a><span class="doc-step">Step&nbsp;2</span>
+        <div class="doc-desc">Reading the four X12 delimiters &mdash; element, repetition,
+          component, terminator &mdash; out of that run when every byte offset the standard
+          uses has moved.</div>
+        <div class="doc-meta">~1,900 words &nbsp;&middot;&nbsp;
+          <a href="those-pesky-delimiters.md">Markdown</a> &nbsp;&middot;&nbsp;
+          <a href="those-pesky-delimiters.pdf">PDF</a></div>
+      </li>
+    </ul>
+    <p class="soon" style="max-width: var(--measure); margin: 1.4rem auto 0;">
+      More as the build moves forward &mdash; element widths and reconstruction, the
+      recovery path, the GS and ST envelopes.</p>
+  </section>
+
+  <section class="ref">
+    <h2>Reference</h2>
+    <ul>
+      <li><a href="design.md">design.md</a> &mdash; philosophy, the two-path architecture,
+        the diagnostic-code scheme; decisions that span modules.</li>
+      <li><a href="diagnostics.md">diagnostics.md</a> &mdash; every diagnostic code x12-tidy
+        can emit. Generated from the registry.</li>
+      <li><a href="https://github.com/tidyedi/x12-tidy">github.com/tidyedi/x12-tidy</a>
+        &mdash; source, issues, releases.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>x12-tidy is the free CLI and Python library behind
+      <a href="https://tidyedi.com">TidyEDI</a>. Apache-2.0.</p>
+  </footer>
+
+</div>
+</body>
+</html>
