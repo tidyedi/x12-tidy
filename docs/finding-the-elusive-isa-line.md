@@ -17,6 +17,11 @@ and re-encode it. The byte offsets don't survive that. Neither does the regex
 you'd reach for next. This note is what does — and how it names every deviation
 it steps over.
 
+> This is act one of [the x12-tidy method](the-x12-tidy-method.md): the only
+> things the tool must be certain of are the four delimiters, and it earns them
+> from structure before it trusts anything else. Locating the ISA line is the
+> *precondition* for that — not the goal.
+
 ---
 
 ## 1. The ISA line is load-bearing
@@ -153,6 +158,13 @@ terminal** — it does not go to recovery. More than 16 separators is unrecovera
 by definition: a segment whose separator appears in its own data has no
 unambiguous parse. And you cannot parse delimiters out of a run that does not have
 16 elements — there is nothing coherent to parse.
+
+That is why the bar is *these three checks and no others*. They are exactly the
+facts the next step needs to split the line into 16 elements without ambiguity
+and recover the delimiters — [the one thing the whole tool must get
+right](the-x12-tidy-method.md#earn-the-delimiters-first). Anything stronger would
+reject files the delimiters can still be read from; anything weaker would hand
+the next step a run it cannot trust.
 
 Everything *past* the bar — is `ISA05` a valid qualifier, are the fixed widths
 right, is the terminator a legal byte — is the next step's problem. Step 1 hands

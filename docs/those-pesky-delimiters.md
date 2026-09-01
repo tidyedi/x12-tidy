@@ -18,6 +18,11 @@ element separators. That run has the *shape* of an ISA line. This note is about
 the first thing you do with it — pull out the delimiters — and why that is
 harder than reading three bytes at three fixed offsets.
 
+> This is act two of [the x12-tidy method](the-x12-tidy-method.md). The four
+> delimiters are the one thing the tool must be certain of; everything before
+> this step exists to make this parse clean, and everything after treats its
+> result as ground truth.
+
 ---
 
 ## 1. The ISA line is a delimiter declaration
@@ -213,6 +218,11 @@ delimiter. `ISA11` is a fixed one-byte field; the fix makes anything else in it 
 too long, alphanumeric, colliding with another delimiter — a reported finding
 with the repetition separator coming back as *none*. The invariant now holds:
 **a returned delimiter is either absent or exactly one usable byte.**
+
+The split also keeps its sixteen pieces, in the result it returns. The next
+step, [Reconstructing the ISA Line](reconstructing-the-isa-line.md), takes those
+elements and the four delimiters and rebuilds the canonical 105-byte line — with
+width no longer a fact it has to trust.
 
 ---
 
