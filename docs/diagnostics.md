@@ -14,7 +14,7 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.element-embedded-newline` | warning | A carriage return or line feed sits inside an ISA element |
 | `isa.element-overflow` | fatal | An ISA element holds non-space data past its fixed width |
 | `isa.element-separator-invalid` | fatal | The element separator is an alphanumeric byte |
-| `isa.element-width` | warning | An ISA element is not its fixed width |
+| `isa.element-width` | error | An ISA element is not its fixed width |
 | `isa.gs-not-found` | fatal | No GS header found after the ISA segment |
 | `isa.interchange-too-short` | fatal | Too short to be an X12 interchange |
 | `isa.isa11-not-standards-id` | error | ISA11 is not the standards identifier on an older version |
@@ -73,9 +73,9 @@ The 4th byte of the ISA segment -- the element separator -- is a letter or digit
 
 ### `isa.element-width`
 
-*warning* — An ISA element is not its fixed width
+*error* — An ISA element is not its fixed width
 
-Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is 9, and so on. This element was shorter (space-padded on the right to fit) or longer only by trailing spaces (trimmed). The value itself is unchanged. A sender that right-trims blank fixed-width fields is the usual cause; conventional fixed-offset parsers cannot read such a file at all.
+Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is 9, and so on. This element was shorter (space-padded on the right to fit) or longer only by trailing spaces (trimmed). The value itself is unchanged. A sender that right-trims blank fixed-width fields is the usual cause. This is an error, not a warning: the ISA line is no longer 105 bytes, and conventional VAN services and fixed-offset parsers cannot read the interchange at all until it is repaired.
 
 ### `isa.gs-not-found`
 

@@ -354,15 +354,17 @@ META: dict[Code, CodeMeta] = {
         ),
     ),
     Code.ISA_ELEMENT_WIDTH: CodeMeta(
-        default_severity="warning",
+        default_severity="error",
         title="An ISA element is not its fixed width",
         explanation=(
             "Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is "
             "9, and so on. This element was shorter (space-padded on the right "
             "to fit) or longer only by trailing spaces (trimmed). The value "
             "itself is unchanged. A sender that right-trims blank fixed-width "
-            "fields is the usual cause; conventional fixed-offset parsers "
-            "cannot read such a file at all."
+            "fields is the usual cause. This is an error, not a warning: the "
+            "ISA line is no longer 105 bytes, and conventional VAN services and "
+            "fixed-offset parsers cannot read the interchange at all until it "
+            "is repaired."
         ),
     ),
     Code.ISA_ELEMENT_OVERFLOW: CodeMeta(
