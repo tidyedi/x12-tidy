@@ -144,13 +144,17 @@ real segment.
 
 ### Step 2 — decompose the run
 
-`x12_tidy.isa.split_isa_line(run) -> IsaDelimiters` is the first slice: recover
-the four X12 delimiters — element separator (`run[3]`), repetition separator
-(`ISA11`, only for version `00403`+), component separator (value of `ISA16`),
-segment terminator (one byte, by rule) — by splitting the run on the element
-separator rather than reading any byte offset. See
+`x12_tidy.isa.split_isa_line(run) -> IsaDecomposition` is the first slice:
+recover the four X12 delimiters — element separator (`run[3]`), repetition
+separator (`ISA11`, only for version `00403`+), component separator (value of
+`ISA16`), segment terminator (one byte, by rule) — by splitting the run on the
+element separator rather than reading any byte offset. See
 [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
 for the walk-through, and the module docstring for the flow.
+
+The split happens **once**. `IsaDecomposition` carries the sixteen raw element
+values alongside the delimiters, and slice 2 consumes them directly rather than
+splitting the run a second time.
 
 **Severity rule for delimiters.** A finding is fatal *at this step* only if it
 blocks parsing the interchange outright. The element separator and the segment
@@ -169,9 +173,11 @@ outcome — no silent wrong answer, no partial parse, no crash.
 
 ### Step 2, slice 2 — reconstruct the canonical ISA line
 
-`x12_tidy.isa.reconstruct_isa_line(run, delimiters) -> ...` (also reachable as
-`clean_isa_line(dirty)`, which runs Step 1 → slice 1 → slice 2 in one call).
-See the module docstring in `isa/reconstruct.py` for the flow.
+`x12_tidy.isa.reconstruct_isa_line(decomposition) -> ReconstructedIsaLine` (also
+reachable as `clean_isa_line(dirty)`, which runs Step 1 → slice 1 → slice 2 in
+one call). See the module docstring in `isa/reconstruct.py` for the flow.
+`ReconstructedIsaLine` *contains* the `IsaDecomposition` it was built from rather
+than copying its fields out.
 
 **The methodology, and why it beats a fixed-offset parser.** A conventional X12
 reader trusts byte positions: the ISA line is 105 bytes, the terminator is at

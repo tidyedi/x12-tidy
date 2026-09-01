@@ -44,13 +44,19 @@ def _cmd_check(path: Path) -> int:
     result = clean_isa_line(data)
     worst_problem = _report(result.diagnostics)
 
-    print(
-        "delimiters: "
-        f"element={result.element_separator!r} "
-        f"repetition={result.repetition_separator!r} "
-        f"component={result.component_separator!r} "
-        f"terminator={result.segment_terminator!r}"
-    )
+    decomposition = result.decomposition
+    if decomposition is not None:
+        found = decomposition.segment_terminator
+        terminator = f"{found!r}"
+        if result.isa_line is not None and found != result.segment_terminator:
+            terminator += f" (normalised to {result.segment_terminator!r})"
+        print(
+            "delimiters: "
+            f"element={decomposition.element_separator!r} "
+            f"repetition={decomposition.repetition_separator!r} "
+            f"component={decomposition.component_separator!r} "
+            f"terminator={terminator}"
+        )
 
     if result.isa_line is None:
         return 1 if worst_problem else 0

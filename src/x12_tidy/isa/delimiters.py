@@ -56,13 +56,18 @@ REPETITION_SEPARATOR_MIN_VERSION = b"00403"
 
 
 @dataclass
-class IsaDelimiters:
-    """The delimiters recovered from an ISA-line run.
+class IsaDecomposition:
+    """The ISA line taken apart: the four delimiters, the trailing bytes, and
+    the sixteen raw element values.
+
+    The split happens once, here. Reconstruction consumes :attr:`elements`
+    directly rather than splitting the run a second time.
 
     Field values are filled in best-effort even when a fatal was raised, so the
     diagnostics always have context; check :attr:`usable` before trusting them.
     ``repetition_separator`` is ``None`` when the version predates it or when
-    ISA11 does not carry one.
+    ISA11 does not carry one. ``elements`` is empty on the structural fatals
+    (misaligned split, ISA16 absent) where there is nothing to hand on.
     """
 
     element_separator: bytes
@@ -70,6 +75,9 @@ class IsaDelimiters:
     component_separator: bytes
     segment_terminator: bytes
     trailing: bytes
+    #: ISA01..ISA16 exactly as split -- not width-checked. ISA16 is its one-byte
+    #: value (the component separator), with the terminator and trailing removed.
+    elements: tuple[bytes, ...] = ()
     diagnostics: list[Diagnostic] = field(default_factory=list)
 
     @property
@@ -95,7 +103,7 @@ def _version_has_repetition_separator(version: bytes) -> bool | None:
     return None
 
 
-def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
+def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
     """Recover the delimiters from ``run`` -- the byte run from
     :func:`~x12_tidy.isa.extract_isa_line`. ``base_offset`` is the offset of
     ``run`` within the original input, added to every diagnostic offset.
@@ -112,7 +120,9 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
             "tag and an element separator.",
             offset=base_offset,
         ))
-        return IsaDelimiters(element_separator, None, b"", b"", b"", diags)
+        return IsaDecomposition(
+            element_separator, None, b"", b"", b"", diagnostics=diags
+        )
 
     parts = run.split(element_separator)
 
@@ -127,7 +137,9 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
             f"element separator is wrong or occurs inside ISA06/ISA08 data.",
             offset=base_offset,
         ))
-        return IsaDelimiters(element_separator, None, b"", b"", b"", diags)
+        return IsaDecomposition(
+            element_separator, None, b"", b"", b"", diagnostics=diags
+        )
 
     version = parts[12]
     isa11 = parts[11]
@@ -141,7 +153,9 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
             "or segment terminator.",
             offset=last_piece_offset,
         ))
-        return IsaDelimiters(element_separator, None, b"", b"", b"", diags)
+        return IsaDecomposition(
+            element_separator, None, b"", b"", b"", diagnostics=diags
+        )
 
     component_separator = last_piece[0:1]
     after = last_piece[1:]
@@ -319,11 +333,12 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDelimiters:
                 offset=trailing_offset,
             ))
 
-    return IsaDelimiters(
+    return IsaDecomposition(
         element_separator,
         repetition_separator,
         component_separator,
         segment_terminator,
         trailing,
-        diags,
+        elements=(*parts[1:16], component_separator),
+        diagnostics=diags,
     )

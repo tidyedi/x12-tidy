@@ -13,10 +13,10 @@
 
 from __future__ import annotations
 
-from x12_tidy.isa.delimiters import IsaDelimiters, split_isa_line
+from x12_tidy.isa.delimiters import IsaDecomposition, split_isa_line
 from x12_tidy.isa.isa_line import IsaLineResult, extract_isa_line
 from x12_tidy.isa.reconstruct import (
-    CleanIsaLine,
+    ReconstructedIsaLine,
     clean_isa_line,
     reconstruct_isa_line,
 )
@@ -24,9 +24,9 @@ from x12_tidy.isa.reconstruct import (
 __all__ = [
     "IsaLineResult",
     "extract_isa_line",
-    "IsaDelimiters",
+    "IsaDecomposition",
     "split_isa_line",
-    "CleanIsaLine",
+    "ReconstructedIsaLine",
     "clean_isa_line",
     "reconstruct_isa_line",
 ]

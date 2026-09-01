@@ -10,11 +10,12 @@ The methodology, and why it works where fixed-offset parsers do not:
   delimiters, and they do it from *structure* (the ``ISA`` tag, the ``GS``
   boundary, exactly sixteen element separators) -- never from a byte offset or
   an element width. So they succeed on an ISA line that is the "wrong" length.
-* Once those delimiters are in hand with **no fatal**, width stops being
-  load-bearing. The run splits into exactly sixteen elements on the element
-  separator; each element is then normalised to its fixed width; the line is
-  reassembled. A blank fixed-width field the sender right-trimmed -- which kills
-  a conventional parser outright -- is simply padded back here.
+* Once :class:`~x12_tidy.isa.IsaDecomposition` comes back with **no fatal**,
+  width stops being load-bearing. The sixteen elements are already split
+  (:attr:`IsaDecomposition.elements` -- no second split here); each is
+  normalised to its fixed width, and the line is reassembled at 105 bytes. A
+  blank fixed-width field the sender right-trimmed -- which kills a conventional
+  parser outright -- is simply padded back.
 
 Repairs (each carries a diagnostic so a human can veto):
 
@@ -25,7 +26,8 @@ Repairs (each carries a diagnostic so a human can veto):
 * an element shorter than its fixed width -> space-padded on the right.
 * an element longer than its width by trailing spaces only -> trimmed.
 * the segment terminator -> normalised to ``~`` (it is not part of the 105-byte
-  line; it is returned alongside).
+  line; the reconstructed line carries none, and :attr:`ReconstructedIsaLine.
+  segment_terminator` reports the canonical byte).
 
 Refuses -- ``isa_line`` is ``None``, one fatal diagnostic:
 
@@ -47,7 +49,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from x12_tidy.diagnostics import Code, Diagnostic
-from x12_tidy.isa.delimiters import IsaDelimiters, split_isa_line
+from x12_tidy.isa.delimiters import IsaDecomposition, split_isa_line
 from x12_tidy.isa.isa_line import extract_isa_line
 
 #: Fixed byte width of each ISA element, ISA01..ISA16. The sum is 86; with the
@@ -72,21 +74,20 @@ _REPETITION_SEPARATOR_INDEX = 11
 
 
 @dataclass
-class CleanIsaLine:
+class ReconstructedIsaLine:
     """The canonical ISA line and every deviation found producing it.
 
     ``isa_line`` is the 105-byte canonical line, or ``None`` when the input is
     terminally broken. ``elements`` is the sixteen width-correct element values
-    (empty when ``isa_line`` is ``None``). ``diagnostics`` spans the whole
-    pipeline: locating the run, recovering the delimiters, and reconstruction.
+    (empty when ``isa_line`` is ``None``). ``decomposition`` is the slice-1
+    result this was built from (``None`` only when Step 1 never returned a run).
+    ``diagnostics`` spans the whole pipeline: locating the run, recovering the
+    delimiters, and reconstruction.
     """
 
     isa_line: bytes | None
     elements: tuple[bytes, ...]
-    element_separator: bytes
-    repetition_separator: bytes | None
-    component_separator: bytes
-    segment_terminator: bytes
+    decomposition: IsaDecomposition | None
     diagnostics: list[Diagnostic] = field(default_factory=list)
 
     @property
@@ -94,79 +95,66 @@ class CleanIsaLine:
         """The input needed no repair and tripped no finding."""
         return not self.diagnostics
 
+    @property
+    def segment_terminator(self) -> bytes:
+        """The terminator the reconstructed line uses -- always
+        :data:`CANONICAL_TERMINATOR` when a line was produced. The byte the
+        sender actually used is on ``decomposition.segment_terminator``."""
+        if self.isa_line is not None:
+            return CANONICAL_TERMINATOR
+        if self.decomposition is not None:
+            return self.decomposition.segment_terminator
+        return b""
 
-def clean_isa_line(dirty: bytes) -> CleanIsaLine:
+
+def clean_isa_line(dirty: bytes) -> ReconstructedIsaLine:
     """Locate, recover delimiters, and reconstruct the canonical ISA line from
     raw bytes. See the module docstring for the repair / refuse contract."""
     located = extract_isa_line(dirty)
-    diagnostics: list[Diagnostic] = list(located.diagnostics)
-
     if located.isa_line is None:
-        return CleanIsaLine(None, (), b"", None, b"", b"", diagnostics)
+        return ReconstructedIsaLine(None, (), None, list(located.diagnostics))
 
-    delimiters = split_isa_line(located.isa_line, base_offset=located.isa_start)
-    diagnostics += delimiters.diagnostics
-
-    return _finish(located.isa_line, delimiters, diagnostics, located.isa_start)
+    decomposition = split_isa_line(located.isa_line, base_offset=located.isa_start)
+    result = reconstruct_isa_line(decomposition, base_offset=located.isa_start)
+    result.diagnostics = list(located.diagnostics) + result.diagnostics
+    return result
 
 
 def reconstruct_isa_line(
-    run: bytes, delimiters: IsaDelimiters, *, base_offset: int = 0
-) -> CleanIsaLine:
-    """Reconstruct the canonical line from an already-located run and its
-    recovered delimiters. :func:`clean_isa_line` is the usual entry point; use
-    this when the run and delimiters are already in hand. ``base_offset`` is
-    added to every diagnostic offset."""
-    return _finish(run, delimiters, list(delimiters.diagnostics), base_offset)
+    decomposition: IsaDecomposition, *, base_offset: int = 0
+) -> ReconstructedIsaLine:
+    """Reconstruct the canonical line from a slice-1 :class:`IsaDecomposition`.
+    :func:`clean_isa_line` is the usual entry point; use this when the
+    decomposition is already in hand. ``base_offset`` is added to every
+    reconstruction diagnostic offset.
 
+    The returned ``diagnostics`` carries the decomposition's findings followed
+    by reconstruction's.
+    """
+    diagnostics: list[Diagnostic] = list(decomposition.diagnostics)
 
-def _finish(
-    run: bytes,
-    delimiters: IsaDelimiters,
-    diagnostics: list[Diagnostic],
-    base_offset: int,
-) -> CleanIsaLine:
-    if not delimiters.usable:
-        return CleanIsaLine(
-            None, (),
-            delimiters.element_separator, delimiters.repetition_separator,
-            delimiters.component_separator, delimiters.segment_terminator,
-            diagnostics,
-        )
+    if not decomposition.usable:
+        return ReconstructedIsaLine(None, (), decomposition, diagnostics)
 
     line, elements, rebuild_diagnostics = _rebuild(
-        run, delimiters, base_offset=base_offset
+        decomposition, base_offset=base_offset
     )
     diagnostics += rebuild_diagnostics
-
-    return CleanIsaLine(
-        line,
-        elements,
-        delimiters.element_separator,
-        delimiters.repetition_separator,
-        delimiters.component_separator,
-        CANONICAL_TERMINATOR if line is not None else delimiters.segment_terminator,
-        diagnostics,
-    )
+    return ReconstructedIsaLine(line, elements, decomposition, diagnostics)
 
 
 def _rebuild(
-    run: bytes, delimiters: IsaDelimiters, *, base_offset: int
+    decomposition: IsaDecomposition, *, base_offset: int
 ) -> tuple[bytes | None, tuple[bytes, ...], list[Diagnostic]]:
     """The reconstruction itself. ``(line, elements, diagnostics)`` -- ``line``
     is ``None`` and ``elements`` empty on a fatal."""
     diagnostics: list[Diagnostic] = []
-
-    # delimiters.usable guarantees exactly 17 parts: "ISA", ISA01..ISA15, then
-    # ISA16 + terminator + trailing. ISA16's value is the component separator.
-    parts = run.split(delimiters.element_separator)
-    raw_elements = [*parts[1:16], parts[16][:1]]
-
-    carries_repetition_separator = delimiters.repetition_separator is not None
+    element_separator = decomposition.element_separator
+    carries_repetition_separator = decomposition.repetition_separator is not None
 
     elements: list[bytes] = []
     for index, (raw, width) in enumerate(
-        zip(raw_elements, ISA_ELEMENT_WIDTHS), start=1
+        zip(decomposition.elements, ISA_ELEMENT_WIDTHS), start=1
     ):
         name = f"ISA{index:02d}"
         value = raw
@@ -220,9 +208,7 @@ def _rebuild(
         elements.append(value)
 
     line = (
-        _ISA_TAG
-        + delimiters.element_separator
-        + delimiters.element_separator.join(elements)
+        _ISA_TAG + element_separator + element_separator.join(elements)
     )
 
     if len(line) != CANONICAL_LENGTH:

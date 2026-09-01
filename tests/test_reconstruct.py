@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Michael Schertz
 
-"""Step 2, slice 2 -- ``clean_isa_line`` reconstructs the canonical ISA line.
+"""Step 2, slice 2 -- reconstruct the canonical ISA line.
 
 Two things are checked:
 
@@ -20,7 +20,13 @@ import pytest
 from _isa_helpers import ISA_ELEMENTS, build_isa
 from test_isa_line_roundtrip import _CORPUS
 from x12_tidy.diagnostics import Code
-from x12_tidy.isa import CleanIsaLine, clean_isa_line
+from x12_tidy.isa import (
+    ReconstructedIsaLine,
+    clean_isa_line,
+    extract_isa_line,
+    reconstruct_isa_line,
+    split_isa_line,
+)
 from x12_tidy.isa.reconstruct import CANONICAL_LENGTH, ISA_ELEMENT_WIDTHS
 
 
@@ -31,7 +37,7 @@ def _elements(**overrides: bytes) -> list[bytes]:
     return els
 
 
-def _codes(result: CleanIsaLine) -> list[Code]:
+def _codes(result: ReconstructedIsaLine) -> list[Code]:
     return [d.code for d in result.diagnostics]
 
 
@@ -118,7 +124,7 @@ def test_terminator_is_normalised_to_tilde() -> None:
 def test_sender_delimiters_are_kept() -> None:
     result = clean_isa_line(build_isa(sep=b"|", term=b"\n"))
     assert result.isa_line is not None
-    assert result.element_separator == b"|"
+    assert result.decomposition.element_separator == b"|"
     assert result.isa_line.startswith(b"ISA|")
 
 
@@ -129,8 +135,28 @@ def test_repetition_separator_element_is_not_rewritten() -> None:
         build_isa(elements=_elements(isa11=b"^", isa12=b"00501"))
     )
     assert result.isa_line is not None
-    assert result.repetition_separator == b"^"
+    assert result.decomposition.repetition_separator == b"^"
     assert result.elements[10] == b"^"
+
+
+def test_internal_spaces_in_an_element_are_preserved() -> None:
+    result = clean_isa_line(
+        build_isa(elements=_elements(isa6=b"AB CD".ljust(15)))
+    )
+    assert result.isa_line is not None
+    assert result.elements[5] == b"AB CD".ljust(15)  # inner space kept, not collapsed
+
+
+def test_reconstruct_isa_line_direct_entry() -> None:
+    located = extract_isa_line(build_isa(elements=_elements(isa2=b"", isa4=b"")))
+    assert located.isa_line is not None
+    decomposition = split_isa_line(located.isa_line, base_offset=located.isa_start)
+
+    result = reconstruct_isa_line(decomposition, base_offset=located.isa_start)
+    assert result.isa_line is not None
+    assert len(result.isa_line) == CANONICAL_LENGTH
+    assert result.decomposition is decomposition
+    assert _codes(result) == [Code.ISA_ELEMENT_WIDTH, Code.ISA_ELEMENT_WIDTH]
 
 
 def test_upstream_fatal_is_propagated_with_no_line() -> None:
@@ -176,7 +202,9 @@ def test_reconstruction_round_trips(dirty: bytes) -> None:
     assert len(first.isa_line) == CANONICAL_LENGTH
 
     # re-parse the reconstruction from the front of the pipeline
-    reparsed = clean_isa_line(_wrap(first.isa_line, first.element_separator))
+    reparsed = clean_isa_line(
+        _wrap(first.isa_line, first.decomposition.element_separator)
+    )
 
     # the line is a fixed point: cleaning it again changes nothing
     assert reparsed.isa_line == first.isa_line
