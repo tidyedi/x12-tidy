@@ -77,6 +77,12 @@ class Code(Enum):
     ISA_TRAILING_NEWLINE = "isa.trailing-newline"
     ISA_TRAILING_JUNK = "isa.trailing-junk"
 
+    # -- isa: reconstructing the canonical ISA line (Step 2, slice 2) --
+    ISA_ELEMENT_EMBEDDED_NEWLINE = "isa.element-embedded-newline"
+    ISA_ELEMENT_WIDTH = "isa.element-width"
+    ISA_ELEMENT_OVERFLOW = "isa.element-overflow"
+    ISA_LINE_LENGTH = "isa.line-length"
+
     @property
     def area(self) -> str:
         return self.value.split(".", 1)[0]
@@ -331,6 +337,54 @@ META: dict[Code, CodeMeta] = {
             "terminator and the GS header -- stray spaces, a comment, or "
             "transport framing. They are not part of the interchange and are "
             "stripped on reconstruction."
+        ),
+    ),
+
+    # -- isa: reconstructing the canonical ISA line (Step 2, slice 2) --
+    Code.ISA_ELEMENT_EMBEDDED_NEWLINE: CodeMeta(
+        default_severity="warning",
+        title="A carriage return or line feed sits inside an ISA element",
+        explanation=(
+            "An ISA element value contains a CR or LF byte -- almost always a "
+            "sender that hard-wrapped the ISA segment across lines. The "
+            "delimiters are already known at this point, so the byte cannot be "
+            "a delimiter (ISA11 when it carries the repetition separator, and "
+            "ISA16, are left untouched); it is replaced with a space and the "
+            "element is then measured against its fixed width."
+        ),
+    ),
+    Code.ISA_ELEMENT_WIDTH: CodeMeta(
+        default_severity="warning",
+        title="An ISA element is not its fixed width",
+        explanation=(
+            "Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is "
+            "9, and so on. This element was shorter (space-padded on the right "
+            "to fit) or longer only by trailing spaces (trimmed). The value "
+            "itself is unchanged. A sender that right-trims blank fixed-width "
+            "fields is the usual cause; conventional fixed-offset parsers "
+            "cannot read such a file at all."
+        ),
+    ),
+    Code.ISA_ELEMENT_OVERFLOW: CodeMeta(
+        default_severity="fatal",
+        title="An ISA element holds non-space data past its fixed width",
+        explanation=(
+            "This element is longer than its fixed width and the overflow is "
+            "real data, not padding. There is no way to know the sender's "
+            "intent -- an element separator may have been dropped, merging two "
+            "fields, or the sender may have overrun the field. Guessing either "
+            "way risks corrupting an identifier, so the ISA line is not "
+            "reconstructed."
+        ),
+    ),
+    Code.ISA_LINE_LENGTH: CodeMeta(
+        default_severity="fatal",
+        title="The reconstructed ISA line is not 105 bytes",
+        explanation=(
+            "After padding every element to its fixed width and rejoining on "
+            "the element separator, the ISA line is not the required 105 bytes. "
+            "This should not happen once the per-element widths hold; it is a "
+            "guard that refuses to emit a non-conformant line."
         ),
     ),
 }
