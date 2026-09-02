@@ -22,13 +22,13 @@ searched for, yes, that too.)
 **Engineering notes** — the method, then one note per build step, at
 [docs.tidyedi.com](https://docs.tidyedi.com):
 
-- [The x12-tidy Method](docs/the-x12-tidy-method.md)
+- [The x12-tidy Method](https://docs.tidyedi.com/the-x12-tidy-method.html)
   — the one idea: earn the delimiters from structure first, then the rest is easy
 - [Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
   — Step 1: locating the ISA line when fixed byte offsets and a regex both fail
 - [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
   — Step 2, slice 1: reading the four delimiters from a line whose byte offsets have moved
-- [Reconstructing the ISA Line](docs/reconstructing-the-isa-line.md)
+- [Reconstructing the ISA Line](https://docs.tidyedi.com/reconstructing-the-isa-line.html)
   — Step 2, slice 2: rebuilding the canonical 105-byte line once the delimiters are trusted
 
 **Reference** — [`design.md`](docs/design.md) (architecture, the diagnostic-code
