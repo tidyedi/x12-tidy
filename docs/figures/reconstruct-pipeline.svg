@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 236" role="img" aria-label="A five-stage pipeline. Split into sixteen, done once in the delimiter step. Then carriage returns and line feeds inside an element become spaces, safe only because the terminator and element separator have already done their work. Then each element is padded or trimmed to its fixed width. Then the line is reassembled on the sender's own element separator. Then a guard checks the length is 105. The output is the canonical line.">
+  <style>
+    svg { color: #17212b; }
+    :root {
+      --ink-soft: #566470; --rule: #d2d8dc;
+      --accent: #0e6f86; --accent-soft: #dbeaee;
+      --valid: #467a4e; --deviation: #ac5230;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg { color: #dce4e9; }
+      :root {
+        --ink-soft: #93a1ac; --rule: #2a343d;
+        --accent: #45b8d0; --accent-soft: #123039;
+        --valid: #74b079; --deviation: #dd8b64;
+      }
+    }
+    text { font-family: 'IBM Plex Mono', ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", monospace; }
+  </style>
+  <g font-family="'IBM Plex Mono', monospace" font-size="11">
+    <g>
+      <rect x="10" y="20" width="130" height="46" rx="4" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <text x="75" y="40" text-anchor="middle" fill="var(--ink-soft)">split &#8594; 16</text>
+      <text x="75" y="56" text-anchor="middle" fill="var(--ink-soft)" font-size="9">done once, upstream</text>
+
+      <rect x="158" y="20" width="140" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="228" y="40" text-anchor="middle" fill="currentColor">CR / LF &#8594; space</text>
+      <text x="228" y="56" text-anchor="middle" fill="var(--ink-soft)" font-size="9">inside text elements only</text>
+
+      <rect x="316" y="20" width="140" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="386" y="40" text-anchor="middle" fill="currentColor">pad / trim to width</text>
+      <text x="386" y="56" text-anchor="middle" fill="var(--ink-soft)" font-size="9">per element, all 16</text>
+
+      <rect x="474" y="20" width="150" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="549" y="40" text-anchor="middle" fill="currentColor">reassemble</text>
+      <text x="549" y="56" text-anchor="middle" fill="var(--ink-soft)" font-size="9">sender's own separator</text>
+
+      <rect x="642" y="20" width="128" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="706" y="40" text-anchor="middle" fill="currentColor">length == 105?</text>
+      <text x="706" y="56" text-anchor="middle" fill="var(--ink-soft)" font-size="9">guard, should never fire</text>
+
+      <path d="M140 43 L156 43" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#rc-p)"/>
+      <path d="M298 43 L314 43" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#rc-p)"/>
+      <path d="M456 43 L472 43" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#rc-p)"/>
+      <path d="M624 43 L640 43" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#rc-p)"/>
+      <defs>
+        <marker id="rc-p" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 1 L9 5 L0 9" fill="none" stroke="var(--ink-soft)" stroke-width="1.6"/>
+        </marker>
+      </defs>
+    </g>
+
+    <text x="12" y="104" fill="var(--ink-soft)" font-size="10.5" letter-spacing="0.06em">SAFE ONLY BECAUSE</text>
+    <g font-size="10.5">
+      <text x="158" y="126" fill="currentColor">a stray CR / LF still inside an element</text>
+      <text x="158" y="142" fill="currentColor">is provably not the terminator and not</text>
+      <text x="158" y="158" fill="currentColor">an element separator &#8212; both already resolved</text>
+
+      <text x="316" y="188" fill="currentColor">the boundaries are fixed; only the</text>
+      <text x="316" y="204" fill="currentColor">lengths move &#8212; so padding cannot</text>
+      <text x="316" y="220" fill="currentColor">shift a field into a neighbour</text>
+    </g>
+
+    <path d="M228 68 L228 112" fill="none" stroke="var(--rule)" stroke-width="1.1"/>
+    <path d="M386 68 L386 174" fill="none" stroke="var(--rule)" stroke-width="1.1"/>
+
+    <rect x="642" y="150" width="128" height="40" rx="4" fill="var(--accent-soft)" stroke="var(--valid)" stroke-width="1.6"/>
+    <text x="706" y="167" text-anchor="middle" fill="var(--valid)" font-size="10.5" font-weight="700">canonical line</text>
+    <text x="706" y="182" text-anchor="middle" fill="var(--ink-soft)" font-size="9">105 bytes</text>
+    <path d="M706 68 L706 148" fill="none" stroke="var(--valid)" stroke-width="1.3" marker-end="url(#rc-p2)"/>
+    <defs>
+      <marker id="rc-p2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0 1 L9 5 L0 9" fill="none" stroke="var(--valid)" stroke-width="1.6"/>
+      </marker>
+    </defs>
+  </g>
+</svg>

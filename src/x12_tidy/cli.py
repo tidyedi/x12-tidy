@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from x12_tidy.diagnostics import Code, Diagnostic, all_codes, meta, resolved_severity
-from x12_tidy.isa import extract_isa_line, split_isa_line
+from x12_tidy.isa import clean_isa_line
 
 
 def _report(diags: list[Diagnostic]) -> bool:
@@ -41,23 +41,29 @@ def _cmd_check(path: Path) -> int:
         print(f"cannot read {path}: {exc}", file=sys.stderr)
         return 2
 
-    result = extract_isa_line(data)
+    result = clean_isa_line(data)
     worst_problem = _report(result.diagnostics)
+
+    decomposition = result.decomposition
+    if decomposition is not None:
+        found = decomposition.segment_terminator
+        terminator = f"{found!r}"
+        if result.isa_line is not None and found != result.segment_terminator:
+            terminator += f" (normalised to {result.segment_terminator!r})"
+        print(
+            "delimiters: "
+            f"element={decomposition.element_separator!r} "
+            f"repetition={decomposition.repetition_separator!r} "
+            f"component={decomposition.component_separator!r} "
+            f"terminator={terminator}"
+        )
 
     if result.isa_line is None:
         return 1 if worst_problem else 0
 
-    print(f"isa_line: {len(result.isa_line)} bytes  {result.isa_line!r}")
-
-    delimiters = split_isa_line(result.isa_line, base_offset=result.isa_start)
-    worst_problem |= _report(delimiters.diagnostics)
-    print(
-        "delimiters: "
-        f"element={delimiters.element_separator!r} "
-        f"repetition={delimiters.repetition_separator!r} "
-        f"component={delimiters.component_separator!r} "
-        f"terminator={delimiters.segment_terminator!r}"
-    )
+    print(f"isa_line ({len(result.isa_line)} bytes): {result.isa_line!r}")
+    if result.was_clean:
+        print("was_clean: yes")
     return 1 if worst_problem else 0
 
 

@@ -407,6 +407,14 @@
 
     <ul class="doc-list">
       <li>
+        <a class="doc-link" href="the-x12-tidy-method.html"><span class="doc-title">The x12-tidy Method</span></a><span class="doc-step">The&nbsp;spine</span>
+        <div class="doc-desc">The one idea the step notes hang off &mdash; earn the four delimiters
+          from structure first, and then everything downstream is ordinary parsing plus
+          repair. Read this first.</div>
+        <div class="doc-meta">~1,100 words &nbsp;&middot;&nbsp;
+          <a href="the-x12-tidy-method.md">Markdown</a></div>
+      </li>
+      <li>
         <a class="doc-link" href="finding-the-elusive-isa-line.html"><span class="doc-title">Finding the Elusive ISA Line</span></a><span class="doc-step">Step&nbsp;1</span>
         <div class="doc-desc">Locating the ISA line in a file that strips it, prepends to it and
           re-encodes it &mdash; why fixed byte offsets and a regex both fail, and the five
@@ -416,7 +424,7 @@
           <a href="finding-the-elusive-isa-line.pdf">PDF</a></div>
       </li>
       <li>
-        <a class="doc-link" href="those-pesky-delimiters.html"><span class="doc-title">Those Pesky Delimiters</span></a><span class="doc-step">Step&nbsp;2</span>
+        <a class="doc-link" href="those-pesky-delimiters.html"><span class="doc-title">Those Pesky Delimiters</span></a><span class="doc-step">Step&nbsp;2 &middot; slice&nbsp;1</span>
         <div class="doc-desc">Reading the four X12 delimiters &mdash; element, repetition,
           component, terminator &mdash; out of that run when every byte offset the standard
           uses has moved.</div>
@@ -424,9 +432,17 @@
           <a href="those-pesky-delimiters.md">Markdown</a> &nbsp;&middot;&nbsp;
           <a href="those-pesky-delimiters.pdf">PDF</a></div>
       </li>
+      <li>
+        <a class="doc-link" href="reconstructing-the-isa-line.html"><span class="doc-title">Reconstructing the ISA Line</span></a><span class="doc-step">Step&nbsp;2 &middot; slice&nbsp;2</span>
+        <div class="doc-desc">Once the delimiters are trusted, rebuilding the canonical
+          105-byte line &mdash; and why that is a total function: non-fatal in, one canonical
+          line out, everything else a named fatal.</div>
+        <div class="doc-meta">~1,500 words &nbsp;&middot;&nbsp;
+          <a href="reconstructing-the-isa-line.md">Markdown</a></div>
+      </li>
     </ul>
     <p class="soon" style="max-width: var(--measure); margin: 1.4rem auto 0;">
-      More as the build moves forward &mdash; element widths and reconstruction, the
+      More as the build moves forward &mdash; the whole-document cleanse, the
       recovery path, the GS and ST envelopes.</p>
   </section>
 

@@ -7,16 +7,26 @@
   ``GS``).
 * :func:`split_isa_line` -- Step 2, slice 1: recover the four delimiters from
   that run.
+* :func:`clean_isa_line` / :func:`reconstruct_isa_line` -- Step 2, slice 2:
+  reconstruct the canonical 105-byte ISA line from the run and its delimiters.
 """
 
 from __future__ import annotations
 
-from x12_tidy.isa.delimiters import IsaDelimiters, split_isa_line
+from x12_tidy.isa.delimiters import IsaDecomposition, split_isa_line
 from x12_tidy.isa.isa_line import IsaLineResult, extract_isa_line
+from x12_tidy.isa.reconstruct import (
+    ReconstructedIsaLine,
+    clean_isa_line,
+    reconstruct_isa_line,
+)
 
 __all__ = [
     "IsaLineResult",
     "extract_isa_line",
-    "IsaDelimiters",
+    "IsaDecomposition",
     "split_isa_line",
+    "ReconstructedIsaLine",
+    "clean_isa_line",
+    "reconstruct_isa_line",
 ]

@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The x12-tidy Method</title>
+<meta name="description" content="The one idea the x12-tidy engineering notes are all about: don't derive the four X12 delimiters from the structure — earn them first, from the weakest facts that pin them down, and then the structure is ordinary parsing plus repair.">
+<link rel="canonical" href="https://docs.tidyedi.com/the-x12-tidy-method.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="The x12-tidy Method">
+<meta property="og:description" content="Earn the four X12 delimiters from structure first; then everything downstream is ordinary parsing plus repair. The spine the per-step notes hang off.">
+<meta property="og:url" content="https://docs.tidyedi.com/the-x12-tidy-method.html">
+<meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root {
+    --paper:   #edf0f2;
+    --surface:  #f8fafb;
+    --ink:      #17212b;
+    --ink-soft: #566470;
+    --rule:     #d2d8dc;
+    --accent:   #0e6f86;
+    --accent-soft: #dbeaee;
+    --valid:    #467a4e;
+    --deviation:#ac5230;
+    --code-bg:  #f1f4f5;
+    --code-ink: #223039;
+
+    --measure: 40rem;
+    --wide: 53rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #0f151b;
+      --surface:  #161f27;
+      --ink:      #dce4e9;
+      --ink-soft: #93a1ac;
+      --rule:     #2a343d;
+      --accent:   #45b8d0;
+      --accent-soft: #123039;
+      --valid:    #74b079;
+      --deviation:#dd8b64;
+      --code-bg:  #131b22;
+      --code-ink: #c9d5dc;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #0f151b;
+    --surface:  #161f27;
+    --ink:      #dce4e9;
+    --ink-soft: #93a1ac;
+    --rule:     #2a343d;
+    --accent:   #45b8d0;
+    --accent-soft: #123039;
+    --valid:    #74b079;
+    --deviation:#dd8b64;
+    --code-bg:  #131b22;
+    --code-ink: #c9d5dc;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  .sitebar {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sitebar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  .sitebar svg { width: 26px; height: 26px; display: block; border-radius: 6px; }
+  .sitebar .edi { color: #1F6B4D; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .sitebar .edi { color: #5CBB8E; }
+  }
+  :root[data-theme="dark"] .sitebar .edi { color: #5CBB8E; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 1.0625rem;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: 0 1.5rem; }
+  .prose { max-width: var(--measure); margin-inline: auto; }
+
+  /* ---- type ---- */
+  h1, h2, h3, .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0.6rem 0 0;
+  }
+  .thesis {
+    font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--ink);
+    font-style: italic;
+    max-width: 34rem;
+    margin: 1.6rem 0 0;
+  }
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+    position: relative;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2.4rem 0 0.4rem;
+    color: var(--ink);
+  }
+  p { margin: 1.1rem 0 0; }
+  .prose > p:first-child, section > p:first-of-type { margin-top: 1rem; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--accent-soft);
+    color: var(--ink);
+    padding: 0.08em 0.34em;
+    border-radius: 3px;
+  }
+
+  /* ---- section framing ---- */
+  section { margin-top: 4.5rem; }
+  .sec-head {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.4rem;
+  }
+  .sec-head .eyebrow { display: block; margin-bottom: 0.5rem; }
+  .sec-num {
+    color: var(--accent);
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+  }
+
+  /* ---- figures ---- */
+  figure {
+    margin: 2.4rem auto;
+    max-width: var(--wide);
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  .fig-frame {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.6rem 1.4rem 1.1rem;
+  }
+  .fig-label { display: block; margin-bottom: 1rem; }
+  figcaption {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 0.9rem;
+    max-width: 44rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* ---- code ---- */
+  .code-fig { margin: 2rem auto; max-width: var(--wide); }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 1.15rem 1.3rem;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    line-height: 1.62;
+    tab-size: 4;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .c  { color: var(--ink-soft); font-style: italic; }
+  .s  { color: var(--valid); }
+  .k  { color: var(--accent); font-weight: 500; }
+  .code-cap {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.55rem;
+  }
+  .code-cap b { color: var(--accent); font-weight: 500; }
+
+  /* ---- tables ---- */
+  .table-fig { margin: 2rem auto; max-width: var(--wide); overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink-soft);
+  }
+  td code, th code { font-size: 0.82em; background: var(--code-bg); }
+  .verdict { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; white-space: nowrap; }
+  .v-ok  { color: var(--valid); }
+  .v-flag{ color: var(--deviation); }
+
+  /* ---- callout ---- */
+  .note {
+    max-width: var(--measure);
+    margin: 1.8rem auto 0;
+    padding: 1rem 1.2rem;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+  .note .kicker { display:block; margin-bottom: 0.35rem; color: var(--accent); }
+
+  /* ---- lists ---- */
+  ul.plain { max-width: var(--measure); margin: 1.2rem auto 0; padding: 0; list-style: none; }
+  ul.plain li {
+    position: relative;
+    padding: 0.75rem 0 0.75rem 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  ul.plain li:last-child { border-bottom: 1px solid var(--rule); }
+  ul.plain li::before {
+    content: "";
+    position: absolute; left: 0; top: 1.15rem;
+    width: 7px; height: 7px;
+    background: var(--deviation);
+    border-radius: 1px;
+  }
+  ul.plain li b { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; }
+
+  /* ---- header / hero ---- */
+  header.hero {
+    padding: clamp(3.5rem, 9vw, 6rem) 0 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .byline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 2rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem;
+  }
+  footer {
+    margin-top: 5rem;
+    border-top: 1px solid var(--rule);
+    padding: 2.5rem 0 4rem;
+  }
+  footer p { max-width: var(--measure); margin-inline: auto; color: var(--ink-soft); font-size: 0.95rem; }
+
+  /* section number in margin on wide screens */
+  @media (min-width: 60rem) {
+    .sec-head { position: relative; }
+    .sec-head .sec-num-rail {
+      position: absolute;
+      left: -3.5rem;
+      top: 2.1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
+    }
+  }
+  .sec-num-rail { display: none; }
+  @media (min-width: 60rem) { .sec-num-rail { display: block; } .sec-head h2 .sec-num { display: none; } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: color 0.15s ease; }
+  }
+
+  @media print {
+    .sitebar { padding-top: 0.4rem; }
+    header.hero { padding: 1rem 0; }
+    section { margin-top: 2rem; }
+    figure, .fig-frame, pre, table, .note, .table-fig, .code-fig { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    a { color: inherit; }
+    .byline a { text-decoration: underline; }
+  }
+
+  /* ---- method-note extras ---- */
+  .acts { list-style: none; padding: 0; margin: 2rem auto 0; max-width: var(--measure); }
+  .acts li {
+    border-top: 1px solid var(--rule);
+    padding: 1.1rem 0;
+    display: grid;
+    grid-template-columns: 3.4rem 1fr;
+    gap: 0.4rem 1rem;
+  }
+  .acts li:last-child { border-bottom: 1px solid var(--rule); }
+  .acts .act-n {
+    font-family: "IBM Plex Mono", monospace; font-size: 0.78rem;
+    color: var(--accent); letter-spacing: 0.08em; padding-top: 0.15rem;
+  }
+  .acts .act-t {
+    font-family: "IBM Plex Sans", sans-serif; font-weight: 600;
+    font-size: 1.02rem; color: var(--ink);
+  }
+  .acts .act-d { grid-column: 2; color: var(--ink-soft); font-size: 0.96rem; }
+  .acts a { text-decoration: none; }
+  .acts a:hover .act-t { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="sitebar">
+  <a href="https://tidyedi.com">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#1F6B4D"/>
+      <rect x="11" y="15" width="35" height="5.4" rx="2.7" fill="#F3F8F5" opacity="0.34"/>
+      <rect x="18" y="26" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="37" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="48" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+    </svg>
+    <span>Tidy<span class="edi">EDI</span></span>
+  </a>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">X12 EDI &nbsp;&middot;&nbsp; Method</span>
+    <h1>The x12-tidy&nbsp;Method</h1>
+    <p class="thesis">Don't derive the four X12 delimiters from the structure.
+      Earn them first &mdash; from the weakest facts that pin them down &mdash;
+      and then the structure is ordinary parsing plus repair.</p>
+    <div class="byline">
+      <span>The spine</span>
+      <span>x12&#8209;tidy&nbsp;/&nbsp;isa</span>
+      <span>~1,100 words</span>
+      <span><a href="finding-the-elusive-isa-line.html">Note 1: locate</a></span>
+      <span><a href="those-pesky-delimiters.html">Note 2: delimiters</a></span>
+      <span><a href="reconstructing-the-isa-line.html">Note 3: reconstruct</a></span>
+    </div>
+  </header>
+
+  <section id="intro" style="margin-top:3.5rem">
+    <div class="prose">
+      <p>The engineering notes were written as related&#8209;but&#8209;separate
+      lessons &mdash; locating the ISA line, reading its delimiters, rebuilding
+      it. The through&#8209;line is a single architectural idea, and it was
+      implicit. This note makes it explicit. Read it once; each note then picks up
+      one act of the same argument.</p>
+    </div>
+  </section>
+
+  <section id="problem">
+    <div class="sec-head">
+      <span class="sec-num-rail">01</span>
+      <span class="eyebrow">The setup</span>
+      <h2><span class="sec-num">01&nbsp;&nbsp;</span>The problem, stated once</h2>
+    </div>
+    <div class="prose">
+      <p>An ANSI X12 interchange is a stack of envelopes: <code>ISA</code> wraps
+      one or more <code>GS</code> functional groups, each wrapping <code>ST</code>
+      transaction sets, closed in reverse by <code>SE</code>, <code>GE</code>,
+      <code>IEA</code>. The first segment, <code>ISA</code>, is a fixed
+      105&#8209;byte record whose byte positions <em>declare the delimiters</em>
+      for everything after it &mdash; element separator at byte&nbsp;3, component
+      separator at byte&nbsp;104, segment terminator at byte&nbsp;105, and
+      (version <code>00403</code>+) the repetition separator in
+      <code>ISA11</code>.</p>
+      <p>The standard is strict about this, so the obvious reader is offset
+      arithmetic: slice the delimiters out at 3, 104, 105; check <code>GS</code>
+      sits at 106; parse the rest. It works on conformant files and fails on a
+      large share of real ones, because the senders x12-tidy exists for
+      <strong>strip empty elements, prepend bytes, append newlines, and
+      re&#8209;encode</strong>. Three bytes of BOM and one omitted element are
+      enough to put byte&nbsp;106 in the middle of a field. The byte positions are
+      not an invariant.</p>
+    </div>
+
+    <figure>
+      <div class="fig-frame">
+        <span class="fig-label">Fig. 1 &mdash; The envelope stack, and the record that declares its punctuation</span>
+        <svg viewBox="0 0 780 296" role="img" aria-label="The ISA segment wraps GS functional groups, which wrap ST transaction sets, closed in reverse by SE, GE, IEA. The ISA record is fixed at 105 bytes and its byte positions declare the four delimiters. When a BOM is prepended and a blank element omitted, byte 106 no longer lands on GS — it lands inside a field.">
+  <g font-family="'IBM Plex Mono', monospace" font-size="11.5">
+    <text x="12" y="16" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">THE ENVELOPE STACK</text>
+    <g transform="translate(12,26)">
+      <rect x="0" y="0" width="470" height="96" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="10" y="17" fill="var(--accent)">ISA</text>
+      <rect x="60" y="24" width="392" height="60" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="70" y="40" fill="currentColor">GS</text>
+      <rect x="112" y="46" width="320" height="30" rx="3" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/>
+      <text x="122" y="65" fill="var(--ink-soft)">ST &#8230; SE</text>
+      <text x="330" y="17" fill="var(--ink-soft)" font-size="10">&#8230; IEA / GE / SE close in reverse</text>
+    </g>
+
+    <line x1="12" y1="146" x2="768" y2="146" stroke="var(--rule)" stroke-width="1.1"/>
+
+    <text x="12" y="172" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">THE ISA RECORD &#8212; 105 bytes, positions declare the delimiters</text>
+    <g transform="translate(12,182)" font-size="10.5">
+      <rect x="0" y="0" width="40" height="26" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="20" y="17" text-anchor="middle" fill="currentColor">ISA</text>
+      <rect x="40" y="0" width="14" height="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3"/><text x="47" y="17" text-anchor="middle" fill="var(--accent)">*</text>
+      <rect x="54" y="0" width="470" height="26" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3"/><text x="289" y="17" text-anchor="middle" fill="currentColor">ISA01 * &#8230; * ISA15 *</text>
+      <rect x="524" y="0" width="14" height="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3"/><text x="531" y="17" text-anchor="middle" fill="var(--accent)">:</text>
+      <rect x="538" y="0" width="14" height="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3"/><text x="545" y="17" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="552" y="0" width="46" height="26" fill="none" stroke="var(--valid)" stroke-width="1.5"/><text x="575" y="17" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <text x="47" y="42" text-anchor="middle" fill="var(--ink-soft)" font-size="9">byte 3</text>
+      <text x="531" y="42" text-anchor="middle" fill="var(--ink-soft)" font-size="9">104</text>
+      <text x="545" y="42" text-anchor="middle" fill="var(--ink-soft)" font-size="9">105</text>
+      <text x="575" y="42" text-anchor="middle" fill="var(--valid)" font-size="9">106</text>
+    </g>
+
+    <g transform="translate(12,244)" font-size="10.5">
+      <rect x="0" y="0" width="34" height="26" fill="none" stroke="var(--deviation)" stroke-width="1.3"/><text x="17" y="17" text-anchor="middle" fill="var(--deviation)">BOM</text>
+      <rect x="34" y="0" width="40" height="26" fill="none" stroke="currentColor" stroke-width="1.3"/><text x="54" y="17" text-anchor="middle" fill="currentColor">ISA</text>
+      <rect x="74" y="0" width="14" height="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3"/><text x="81" y="17" text-anchor="middle" fill="var(--accent)">*</text>
+      <rect x="88" y="0" width="430" height="26" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 3"/><text x="303" y="17" text-anchor="middle" fill="currentColor">ISA01 ** &#8230; (one blank element omitted)</text>
+      <rect x="518" y="0" width="14" height="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3"/><text x="525" y="17" text-anchor="middle" fill="var(--accent)">:</text>
+      <rect x="532" y="0" width="14" height="26" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3"/><text x="539" y="17" text-anchor="middle" fill="var(--accent)">~</text>
+      <rect x="546" y="0" width="46" height="26" fill="none" stroke="var(--valid)" stroke-width="1.5"/><text x="569" y="17" text-anchor="middle" fill="var(--valid)">GS*</text>
+      <line x1="575" y1="-58" x2="575" y2="26" stroke="var(--deviation)" stroke-width="1.4" stroke-dasharray="3 2"/>
+      <text x="600" y="17" fill="var(--deviation)">byte 106 lands here &#8212; inside a field</text>
+    </g>
+  </g>
+        </svg>
+      </div>
+      <figcaption>The dashed line is byte&nbsp;106. In the conformant record it
+        falls exactly on <code>GS</code>. Prepend three bytes of BOM and drop one
+        blank element and it falls two fields short. <b>An offset parser has
+        already failed here</b> &mdash; before it has read a single value.</figcaption>
+    </figure>
+  </section>
+
+  <section id="inversion">
+    <div class="sec-head">
+      <span class="sec-num-rail">02</span>
+      <span class="eyebrow">The idea</span>
+      <h2><span class="sec-num">02&nbsp;&nbsp;</span>The inversion</h2>
+    </div>
+    <div class="prose">
+      <p>Every conventional X12 reader derives the delimiters <em>from</em> the
+      structure &mdash; it trusts the offsets, reads the bytes there, and moves
+      on. When the structure is wrong, it has already failed.</p>
+      <p>x12-tidy goes the other way. <strong>The only things it must be certain
+      of are the four delimiters.</strong> So it earns those first, from the
+      weakest structural facts that still pin them down &mdash; never from an
+      offset or a width &mdash; and only then looks at anything else. Once the
+      delimiters are known and nothing fatal was found, they are ground truth:
+      every later step (split the elements, check the widths, rebuild the line,
+      walk the body) is ordinary parsing plus repair.</p>
+    </div>
+
+    <figure>
+      <div class="fig-frame">
+        <span class="fig-label">Fig. 2 &mdash; Two directions through the same line</span>
+        <svg viewBox="0 0 780 250" role="img" aria-label="A conventional reader goes structure to delimiters to values, and fails at the first step when the structure is wrong. x12-tidy goes shape to delimiters, treats the delimiters as ground truth, then structure, then values.">
+  <g font-family="'IBM Plex Mono', monospace" font-size="11.5">
+    <text x="12" y="16" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">CONVENTIONAL READER</text>
+    <g transform="translate(12,30)">
+      <rect x="0" y="0" width="150" height="40" rx="4" fill="none" stroke="var(--deviation)" stroke-width="1.5"/>
+      <text x="75" y="24" text-anchor="middle" fill="var(--deviation)">trust the offsets</text>
+      <path d="M150 20 L188 20" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#m-a)"/>
+      <rect x="190" y="0" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="265" y="24" text-anchor="middle" fill="currentColor">read delimiters</text>
+      <path d="M340 20 L378 20" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#m-a)"/>
+      <rect x="380" y="0" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="455" y="24" text-anchor="middle" fill="currentColor">values</text>
+      <text x="545" y="18" fill="var(--deviation)" font-size="10.5">structure wrong</text>
+      <text x="545" y="33" fill="var(--deviation)" font-size="10.5">&#8594; already failed</text>
+    </g>
+
+    <line x1="12" y1="104" x2="768" y2="104" stroke="var(--rule)" stroke-width="1.1"/>
+
+    <text x="12" y="132" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">x12-tidy</text>
+    <g transform="translate(12,146)">
+      <rect x="0" y="0" width="120" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="60" y="24" text-anchor="middle" fill="currentColor">shape</text>
+      <path d="M120 20 L152 20" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#m-a)"/>
+      <rect x="154" y="0" width="150" height="40" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.7"/>
+      <text x="229" y="19" text-anchor="middle" fill="var(--accent)" font-weight="700">delimiters</text>
+      <text x="229" y="33" text-anchor="middle" fill="var(--ink-soft)" font-size="9">ground truth</text>
+      <path d="M304 20 L336 20" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#m-a)"/>
+      <rect x="338" y="0" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="413" y="24" text-anchor="middle" fill="currentColor">structure</text>
+      <path d="M488 20 L520 20" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#m-a)"/>
+      <rect x="522" y="0" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      <text x="597" y="24" text-anchor="middle" fill="currentColor">values</text>
+    </g>
+    <defs>
+      <marker id="m-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0 1 L9 5 L0 9" fill="none" stroke="var(--ink-soft)" stroke-width="1.6"/>
+      </marker>
+    </defs>
+  </g>
+        </svg>
+      </div>
+      <figcaption>Same bytes, opposite order. The conventional reader needs the
+        structure to be right before it can read the punctuation. x12-tidy needs
+        only the punctuation &mdash; and gets it from facts a broken structure
+        leaves intact. <b>That is the whole method; everything else is a
+        consequence.</b></figcaption>
+    </figure>
+  </section>
+
+  <section id="earn">
+    <div class="sec-head">
+      <span class="sec-num-rail">03</span>
+      <span class="eyebrow">Each note, one act</span>
+      <h2><span class="sec-num">03&nbsp;&nbsp;</span>Earn the delimiters first</h2>
+    </div>
+    <div class="prose">
+      <p>This reframes what each early step is <em>for</em>:</p>
+    </div>
+
+    <ul class="acts">
+      <li>
+        <span class="act-n">Note 1</span>
+        <a href="finding-the-elusive-isa-line.html"><span class="act-t">Locating the ISA line</span></a>
+        <span class="act-d">is not the goal &mdash; it is the precondition for a
+          clean delimiter parse. Its minimum bar (begins with <code>ISA</code>,
+          ends immediately before <code>GS</code>&#8202;+&#8202;the element
+          separator, holds <em>exactly</em> 16 element separators) is exactly the
+          set of facts sufficient to guarantee the next step can split the line
+          into 16 elements without ambiguity. No more, no less. A run that fails
+          the bar is fatal and terminal &mdash; not because locating failed, but
+          because the delimiters could not be trusted out of it.</span>
+      </li>
+      <li>
+        <span class="act-n">Note 2</span>
+        <a href="those-pesky-delimiters.html"><span class="act-t">Reading the delimiters</span></a>
+        <span class="act-d">anchors on the one offset that cannot move
+          (byte&nbsp;3, before the first variable&#8209;width field) and the one
+          boundary the sender cannot shift (the <code>GS</code> header), and
+          recovers the other three from a single <code>split</code>. A finding
+          here is fatal only if a delimiter the whole interchange needs is
+          unusable.</span>
+      </li>
+      <li>
+        <span class="act-n">Note 3</span>
+        <a href="reconstructing-the-isa-line.html"><span class="act-t">Reconstruction</span></a>
+        <span class="act-d">is where the payoff lands: with the delimiters
+          trusted, element width stops being load&#8209;bearing, and a
+          right&#8209;trimmed blank field &mdash; fatal to an offset parser
+          &mdash; is just padding to restore.</span>
+      </li>
+    </ul>
+  </section>
+
+  <section id="the-ladder">
+    <div class="sec-head">
+      <span class="sec-num-rail">04</span>
+      <span class="eyebrow">The shape of the pipeline</span>
+      <h2><span class="sec-num">04&nbsp;&nbsp;</span>The ladder: shape &rarr; delimiters &rarr; structure &rarr; values</h2>
+    </div>
+    <div class="prose">
+      <p>Each phase validates exactly one more thing and hands the next a stronger
+      guarantee. Nothing checks a property the phase below it has not already
+      established.</p>
+    </div>
+
+    <div class="table-fig">
+      <table>
+        <thead><tr><th>phase</th><th>establishes</th><th>hands forward</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>locate</b></td>
+            <td>the run has the <em>shape</em> of an ISA line (tag, <code>GS</code> boundary, 16 separators)</td>
+            <td>a run the delimiters can be parsed from</td>
+          </tr>
+          <tr>
+            <td><b>delimiters</b></td>
+            <td>the four delimiter bytes, and which are usable</td>
+            <td>ground&#8209;truth delimiters</td>
+          </tr>
+          <tr>
+            <td><b>structure</b></td>
+            <td>16 elements at fixed width, one canonical 105&#8209;byte line, terminator <code>~</code></td>
+            <td>a conformant ISA line</td>
+          </tr>
+          <tr>
+            <td><b>values</b> <span style="color:var(--ink-soft)">(later)</span></td>
+            <td><code>ISA05</code> is a real qualifier, <code>ISA09</code> a real date, <code>ISA13</code> matches <code>IEA02</code></td>
+            <td>a validated interchange</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <p>A note that says &ldquo;that is the next step's problem&rdquo; is pointing
+      down this ladder.</p>
+    </div>
+  </section>
+
+  <section id="never-guess">
+    <div class="sec-head">
+      <span class="sec-num-rail">05</span>
+      <span class="eyebrow">The refusal rule</span>
+      <h2><span class="sec-num">05&nbsp;&nbsp;</span>Never guess the sender's intent</h2>
+    </div>
+    <div class="prose">
+      <p>Every terminal decision in the system is the same move. The tool
+      <em>could</em> guess, but a wrong guess silently corrupts an identifier
+      &mdash; a sender or receiver ID, a control number &mdash; so instead it
+      refuses and names the fault:</p>
+    </div>
+
+    <ul class="plain">
+      <li><b>more than 16 element separators</b> &rarr; the line has no
+        unambiguous parse (a separator inside <code>ISA06</code>&#8202;/&#8202;<code>ISA08</code>
+        data, or a false <code>GS</code> match). Terminal.</li>
+      <li><b>an element longer than its width with real data in the overflow</b>
+        &rarr; a dropped element separator merged two fields, <em>or</em> the
+        sender overran one. Both are plausible; the tool will not pick. Terminal.</li>
+      <li><b><code>ISA11</code> holding something other than <code>U</code> on a
+        pre&#8209;<code>00403</code> version</b> &rarr; a wrong value in an
+        informational field, not a repetition separator the sender
+        &ldquo;meant.&rdquo; Reported, not used.</li>
+    </ul>
+
+    <div class="prose">
+      <p>Permissive parsing tolerates a lot. It never invents.</p>
+    </div>
+  </section>
+
+  <section id="proof">
+    <div class="sec-head">
+      <span class="sec-num-rail">06</span>
+      <span class="eyebrow">Proving it</span>
+      <h2><span class="sec-num">06&nbsp;&nbsp;</span>Prove it against hostile input</h2>
+    </div>
+    <div class="prose">
+      <p>Each step ships an adversarial sweep &mdash; tens to hundreds of
+      thousands of mutated, truncated, mis&#8209;encoded inputs &mdash; checked
+      against a single invariant: no crash, and either a clean refusal (a fatal
+      diagnostic, no output) or a result that satisfies the phase's contract.
+      There is no third outcome &mdash; no silent wrong answer, no partial parse.
+      The notes each end with the sweep that backs them.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><span class="eyebrow" style="display:block;margin-bottom:0.6rem">The pattern</span>
+      Find the one thing you must be certain of. Earn it from the weakest
+      assumptions that pin it down, anchored on what the adversary cannot move.
+      Treat it as ground truth from then on. Build the rest as a ladder where each
+      rung only checks what the rung below already guaranteed. Refuse &mdash;
+      loudly, by name &mdash; rather than guess. And prove the whole thing against
+      inputs written to break it.</p>
+  </footer>
+
+</div>
+</body>
+</html>

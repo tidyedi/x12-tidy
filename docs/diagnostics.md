@@ -11,12 +11,16 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.component-separator-invalid` | error | The component separator is not a usable delimiter |
 | `isa.delimiter-collision` | fatal | Two delimiters are the same byte |
 | `isa.delimiter-misaligned` | fatal | The ISA line cannot be decomposed at the element separator |
+| `isa.element-embedded-newline` | warning | A carriage return or line feed sits inside an ISA element |
+| `isa.element-overflow` | fatal | An ISA element holds non-space data past its fixed width |
 | `isa.element-separator-invalid` | fatal | The element separator is an alphanumeric byte |
+| `isa.element-width` | error | An ISA element is not its fixed width |
 | `isa.gs-not-found` | fatal | No GS header found after the ISA segment |
 | `isa.interchange-too-short` | fatal | Too short to be an X12 interchange |
 | `isa.isa11-not-standards-id` | error | ISA11 is not the standards identifier on an older version |
 | `isa.isa16-missing` | fatal | Nothing follows ISA15 in the ISA line |
 | `isa.leading-bytes` | warning | Bytes precede the ISA segment |
+| `isa.line-length` | fatal | The reconstructed ISA line is not 105 bytes |
 | `isa.no-functional-group` | fatal | ISA segment is not bounded by a GS functional-group header |
 | `isa.no-tag` | fatal | No ISA segment tag in the file |
 | `isa.repetition-separator-invalid` | error | The repetition separator is not a usable delimiter |
@@ -49,11 +53,29 @@ The segment terminator is the same byte as the element separator or the componen
 
 Splitting the ISA line on the element separator did not land the component separator and segment terminator on delimiter-shaped bytes. The usual cause is an element separator byte occurring inside ISA06 or ISA08 data, which shifts every field after it. The line holds the right number of separators but the wrong boundaries, so it cannot be trusted.
 
+### `isa.element-embedded-newline`
+
+*warning* — A carriage return or line feed sits inside an ISA element
+
+An ISA element value contains a CR or LF byte -- almost always a sender that hard-wrapped the ISA segment across lines. The delimiters are already known at this point, so the byte cannot be a delimiter (ISA11 when it carries the repetition separator, and ISA16, are left untouched); it is replaced with a space and the element is then measured against its fixed width.
+
+### `isa.element-overflow`
+
+*fatal* — An ISA element holds non-space data past its fixed width
+
+This element is longer than its fixed width and the overflow is real data, not padding. There is no way to know the sender's intent -- an element separator may have been dropped, merging two fields, or the sender may have overrun the field. Guessing either way risks corrupting an identifier, so the ISA line is not reconstructed.
+
 ### `isa.element-separator-invalid`
 
 *fatal* — The element separator is an alphanumeric byte
 
 The 4th byte of the ISA segment -- the element separator -- is a letter or digit. It cannot be distinguished from the data inside elements, so no segment in the interchange can be split reliably. X12 element separators are non-alphanumeric (commonly '*').
+
+### `isa.element-width`
+
+*error* — An ISA element is not its fixed width
+
+Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is 9, and so on. This element was shorter (space-padded on the right to fit) or longer only by trailing spaces (trimmed). The value itself is unchanged. A sender that right-trims blank fixed-width fields is the usual cause. This is an error, not a warning: the ISA line is no longer 105 bytes, and conventional VAN services and fixed-offset parsers cannot read the interchange at all until it is repaired.
 
 ### `isa.gs-not-found`
 
@@ -84,6 +106,12 @@ After the 16th element separator there are no bytes at all -- no ISA16 (which ca
 *warning* — Bytes precede the ISA segment
 
 One or more bytes appear before the ISA segment. A conformant X12 file begins with 'ISA' as its very first byte. Common causes are a UTF-8 byte-order mark, whitespace, or transport headers left in by the sender. x12-tidy strips them and continues; the reported bytes are what was removed.
+
+### `isa.line-length`
+
+*fatal* — The reconstructed ISA line is not 105 bytes
+
+After padding every element to its fixed width and rejoining on the element separator, the ISA line is not the required 105 bytes. This should not happen once the per-element widths hold; it is a guard that refuses to emit a non-conformant line.
 
 ### `isa.no-functional-group`
 

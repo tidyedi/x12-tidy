@@ -144,13 +144,17 @@ real segment.
 
 ### Step 2 — decompose the run
 
-`x12_tidy.isa.split_isa_line(run) -> IsaDelimiters` is the first slice: recover
-the four X12 delimiters — element separator (`run[3]`), repetition separator
-(`ISA11`, only for version `00403`+), component separator (value of `ISA16`),
-segment terminator (one byte, by rule) — by splitting the run on the element
-separator rather than reading any byte offset. See
+`x12_tidy.isa.split_isa_line(run) -> IsaDecomposition` is the first slice:
+recover the four X12 delimiters — element separator (`run[3]`), repetition
+separator (`ISA11`, only for version `00403`+), component separator (value of
+`ISA16`), segment terminator (one byte, by rule) — by splitting the run on the
+element separator rather than reading any byte offset. See
 [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
 for the walk-through, and the module docstring for the flow.
+
+The split happens **once**. `IsaDecomposition` carries the sixteen raw element
+values alongside the delimiters, and slice 2 consumes them directly rather than
+splitting the run a second time.
 
 **Severity rule for delimiters.** A finding is fatal *at this step* only if it
 blocks parsing the interchange outright. The element separator and the segment
@@ -159,10 +163,104 @@ separator (composite elements) and the repetition separator (repeats) are
 conditional → an unusable one is an `error`, which the body parser escalates to
 fatal at the first segment that needs it.
 
-Still to come in Step 2: element-width validation, reconstructing the canonical
-105-byte line, and the round-trip acceptance test. The recovery path (a
-permissive re-parse when the standard gate fails) is drafted in scratch
-(`recover_isa_line.py`) and folds into this work.
+**The decompose is lossless.** For any run `split_isa_line` does not fatal,
+`element_separator.join(run.split(element_separator)) == run` — the seventeen
+pieces (`ISA`, ISA01–ISA15, `ISA16` + terminator + trailing) are a complete,
+reversible account of the run. `tests/test_isa_line_roundtrip.py` proves this
+across the corpus: every input is *either* a clean refusal (no line, or not
+usable, always with a `fatal`) *or* a lossless account. There is no third
+outcome — no silent wrong answer, no partial parse, no crash.
+
+### Step 2, slice 2 — reconstruct the canonical ISA line
+
+`x12_tidy.isa.reconstruct_isa_line(decomposition) -> ReconstructedIsaLine` (also
+reachable as `clean_isa_line(dirty)`, which runs Step 1 → slice 1 → slice 2 in
+one call). See the module docstring in `isa/reconstruct.py` for the flow.
+`ReconstructedIsaLine` *contains* the `IsaDecomposition` it was built from rather
+than copying its fields out.
+
+**The methodology, and why it beats a fixed-offset parser.** A conventional X12
+reader trusts byte positions: the ISA line is 105 bytes, the terminator is at
+105, each element is at a known offset. One right-trimmed blank field — a sender
+sends `ISA*00**00**ZZ*…` with ISA02/ISA04 empty instead of ten spaces — and
+every offset downstream is wrong; the reader is dead on arrival.
+
+x12-tidy inverts the dependency. The only things it must be *certain* of are the
+four delimiters, so it earns those first, from structure alone (Step 1's minimum
+bar + slice 1), making no assumption about length or width. Once slice 1 returns
+**no fatal**, the delimiters are trustworthy and width stops being load-bearing:
+
+1. split the run on the element separator → exactly sixteen elements (guaranteed
+   by the non-fatal parse);
+2. within each *text* element, replace any `\r` / `\n` with a space — a
+   hard-wrapped ISA segment. This is safe **only here**: before the delimiters
+   are known a `\r`/`\n` could be the terminator or a delimiter, so ISA16 (its
+   value *is* the component separator) and ISA11 (when it carries the repetition
+   separator, version `00403`+) are excluded by position;
+3. normalise each element to its fixed width
+   `(2,10,2,10,2,15,2,15,6,4,1,5,9,1,1,1)` — pad a short one with spaces, trim
+   one that is long by trailing spaces only;
+4. reassemble: `ISA` + the sixteen elements joined on the (unchanged) element
+   separator = 105 bytes. The terminator is normalised to `~` and returned
+   alongside (it is not one of the 105).
+
+The sender's element, component, and repetition separators are **kept as-is** —
+any valid non-alphanumeric byte is conformant; only the terminator is
+normalised.
+
+**What reconstruction repairs** (each with a `Diagnostic`):
+
+| finding | code | severity | action |
+| --- | --- | --- | --- |
+| `\r`/`\n` inside a text element | `isa.element-embedded-newline` | warning | → space, then re-measure |
+| element shorter than its fixed width | `isa.element-width` | **error** | space-pad on the right |
+| element longer only by trailing spaces | `isa.element-width` | **error** | trim to width |
+
+`isa.element-width` is an **error, not a warning**: a non-105-byte ISA line
+cannot be read by conventional VAN services or any fixed-offset parser, so the
+interchange is unprocessable until it is repaired.
+
+**What makes reconstruction refuse** (`isa_line` is `None`, one `fatal`):
+
+| finding | code | why not a guess |
+| --- | --- | --- |
+| anything slice 1 already made fatal | — | propagated |
+| element longer than its width with **real data** in the overflow | `isa.element-overflow` | intent is unknowable — a dropped element separator merged two fields, or the sender overran the field. Either guess risks corrupting an identifier (sender/receiver ID, control number). |
+| reassembled line not 105 bytes | `isa.line-length` | a guard; should never fire once the per-element widths hold |
+
+**The round-trip acceptance test.** `tests/test_reconstruct.py`: for every
+non-terminal corpus input, reconstruct, then re-parse the reconstruction through
+the whole pipeline. The reconstructed line is a **fixed point** — cleaning it
+again returns the identical bytes and elements — and none of the codes
+reconstruction owns (`isa.element-*`, `isa.leading-bytes`, `isa.trailing-*`,
+`isa.segment-terminator-*`, `isa.line-length`) reappears. Value-level findings
+(`isa.version-unrecognized`, `isa.isa11-not-standards-id`) are **out of scope**
+for this phase and may legitimately survive a round trip.
+
+**Scope boundary.** Reconstruction validates and repairs *structure* — widths,
+delimiters, the terminator, the length. It does **not** judge element *values*:
+whether ISA05 is a real qualifier, ISA09 a real date, ISA15 a valid usage
+indicator, or whether ISA13 matches IEA02. That is later work (the GS/ST
+envelope QA/QC phase).
+
+**Open naming question.** `clean_isa_line(dirty)` is currently the one-call
+pipeline entry point. The name overloads "cleaning the ISA line", which through
+Step 1 and slice 1 meant *recovering the delimiters so a clean-up is possible* —
+not producing the cleansed artifact. The raw-bytes-in → cleansed-contents-out
+orchestrator is really the whole-document cleanse (below), not an ISA-line
+function. This is flagged for resolution before the phase is finalised.
+
+**Not built yet — the whole-document cleanse.** Reconstruction produces a clean
+ISA *line*; it does not yet return cleansed *contents*. That step, once the
+terminator is known: `raw.split(segment_terminator)` → each piece must start
+with a valid segment tag → strip the inter-segment junk (line wrapping,
+transport framing) that sits after *every* terminator, not just the ISA line's →
+rejoin on `~` → splice in the reconstructed ISA line. It gets its own
+`structure.*` diagnostic. This is what makes the tool hand back a cleaned
+interchange rather than a cleaned header.
+
+The recovery path (a permissive re-parse when the standard gate fails) is
+drafted in scratch (`recover_isa_line.py`) and folds into this work.
 
 ---
 
