@@ -6,7 +6,7 @@
 from the structure — earn them first, then the structure is easy.*
 
 > **Read this as a web page:** <https://docs.tidyedi.com/the-x12-tidy-method.html>
-> This is the spine the per-step notes hang off. Read it once; each note then
+> This is the spine the other notes hang off. Read it once; each note then
 > picks up one act of the same argument.
 
 ---
@@ -46,25 +46,25 @@ of it.
 
 ## Earn the delimiters first
 
-This reframes what each early step is *for*:
+This reframes what each part of the parse is *for*:
 
-- **Locating the ISA line** ([note 1](finding-the-elusive-isa-line.md)) is not
-  the goal — it is the precondition for a clean delimiter parse. Its minimum bar
-  (begins with `ISA`, ends immediately before `GS` + the element separator,
-  holds *exactly* 16 element separators) is exactly the set of facts sufficient
-  to guarantee that the next step can split the line into 16 elements without
-  ambiguity. No more, no less. A run that fails the bar is fatal and terminal —
-  not because locating failed, but because the delimiters could not be trusted
-  out of it.
-- **Reading the delimiters** ([note 2](those-pesky-delimiters.md)) anchors on
-  the one offset that cannot move (byte 3, before the first variable-width
-  field) and the one boundary the sender cannot shift (the `GS` header), and
-  recovers the other three from a single `split`. A finding here is fatal only
-  if a delimiter the whole interchange needs is unusable.
-- **Reconstruction** ([note 3](reconstructing-the-isa-line.md)) is where the
-  payoff lands: with the delimiters trusted, element width stops being
-  load-bearing, and a right-trimmed blank field — fatal to an offset parser — is
-  just padding to restore.
+- **[Locating the ISA line](finding-the-elusive-isa-line.md)** is not the goal —
+  it is the precondition for a clean delimiter parse. Its minimum bar (begins
+  with `ISA`, ends immediately before `GS` + the element separator, holds
+  *exactly* 16 element separators) is exactly the set of facts sufficient to
+  guarantee that the delimiters can be read and the line split into 16 elements
+  without ambiguity. No more, no less. A run that fails the bar is fatal and
+  terminal — not because locating failed, but because the delimiters could not
+  be trusted out of it.
+- **[Reading the delimiters](those-pesky-delimiters.md)** anchors on the one
+  offset that cannot move (byte 3, before the first variable-width field) and
+  the one boundary the sender cannot shift (the `GS` header), and recovers the
+  other three from a single `split`. A finding here is fatal only if a delimiter
+  the whole interchange needs is unusable.
+- **[Reconstruction](reconstructing-the-isa-line.md)** is where the payoff
+  lands: with the delimiters trusted, element width stops being load-bearing,
+  and a right-trimmed blank field — fatal to an offset parser — is just padding
+  to restore.
 
 ## The ladder: shape → delimiters → structure → values
 

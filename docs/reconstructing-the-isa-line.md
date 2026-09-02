@@ -2,8 +2,8 @@
 
 # Reconstructing the ISA Line
 
-*An engineering note on Step 2 of x12-tidy: once the four delimiters are known,
-rebuilding the canonical 105-byte ISA line — and why that is a total function.*
+*An engineering note on x12-tidy: once the four delimiters are known, rebuilding
+the canonical 105-byte ISA line — and why that is a total function.*
 
 > **Read this as a web page:** <https://docs.tidyedi.com/reconstructing-the-isa-line.html>
 > (served by GitHub Pages from [`docs/reconstructing-the-isa-line.html`](reconstructing-the-isa-line.html);

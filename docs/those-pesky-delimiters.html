@@ -520,7 +520,8 @@
     <div class="prose">
       <p>Byte&nbsp;3 does not move. The tag <code>ISA</code> is exactly three bytes
       &mdash; it can't be stripped, padded or shifted, and it is the anchor
-      Step&nbsp;1 already used to find the line. Whatever byte sits at index&nbsp;3
+      <a href="finding-the-elusive-isa-line.html">locating the line</a> already
+      used. Whatever byte sits at index&nbsp;3
       of the run is the element separator, full stop. It is the one fixed offset
       that survives, because it sits <em>before</em> the first variable&#8209;width
       field.</p>
@@ -531,12 +532,12 @@
       <p class="code-cap">from <b>delimiters.py</b></p>
 <pre><code><span class="k">element_separator</span> = run[<span class="s">3</span>:<span class="s">4</span>]
 parts = run.split(element_separator)
-<span class="c"># Step 1 guarantees exactly 16 element separators -&gt; 17 parts</span>
+<span class="c"># locating the line guarantees exactly 16 element separators -&gt; 17 parts</span>
 </code></pre>
     </div>
 
     <div class="prose">
-      <p>Step&nbsp;1 guarantees the run holds <em>exactly</em> sixteen element
+      <p>Locating the run guarantees it holds <em>exactly</em> sixteen element
       separators &mdash; that is <a href="finding-the-elusive-isa-line.html">its
       minimum bar</a> for calling a run an ISA line at all &mdash; so the split
       always yields seventeen pieces.</p>
@@ -622,9 +623,9 @@ parts = run.split(element_separator)
     <div class="prose">
       <p>The element separator is checked for one thing, and it is fatal: if it is
       a letter or a digit it cannot be told apart from the data inside elements,
-      so no segment in the whole interchange splits cleanly. Step&nbsp;1 will have
-      <em>located</em> such a line &mdash; its job is permissive &mdash; but
-      Step&nbsp;2 refuses it.</p>
+      so no segment in the whole interchange splits cleanly. Locating the line
+      will have <em>found</em> such a run &mdash; that job is permissive &mdash;
+      but reading the delimiters refuses it.</p>
     </div>
   </section>
 

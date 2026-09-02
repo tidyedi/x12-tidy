@@ -4,12 +4,18 @@ The reference for *why* x12-tidy is built the way it is. Mechanics live in
 module docstrings; this document holds the decisions that span modules. It gains
 one section per step as the project moves forward.
 
-For narrative walk-throughs: [Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
-([source](finding-the-elusive-isa-line.md)) covers Step 1 — the real-world
-violations, why fixed offsets and a regex both fail, and the five techniques.
+For narrative walk-throughs, the engineering notes at
+[docs.tidyedi.com](https://docs.tidyedi.com):
+[The x12-tidy Method](https://docs.tidyedi.com/the-x12-tidy-method.html) is the
+spine — earn the delimiters from structure first. Then
+[Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
+(locating the run — real-world violations, why fixed offsets and a regex both
+fail),
 [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
-([source](those-pesky-delimiters.md)) covers Step 2 — recovering the four
-delimiters from a run whose byte offsets have all shifted.
+(recovering the four delimiters from a run whose byte offsets have all shifted),
+and
+[Reconstructing the ISA Line](https://docs.tidyedi.com/reconstructing-the-isa-line.html)
+(rebuilding the canonical 105-byte line once the delimiters are trusted).
 
 ---
 
