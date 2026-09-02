@@ -2,8 +2,8 @@
 
 # Those Pesky Delimiters
 
-*An engineering note on Step 2 of x12-tidy: reading the four X12 delimiters out
-of an ISA line that no longer sits where the standard says it should.*
+*An engineering note on x12-tidy: reading the four X12 delimiters out of an ISA
+line that no longer sits where the standard says it should.*
 
 > **Read this as a web page:** <https://docs.tidyedi.com/those-pesky-delimiters.html>
 > (served by GitHub Pages from [`docs/those-pesky-delimiters.html`](those-pesky-delimiters.html);
@@ -61,9 +61,9 @@ slid out from under you.
 ## 2. The one you can still trust: the element separator
 
 Byte 3 does not move. The tag `ISA` is exactly three bytes — it can't be
-stripped, padded, or shifted, and it is the anchor Step 1 already used to find
-the line. Whatever byte sits at index 3 of the run is the element separator, full
-stop. It is the one fixed offset that survives, because it sits *before* the
+stripped, padded, or shifted, and it is the anchor
+[locating the line](finding-the-elusive-isa-line.md) already used. Whatever byte
+sits at index 3 of the run is the element separator, full stop. It is the one fixed offset that survives, because it sits *before* the
 first variable-width field.
 
 From there, everything is a `split`:
@@ -73,9 +73,9 @@ element_separator = run[3:4]
 parts = run.split(element_separator)
 ```
 
-Step 1 guarantees the run holds *exactly* sixteen element separators — that is
-[its minimum bar](finding-the-elusive-isa-line.md) for calling a run an ISA line
-at all — so the split always yields seventeen pieces:
+Locating the run guarantees it holds *exactly* sixteen element separators — that
+is [its minimum bar](finding-the-elusive-isa-line.md) for calling a run an ISA
+line at all — so the split always yields seventeen pieces:
 
 ![run.split(element_separator) produces seventeen pieces: the literal ISA, then
 ISA01 through ISA15, and a seventeenth piece that is ISA16 followed by the
@@ -85,14 +85,15 @@ Everything after this is read from those pieces — never from byte 104, never f
 byte 105. A sender who stripped `ISA02` and `ISA04` down to nothing pulled the
 component separator eleven bytes to the left of where the standard puts it, but
 it is still the first byte of the last piece, because the *count* of separators
-and the position of `GS` did not move. This is the same move as Step 1:
-**anchor on a structural invariant, never on a byte position the sender can
+and the position of `GS` did not move. This is the same move as locating the
+line: **anchor on a structural invariant, never on a byte position the sender can
 shift.**
 
 There is one thing the element separator is checked for, and it is fatal: if it
 is a letter or a digit, it cannot be told apart from the data inside elements, so
-no segment in the whole interchange splits cleanly. Step 1 will have *located*
-such a line — its job is permissive — but Step 2 refuses it.
+no segment in the whole interchange splits cleanly. Locating the line will have
+*found* such a run — that job is permissive — but reading the delimiters refuses
+it.
 
 ---
 
@@ -136,7 +137,7 @@ be — is a letter or a digit. The component
 separator is never alphanumeric, so the decomposition is wrong — almost always
 because an element separator byte occurs *inside* `ISA06` or `ISA08` data, which
 pulled every field after it out of alignment. The line has the right *number* of
-separators — Step 1 counted them — but the wrong *boundaries*. That is terminal:
+separators — locating the line counted them — but the wrong *boundaries*. That is terminal:
 the diagnostic is emitted and parsing stops, because any repair from here is a
 guess.
 

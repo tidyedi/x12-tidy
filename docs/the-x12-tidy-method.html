@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://docs.tidyedi.com/the-x12-tidy-method.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="The x12-tidy Method">
-<meta property="og:description" content="Earn the four X12 delimiters from structure first; then everything downstream is ordinary parsing plus repair. The spine the per-step notes hang off.">
+<meta property="og:description" content="Earn the four X12 delimiters from structure first; then everything downstream is ordinary parsing plus repair. The spine the other notes hang off.">
 <meta property="og:url" content="https://docs.tidyedi.com/the-x12-tidy-method.html">
 <meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -342,24 +342,19 @@
   }
 
   /* ---- method-note extras ---- */
-  .acts { list-style: none; padding: 0; margin: 2rem auto 0; max-width: var(--measure); }
+  .acts { list-style: none; padding: 0; margin: 1.6rem auto 0; max-width: var(--measure); }
   .acts li {
     border-top: 1px solid var(--rule);
-    padding: 1.1rem 0;
-    display: grid;
-    grid-template-columns: 3.4rem 1fr;
-    gap: 0.4rem 1rem;
+    padding: 1rem 0;
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    line-height: 1.62;
   }
   .acts li:last-child { border-bottom: 1px solid var(--rule); }
-  .acts .act-n {
-    font-family: "IBM Plex Mono", monospace; font-size: 0.78rem;
-    color: var(--accent); letter-spacing: 0.08em; padding-top: 0.15rem;
-  }
   .acts .act-t {
     font-family: "IBM Plex Sans", sans-serif; font-weight: 600;
-    font-size: 1.02rem; color: var(--ink);
+    color: var(--ink);
   }
-  .acts .act-d { grid-column: 2; color: var(--ink-soft); font-size: 0.96rem; }
   .acts a { text-decoration: none; }
   .acts a:hover .act-t { color: var(--accent); }
 </style>
@@ -391,9 +386,7 @@
       <span>The spine</span>
       <span>x12&#8209;tidy&nbsp;/&nbsp;isa</span>
       <span>~1,100 words</span>
-      <span><a href="finding-the-elusive-isa-line.html">Note 1: locate</a></span>
-      <span><a href="those-pesky-delimiters.html">Note 2: delimiters</a></span>
-      <span><a href="reconstructing-the-isa-line.html">Note 3: reconstruct</a></span>
+      <span>Read this first</span>
     </div>
   </header>
 
@@ -560,28 +553,26 @@
   <section id="earn">
     <div class="sec-head">
       <span class="sec-num-rail">03</span>
-      <span class="eyebrow">Each note, one act</span>
+      <span class="eyebrow">Each part of the parse</span>
       <h2><span class="sec-num">03&nbsp;&nbsp;</span>Earn the delimiters first</h2>
     </div>
     <div class="prose">
-      <p>This reframes what each early step is <em>for</em>:</p>
+      <p>This reframes what each part of the parse is <em>for</em>:</p>
     </div>
 
     <ul class="acts">
       <li>
-        <span class="act-n">Note 1</span>
         <a href="finding-the-elusive-isa-line.html"><span class="act-t">Locating the ISA line</span></a>
         <span class="act-d">is not the goal &mdash; it is the precondition for a
           clean delimiter parse. Its minimum bar (begins with <code>ISA</code>,
           ends immediately before <code>GS</code>&#8202;+&#8202;the element
           separator, holds <em>exactly</em> 16 element separators) is exactly the
-          set of facts sufficient to guarantee the next step can split the line
-          into 16 elements without ambiguity. No more, no less. A run that fails
-          the bar is fatal and terminal &mdash; not because locating failed, but
-          because the delimiters could not be trusted out of it.</span>
+          set of facts sufficient to guarantee the delimiters can be read and the
+          line split into 16 elements without ambiguity. No more, no less. A run
+          that fails the bar is fatal and terminal &mdash; not because locating
+          failed, but because the delimiters could not be trusted out of it.</span>
       </li>
       <li>
-        <span class="act-n">Note 2</span>
         <a href="those-pesky-delimiters.html"><span class="act-t">Reading the delimiters</span></a>
         <span class="act-d">anchors on the one offset that cannot move
           (byte&nbsp;3, before the first variable&#8209;width field) and the one
@@ -591,7 +582,6 @@
           unusable.</span>
       </li>
       <li>
-        <span class="act-n">Note 3</span>
         <a href="reconstructing-the-isa-line.html"><span class="act-t">Reconstruction</span></a>
         <span class="act-d">is where the payoff lands: with the delimiters
           trusted, element width stops being load&#8209;bearing, and a

@@ -463,9 +463,9 @@
       </div>
       <figcaption>The ISA segment is positional, not delimited-and-free: <b>16 fixed-width
         elements</b>, a component separator, a one-byte terminator, and then <code>GS*</code>
-        at byte&nbsp;106. x12-tidy's Step&nbsp;1 returns the run from <code>ISA</code> up to
+        at byte&nbsp;106. x12-tidy returns the run from <code>ISA</code> up to
         (not including) that <code>GS</code> — terminator and any trailing bytes included;
-        splitting the run into elements is a later step.</figcaption>
+        splitting the run into elements comes later.</figcaption>
     </figure>
   </section>
 
@@ -641,11 +641,12 @@
       <h2><span class="sec-num">04&nbsp;&nbsp;</span>One job: return the run</h2>
     </div>
     <div class="prose">
-      <p>Step&nbsp;1 does exactly one thing: given the raw bytes, return the run
-      that starts with <code>ISA</code> and ends immediately before
+      <p>Locating the ISA line does exactly one thing: given the raw bytes, return
+      the run that starts with <code>ISA</code> and ends immediately before
       <code>GS</code> + the element separator. It does <em>not</em> validate the
       delimiters, the element widths, the terminator, or the element content —
-      those are later steps, and they cannot run until the run has been located.</p>
+      that all comes later, and none of it can run until the run has been
+      located.</p>
 
       <p>But a run has to clear a minimum bar to <em>be</em> an ISA line at all.
       Three checks, no more:</p>
@@ -671,8 +672,8 @@
     <div class="prose">
       <p>Everything <em>past</em> the bar — is <code>ISA05</code> a valid
       qualifier, are the fixed widths right, is the terminator a legal byte — is
-      the next step's problem. Step&nbsp;1 hands forward a run with the right
-      shape; whether it also has the right meaning is decided downstream.</p>
+      decided downstream. Locating the line hands forward a run with the right
+      shape; whether it also has the right meaning is someone else's job.</p>
     </div>
   </section>
 
@@ -985,19 +986,19 @@ separator_count = isa_line.count(element_separator)
       <h2><span class="sec-num">07&nbsp;&nbsp;</span>Where content validation takes over</h2>
     </div>
     <div class="prose">
-      <p>Step&nbsp;1 returns a run with the <em>shape</em> of an ISA line. It does
-      not know whether the run has the <em>meaning</em> of one — whether
-      <code>ISA01</code> is a real authorization qualifier, whether the fixed
-      widths line up, whether the delimiters are legal bytes. That is the next
-      step, and it is a genuine backstop.
+      <p>Locating the ISA line returns a run with the <em>shape</em> of an ISA
+      line. It does not know whether the run has the <em>meaning</em> of one —
+      whether <code>ISA01</code> is a real authorization qualifier, whether the
+      fixed widths line up, whether the delimiters are legal bytes. That comes
+      next, and it is a genuine backstop.
       <a href="those-pesky-delimiters.html">Those Pesky Delimiters</a> picks up
       here, with the four delimiters.</p>
 
       <p>The one place the seam is visible: leading junk shaped <em>exactly</em>
       like an ISA line — the bytes <code>ISA</code>, sixteen element separators,
       then <code>GS</code> + that separator, across at least 109 bytes. It clears
-      all three of Step&nbsp;1's checks, so Step&nbsp;1 returns it — correctly, by
-      its own contract — and the element&#8209;level validation downstream is what
+      all three checks, so the run is returned — correctly, by this stage's own
+      contract — and the element&#8209;level validation downstream is what
       rejects it, because the "elements" are the wrong widths and carry nonsense.
       This is the layering doing its job: shape here, meaning next.</p>
 

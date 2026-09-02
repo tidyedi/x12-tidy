@@ -2,15 +2,15 @@
 
 # Finding the Elusive ISA Line
 
-*An engineering note on Step 1 of x12-tidy: extracting the X12 interchange
-envelope from files that violate the standard, and naming every deviation.*
+*An engineering note on x12-tidy: locating the X12 interchange envelope in files
+that violate the standard, and naming every deviation.*
 
 > **Read this as a web page:** <https://docs.tidyedi.com/finding-the-elusive-isa-line.html>
 > (served by GitHub Pages from [`docs/finding-the-elusive-isa-line.html`](finding-the-elusive-isa-line.html);
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/figures/` in sync with
-> `src/x12_tidy/isa/isa_line.py` when Step 1 changes.
+> `src/x12_tidy/isa/isa_line.py` when the locating logic changes.
 
 A 1979 standard, fixed at 106 bytes, meets senders who strip it, prepend to it,
 and re-encode it. The byte offsets don't survive that. Neither does the regex
@@ -50,8 +50,8 @@ know *precisely* what is wrong with it. That reframes the job: **parse
 permissively — locate the envelope even when it is malformed — then emit a
 diagnostic for every deviation rather than failing on the first.**
 
-Step 1 returns the run from `ISA` up to (not including) that `GS` — terminator
-and any trailing bytes included. Splitting the run into elements is a later step.
+x12-tidy returns the run from `ISA` up to (not including) that `GS` — terminator
+and any trailing bytes included. Splitting the run into elements comes later.
 
 ---
 
@@ -140,11 +140,11 @@ land in the middle of an element. **The byte position is not an invariant. The
 
 ## 4. One job: return the run
 
-Step 1 does exactly one thing: given the raw bytes, return the run that starts
-with `ISA` and ends immediately before `GS` + the element separator. It does
-**not** validate the delimiters, the element widths, the terminator, or the
-element content — those are later steps, and they cannot run until the run has
-been located.
+Locating the ISA line does exactly one thing: given the raw bytes, return the run
+that starts with `ISA` and ends immediately before `GS` + the element separator.
+It does **not** validate the delimiters, the element widths, the terminator, or
+the element content — that all comes later, and none of it can run until the run
+has been located.
 
 But a run has to clear a minimum bar to *be* an ISA line at all. Three checks, no
 more:
@@ -167,9 +167,9 @@ reject files the delimiters can still be read from; anything weaker would hand
 the next step a run it cannot trust.
 
 Everything *past* the bar — is `ISA05` a valid qualifier, are the fixed widths
-right, is the terminator a legal byte — is the next step's problem. Step 1 hands
-forward a run with the right shape; whether it also has the right meaning is
-decided downstream (see §7).
+right, is the terminator a legal byte — is decided downstream. Locating the line
+hands forward a run with the right shape; whether it also has the right meaning is
+someone else's job (see §7).
 
 ---
 
@@ -369,18 +369,19 @@ def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
 
 ## 7. Where content validation takes over
 
-Step 1 returns a run with the *shape* of an ISA line. It does not know whether the
-run has the *meaning* of one — whether `ISA01` is a real authorization qualifier,
-whether the fixed widths line up, whether the delimiters are legal bytes. That is
-the next step, and it is a genuine backstop.
+Locating the ISA line returns a run with the *shape* of an ISA line. It does not
+know whether the run has the *meaning* of one — whether `ISA01` is a real
+authorization qualifier, whether the fixed widths line up, whether the delimiters
+are legal bytes. That comes next, and it is a genuine backstop.
 [Those Pesky Delimiters](those-pesky-delimiters.md) picks up here, with the four
 delimiters.
 
 The one place the seam is visible: leading junk shaped *exactly* like an ISA line
 — the bytes `ISA`, sixteen element separators, then `GS` + that separator, across
-at least 109 bytes. It clears all three of Step 1's checks, so Step 1 returns it —
-correctly, by its own contract — and the element-level validation downstream is
-what rejects it, because the "elements" are the wrong widths and carry nonsense.
+at least 109 bytes. It clears all three checks, so the run is returned —
+correctly, by this stage's own contract — and the element-level validation
+downstream is what rejects it, because the "elements" are the wrong widths and
+carry nonsense.
 This is the layering doing its job: shape here, meaning next.
 
 The weaker and far more common form — junk that merely *ends* in `ISA*` — never

@@ -352,11 +352,6 @@
     transition: color 0.15s ease;
   }
   .doc-link:hover .doc-title { color: var(--accent); }
-  .doc-step {
-    font-family: "IBM Plex Mono", monospace; font-size: 0.72rem;
-    letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
-    margin-left: 0.6rem;
-  }
   .doc-desc { color: var(--ink-soft); font-size: 0.96rem; margin-top: 0.3rem; }
   .doc-meta {
     font-family: "IBM Plex Mono", monospace; font-size: 0.75rem;
@@ -395,7 +390,7 @@
     <span class="eyebrow">x12&#8209;tidy &nbsp;&middot;&nbsp; Documentation</span>
     <h1>Docs</h1>
     <p class="thesis">Engineering notes on how x12-tidy reads a malformed X12
-      interchange &mdash; one per build step &mdash; plus the design and
+      interchange &mdash; one per piece of the parse &mdash; plus the design and
       diagnostic-code reference.</p>
   </header>
 
@@ -407,38 +402,38 @@
 
     <ul class="doc-list">
       <li>
-        <a class="doc-link" href="the-x12-tidy-method.html"><span class="doc-title">The x12-tidy Method</span></a><span class="doc-step">The&nbsp;spine</span>
-        <div class="doc-desc">The one idea the step notes hang off &mdash; earn the four delimiters
+        <a class="doc-link" href="the-x12-tidy-method.html"><span class="doc-title">The x12-tidy Method</span></a>
+        <div class="doc-desc">The one idea the other notes hang off &mdash; earn the four delimiters
           from structure first, and then everything downstream is ordinary parsing plus
           repair. Read this first.</div>
         <div class="doc-meta">~1,100 words &nbsp;&middot;&nbsp;
-          <a href="the-x12-tidy-method.md">Markdown</a></div>
+          <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/the-x12-tidy-method.md">Markdown</a></div>
       </li>
       <li>
-        <a class="doc-link" href="finding-the-elusive-isa-line.html"><span class="doc-title">Finding the Elusive ISA Line</span></a><span class="doc-step">Step&nbsp;1</span>
+        <a class="doc-link" href="finding-the-elusive-isa-line.html"><span class="doc-title">Finding the Elusive ISA Line</span></a>
         <div class="doc-desc">Locating the ISA line in a file that strips it, prepends to it and
           re-encodes it &mdash; why fixed byte offsets and a regex both fail, and the five
           techniques that replace them.</div>
         <div class="doc-meta">~2,400 words &nbsp;&middot;&nbsp;
-          <a href="finding-the-elusive-isa-line.md">Markdown</a> &nbsp;&middot;&nbsp;
+          <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/finding-the-elusive-isa-line.md">Markdown</a> &nbsp;&middot;&nbsp;
           <a href="finding-the-elusive-isa-line.pdf">PDF</a></div>
       </li>
       <li>
-        <a class="doc-link" href="those-pesky-delimiters.html"><span class="doc-title">Those Pesky Delimiters</span></a><span class="doc-step">Step&nbsp;2 &middot; slice&nbsp;1</span>
+        <a class="doc-link" href="those-pesky-delimiters.html"><span class="doc-title">Those Pesky Delimiters</span></a>
         <div class="doc-desc">Reading the four X12 delimiters &mdash; element, repetition,
           component, terminator &mdash; out of that run when every byte offset the standard
           uses has moved.</div>
         <div class="doc-meta">~1,900 words &nbsp;&middot;&nbsp;
-          <a href="those-pesky-delimiters.md">Markdown</a> &nbsp;&middot;&nbsp;
+          <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/those-pesky-delimiters.md">Markdown</a> &nbsp;&middot;&nbsp;
           <a href="those-pesky-delimiters.pdf">PDF</a></div>
       </li>
       <li>
-        <a class="doc-link" href="reconstructing-the-isa-line.html"><span class="doc-title">Reconstructing the ISA Line</span></a><span class="doc-step">Step&nbsp;2 &middot; slice&nbsp;2</span>
+        <a class="doc-link" href="reconstructing-the-isa-line.html"><span class="doc-title">Reconstructing the ISA Line</span></a>
         <div class="doc-desc">Once the delimiters are trusted, rebuilding the canonical
           105-byte line &mdash; and why that is a total function: non-fatal in, one canonical
           line out, everything else a named fatal.</div>
         <div class="doc-meta">~1,500 words &nbsp;&middot;&nbsp;
-          <a href="reconstructing-the-isa-line.md">Markdown</a></div>
+          <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/reconstructing-the-isa-line.md">Markdown</a></div>
       </li>
     </ul>
     <p class="soon" style="max-width: var(--measure); margin: 1.4rem auto 0;">
@@ -449,9 +444,9 @@
   <section class="ref">
     <h2>Reference</h2>
     <ul>
-      <li><a href="design.md">design.md</a> &mdash; philosophy, the two-path architecture,
+      <li><a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/design.md">design.md</a> &mdash; philosophy, the two-path architecture,
         the diagnostic-code scheme; decisions that span modules.</li>
-      <li><a href="diagnostics.md">diagnostics.md</a> &mdash; every diagnostic code x12-tidy
+      <li><a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/diagnostics.md">diagnostics.md</a> &mdash; every diagnostic code x12-tidy
         can emit. Generated from the registry.</li>
       <li><a href="https://github.com/tidyedi/x12-tidy">github.com/tidyedi/x12-tidy</a>
         &mdash; source, issues, releases.</li>

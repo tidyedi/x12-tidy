@@ -19,17 +19,17 @@ searched for, yes, that too.)
 
 ## Docs
 
-**Engineering notes** — the method, then one note per build step, at
+**Engineering notes** — the method, then one note per piece of the parse, at
 [docs.tidyedi.com](https://docs.tidyedi.com):
 
 - [The x12-tidy Method](https://docs.tidyedi.com/the-x12-tidy-method.html)
   — the one idea: earn the delimiters from structure first, then the rest is easy
 - [Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
-  — Step 1: locating the ISA line when fixed byte offsets and a regex both fail
+  — locating the ISA line when fixed byte offsets and a regex both fail
 - [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
-  — Step 2, slice 1: reading the four delimiters from a line whose byte offsets have moved
+  — reading the four delimiters from a line whose byte offsets have moved
 - [Reconstructing the ISA Line](https://docs.tidyedi.com/reconstructing-the-isa-line.html)
-  — Step 2, slice 2: rebuilding the canonical 105-byte line once the delimiters are trusted
+  — rebuilding the canonical 105-byte line once the delimiters are trusted
 
 **Reference** — [`design.md`](docs/design.md) (architecture, the diagnostic-code
 scheme) · [`docs/diagnostics.md`](docs/diagnostics.md) (every code, generated) ·
@@ -39,9 +39,9 @@ the [`docs/`](docs/) folder holds the Markdown sources and PDFs.
 
 | Piece | State |
 | --- | --- |
-| **ISA envelope — Step 1: return the ISA line** (`x12_tidy.isa.extract_isa_line`) | done |
-| **ISA envelope — Step 2, slice 1: the four delimiters** (`x12_tidy.isa.split_isa_line`) | done |
-| **ISA envelope — Step 2, slice 2: reconstruct the canonical line** (`x12_tidy.isa.reconstruct_isa_line`) | done |
+| **ISA envelope — locate the ISA line** (`x12_tidy.isa.extract_isa_line`) | done |
+| **ISA envelope — recover the four delimiters** (`x12_tidy.isa.split_isa_line`) | done |
+| **ISA envelope — reconstruct the canonical line** (`x12_tidy.isa.reconstruct_isa_line`) | done |
 | ISA envelope — whole-document cleanse (strip inter-segment junk, return cleansed contents) | not started |
 | GS / ST / structure — envelope and control-number validation | not started |
 
