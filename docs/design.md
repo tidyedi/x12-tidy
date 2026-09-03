@@ -261,17 +261,22 @@ ISA *line*; the tool must ultimately return cleansed *contents*. This is built
 in pieces:
 
 * **Segment split (`x12_tidy.structure.split_segments`) — done.** A mechanical
-  transform. Take everything from `GS` onward, `strip()` it (dropping trailing
-  whitespace after the final `IEA`), split on the recovered segment terminator,
+  transform. Take everything from `GS` onward, `strip()` whitespace *and the
+  terminator* from the ends (dropping trailing whitespace after the final `IEA`
+  and the terminator that closes it), split on the recovered segment terminator,
   and left-trim whitespace from each piece. The split is on the *segment
   terminator* only — an element separator is never a split point, so unused
   elements (`**`) stay inside their segment. A segment tag is alphabetic and
   first, so leading whitespace is never segment content; the right-hand side of
   a piece is never touched (a space-padded final element is real data). Empty
-  pieces (two terminators in a row) are kept. **No diagnostics, no validation,
-  no refusal** — this step canonicalises nothing and judges nothing.
-* **Later:** drop the empty pieces, reconstruct each segment, rejoin, splice in
-  the reconstructed ISA line.
+  pieces (two terminators in a row) are kept here. **No diagnostics, no
+  validation, no refusal** — this step canonicalises nothing and judges nothing.
+* **Drop empty pieces (`x12_tidy.structure.drop_empty_segments`) — done.** The
+  empty pieces two terminators in a row leave behind are not segments; this
+  removes them. Still mechanical — no judgement about *why* the terminators were
+  doubled.
+* **Later:** reconstruct each segment, rejoin, splice in the reconstructed ISA
+  line.
 * **Later still — QA/QC**, which runs *after* reconstruction: each piece must be
   a real segment (valid tag), envelope nesting, control-number matching,
   segment counts, foreign content between segments, truncation, multiple
