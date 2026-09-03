@@ -147,7 +147,7 @@ The byte after ISA16 -- the segment terminator -- is a letter or digit, so it is
 
 *warning* — The segment terminator is not the tilde
 
-The segment terminator is a usable non-alphanumeric byte -- often a carriage return or line feed -- but not '~'. The interchange parses; the reconstructed ISA line normalises the terminator to '~'.
+The segment terminator is a non-alphanumeric byte -- often a carriage return or line feed -- but not '~'. Which byte serves as a delimiter is the sender's choice; X12 does not dictate it, so this is a legal interchange and reconstruction preserves the terminator as-is. Noted because '~' is the near-universal convention and downstream tools may assume it.
 
 ### `isa.segment-terminator-stripped`
 

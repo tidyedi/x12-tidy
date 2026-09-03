@@ -119,10 +119,15 @@ the interchange at all. That is not advisory.
 
 `ISA` + the sixteen width-correct elements, joined on the sender's *own* element
 separator — unchanged, because any valid non-alphanumeric byte is conformant.
-Only the segment terminator is normalised, to `~`; it is not one of the 105
-bytes, and the reconstructed line carries none. A final guard checks the length
-is 105 (`isa.line-length`, fatal) — it should never fire once the per-element
-widths hold, and it is there so that a bug cannot emit a non-conformant line.
+The segment terminator is likewise the sender's own byte: which character serves
+as a delimiter is the sender's choice, X12 does not dictate it, so a `\n`
+terminator stays `\n` and is never rewritten to `~`. It is not one of the 105
+bytes — the reconstructed line carries none — and is returned alongside for the
+eventual whole-interchange rejoin. `~` is *supplied* only when the sender left
+the terminator out entirely, where there is no byte to keep. A final guard
+checks the length is 105 (`isa.line-length`, fatal) — it should never fire once
+the per-element widths hold, and it is there so that a bug cannot emit a
+non-conformant line.
 
 ## 4. The one thing reconstruction refuses
 
@@ -150,8 +155,10 @@ permissive parsing never invents.
 | blank fixed-width fields right-trimmed | padded back, `isa.element-width` per field |
 | element over-padded with spaces | trimmed, `isa.element-width` |
 | ISA segment hard-wrapped (`\r`/`\n` in a text element) | line breaks → spaces, `isa.element-embedded-newline`, then re-measured |
-| non-`~` terminator (`\n`, `\r\n`, `~\r\n`, `~ `) | normalised to `~`; the deviation was named by the delimiter step |
-| pipe / caret / any valid delimiters | kept as-is; only the terminator changes |
+| non-`~` terminator (`\n`, bare `\r`) | **kept as-is**; named by the delimiter step (`isa.segment-terminator-noncanonical`, warning) because `~` is the convention |
+| trailing bytes after the terminator (`~\r\n`, `~ `) | the real terminator kept; the trailing `\r\n` / spaces stripped (`isa.trailing-newline` / `isa.trailing-junk`) |
+| terminator omitted entirely (GS follows ISA16) | `~` supplied — nothing to preserve — `isa.segment-terminator-stripped` |
+| pipe / caret / any valid delimiters | kept as-is; the delimiters are the sender's choice |
 | element over width with real data | **fatal** `isa.element-overflow` |
 | anything the delimiter step made fatal | propagated; no line |
 | reassembled length ≠ 105 | **fatal** `isa.line-length` (a guard) |

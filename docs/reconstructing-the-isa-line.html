@@ -450,7 +450,7 @@
 
     <rect x="360" y="96" width="360" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--valid)" stroke-width="1.8"/>
     <text x="540" y="120" text-anchor="middle" fill="var(--valid)" font-size="12.5" font-weight="700">one canonical 105-byte ISA line</text>
-    <text x="540" y="138" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">16 width-correct elements &#183; terminator normalised to ~</text>
+    <text x="540" y="138" text-anchor="middle" fill="var(--ink-soft)" font-size="10.5">16 width-correct elements &#183; sender's delimiters kept</text>
 
     <rect x="360" y="258" width="360" height="56" rx="4" fill="none" stroke="var(--deviation)" stroke-width="1.8"/>
     <text x="540" y="282" text-anchor="middle" fill="var(--deviation)" font-size="12.5" font-weight="700">named fatal &#183; no line</text>
@@ -704,12 +704,17 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
     <div class="prose">
       <p><code>ISA</code> + the sixteen width&#8209;correct elements, joined on
       the sender's <em>own</em> element separator &mdash; unchanged, because any
-      valid non&#8209;alphanumeric byte is conformant. Only the segment terminator
-      is normalised, to <code>~</code>; it is not one of the 105 bytes, and the
-      reconstructed line carries none. A final guard checks the length is 105
-      (<code>isa.line-length</code>, fatal) &mdash; it should never fire once the
-      per&#8209;element widths hold, and it is there so a bug cannot emit a
-      non&#8209;conformant line.</p>
+      valid non&#8209;alphanumeric byte is conformant. The segment terminator is
+      likewise the sender's own byte: which character serves as a delimiter is
+      the sender's choice, X12 does not dictate it, so a <code>\n</code>
+      terminator stays <code>\n</code> and is never rewritten to <code>~</code>.
+      It is not one of the 105 bytes &mdash; the reconstructed line carries none
+      &mdash; and is returned alongside for the eventual whole&#8209;interchange
+      rejoin. <code>~</code> is <em>supplied</em> only when the sender left the
+      terminator out entirely, where there is no byte to keep. A final guard
+      checks the length is 105 (<code>isa.line-length</code>, fatal) &mdash; it
+      should never fire once the per&#8209;element widths hold, and it is there so
+      a bug cannot emit a non&#8209;conformant line.</p>
     </div>
   </section>
 
@@ -762,10 +767,14 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
               <td>trimmed &mdash; <code>isa.element-width</code></td></tr>
           <tr><td>ISA segment hard-wrapped (<code>\r</code>&#8202;/&#8202;<code>\n</code> in a text element)</td>
               <td>line breaks &rarr; spaces &mdash; <code>isa.element-embedded-newline</code>, then re-measured</td></tr>
-          <tr><td>non-<code>~</code> terminator (<code>\n</code>, <code>\r\n</code>, <code>~\r\n</code>, <code>~&nbsp;</code>)</td>
-              <td>normalised to <code>~</code>; the deviation was named by the delimiter step</td></tr>
+          <tr><td>non-<code>~</code> terminator (<code>\n</code>, bare <code>\r</code>)</td>
+              <td><strong>kept as&#8209;is</strong>; named by the delimiter step (<code>isa.segment-terminator-noncanonical</code>, warning) because <code>~</code> is the convention</td></tr>
+          <tr><td>trailing bytes after the terminator (<code>~\r\n</code>, <code>~&nbsp;</code>)</td>
+              <td>the real terminator kept; the trailing <code>\r\n</code>&#8202;/&#8202;spaces stripped (<code>isa.trailing-newline</code>&#8202;/&#8202;<code>isa.trailing-junk</code>)</td></tr>
+          <tr><td>terminator omitted entirely (GS follows ISA16)</td>
+              <td><code>~</code> supplied &mdash; nothing to preserve &mdash; <code>isa.segment-terminator-stripped</code></td></tr>
           <tr><td>pipe / caret / any valid delimiters</td>
-              <td>kept as&#8209;is; only the terminator changes</td></tr>
+              <td>kept as&#8209;is; the delimiters are the sender's choice</td></tr>
           <tr><td>element over width with real data</td>
               <td class="verdict v-flag">fatal &mdash; isa.element-overflow</td></tr>
           <tr><td>anything the delimiter step made fatal</td>
