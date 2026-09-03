@@ -256,14 +256,27 @@ not producing the cleansed artifact. The raw-bytes-in → cleansed-contents-out
 orchestrator is really the whole-document cleanse (below), not an ISA-line
 function. This is flagged for resolution before the phase is finalised.
 
-**Not built yet — the whole-document cleanse.** Reconstruction produces a clean
-ISA *line*; it does not yet return cleansed *contents*. That step, once the
-terminator is known: `raw.split(segment_terminator)` → each piece must start
-with a valid segment tag → strip the inter-segment junk (line wrapping,
-transport framing) that sits after *every* terminator, not just the ISA line's →
-rejoin on `~` → splice in the reconstructed ISA line. It gets its own
-`structure.*` diagnostic. This is what makes the tool hand back a cleaned
-interchange rather than a cleaned header.
+**The whole-document cleanse — in progress.** Reconstruction produces a clean
+ISA *line*; the tool must ultimately return cleansed *contents*. This is built
+in pieces:
+
+* **Segment split (`x12_tidy.structure.split_segments`) — done.** A mechanical
+  transform. Take everything from `GS` onward, `strip()` it (dropping trailing
+  whitespace after the final `IEA`), split on the recovered segment terminator,
+  and left-trim whitespace from each piece. The split is on the *segment
+  terminator* only — an element separator is never a split point, so unused
+  elements (`**`) stay inside their segment. A segment tag is alphabetic and
+  first, so leading whitespace is never segment content; the right-hand side of
+  a piece is never touched (a space-padded final element is real data). Empty
+  pieces (two terminators in a row) are kept. **No diagnostics, no validation,
+  no refusal** — this step canonicalises nothing and judges nothing.
+* **Later:** drop the empty pieces, reconstruct each segment, rejoin, splice in
+  the reconstructed ISA line.
+* **Later still — QA/QC**, which runs *after* reconstruction: each piece must be
+  a real segment (valid tag), envelope nesting, control-number matching,
+  segment counts, foreign content between segments, truncation, multiple
+  interchanges, `TA1`, `BIN`/`BDS`. This is where the `structure.*` diagnostics
+  live.
 
 The recovery path (a permissive re-parse when the standard gate fails) is
 drafted in scratch (`recover_isa_line.py`) and folds into this work.
