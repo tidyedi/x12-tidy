@@ -6,13 +6,16 @@
 The ISA-line work (:mod:`x12_tidy.isa`) stops at the header. This package picks
 up the rest of the interchange.
 
-* :func:`split_segments` -- split the interchange into its raw segments. A
-  mechanical transform: no diagnostics, no validation, no refusal. Envelope
-  QA/QC runs later, after reconstruction.
+* :func:`split_segments` -- split the interchange into its raw segments.
+* :func:`drop_empty_segments` -- drop the empty pieces two terminators in a row
+  leave behind.
+
+Both are mechanical transforms: no diagnostics, no validation, no refusal.
+Envelope QA/QC runs later, after reconstruction.
 """
 
 from __future__ import annotations
 
-from x12_tidy.structure.segments import split_segments
+from x12_tidy.structure.segments import drop_empty_segments, split_segments
 
-__all__ = ["split_segments"]
+__all__ = ["split_segments", "drop_empty_segments"]

@@ -13,7 +13,7 @@ segment's right-hand side, never drop an empty piece.
 from __future__ import annotations
 
 from _isa_helpers import build_isa
-from x12_tidy.structure import split_segments
+from x12_tidy.structure import drop_empty_segments, split_segments
 
 # The trailer baked into ``build_isa`` -- segments joined on "~", one unused
 # element ("**") in the BEG segment. The terminator closing the final IEA is
@@ -110,3 +110,28 @@ def test_not_an_interchange_returns_empty_list() -> None:
 
 def test_empty_input_returns_empty_list() -> None:
     assert split_segments(b"") == []
+
+
+# --------------------------------------------------------------------------
+# drop_empty_segments -- the next step
+# --------------------------------------------------------------------------
+
+
+def test_drop_empty_segments_removes_the_empty_pieces() -> None:
+    trailer = b"GS*PO*A*B*20240101*1200*1*X*004010~ST*850*0001~~SE*2*0001~GE*1*1~IEA*1*000000001~"
+    segments = split_segments(build_isa(trailer=trailer))
+    assert drop_empty_segments(segments) == [
+        b"GS*PO*A*B*20240101*1200*1*X*004010",
+        b"ST*850*0001",
+        b"SE*2*0001",
+        b"GE*1*1",
+        b"IEA*1*000000001",
+    ]
+
+
+def test_drop_empty_segments_leaves_a_clean_list_unchanged() -> None:
+    assert drop_empty_segments(_CLEAN_SEGMENTS) == _CLEAN_SEGMENTS
+
+
+def test_drop_empty_segments_on_empty_list() -> None:
+    assert drop_empty_segments([]) == []

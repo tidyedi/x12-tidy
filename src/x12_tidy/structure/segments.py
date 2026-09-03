@@ -23,10 +23,11 @@ a delimiter or an element value. The split is on the *segment terminator* only;
 the element separator is never touched, so unused elements (``**``) stay inside
 their segment exactly as sent.
 
-Empty pieces from two terminators *in the body* are kept. Dropping them is a
-later step (``[s for s in segments if s]``), and QA/QC, which runs after
-reconstruction, is where anything is judged. This function raises no diagnostic,
-validates nothing, and refuses nothing.
+:func:`split_segments` keeps the empty pieces that two terminators in a row
+produce -- the split faithfully reflects what was sent. :func:`drop_empty_segments`
+is the next step: an empty piece is not a segment, so it comes out. QA/QC, which
+runs after reconstruction, is where anything is judged. Nothing here raises a
+diagnostic, validates, or refuses.
 
 If the ISA line or the segment terminator cannot be recovered, the interchange
 cannot be split and the result is an empty list. The reason is on the ISA-phase
@@ -56,3 +57,14 @@ def split_segments(dirty: bytes) -> list[bytes]:
     contents = dirty[located.isa_start + len(located.isa_line):]
     contents = contents.strip(_WHITESPACE + terminator)
     return [piece.lstrip(_WHITESPACE) for piece in contents.split(terminator)]
+
+
+def drop_empty_segments(segments: list[bytes]) -> list[bytes]:
+    """Return ``segments`` without the empty entries.
+
+    Two segment terminators in a row (``~~``) make :func:`split_segments` emit an
+    empty piece -- a faithful record of what was sent, but not a segment. This
+    drops them. Still mechanical: no diagnostic, no judgement about *why* the
+    terminators were doubled -- that is QA/QC's, after reconstruction.
+    """
+    return [segment for segment in segments if segment]
