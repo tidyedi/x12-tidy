@@ -45,9 +45,6 @@ the [`docs/`](docs/) folder holds the Markdown sources and PDFs.
 | ISA envelope — whole-document cleanse (strip inter-segment junk, return cleansed contents) | not started |
 | GS / ST / structure — envelope and control-number validation | not started |
 
-Superseded work (the old fail-fast `check_isa` and the `rules.*` design notes)
-is kept in [`attic/`](attic/) for reference, not built.
-
 ## Usage
 
 ```bash
