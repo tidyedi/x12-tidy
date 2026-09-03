@@ -207,12 +207,19 @@ bar + slice 1), making no assumption about length or width. Once slice 1 returns
    `(2,10,2,10,2,15,2,15,6,4,1,5,9,1,1,1)` — pad a short one with spaces, trim
    one that is long by trailing spaces only;
 4. reassemble: `ISA` + the sixteen elements joined on the (unchanged) element
-   separator = 105 bytes. The terminator is normalised to `~` and returned
-   alongside (it is not one of the 105).
+   separator = 105 bytes. The segment terminator is returned alongside (it is
+   not one of the 105).
 
-The sender's element, component, and repetition separators are **kept as-is** —
-any valid non-alphanumeric byte is conformant; only the terminator is
-normalised.
+The sender's element, component, repetition **and segment** delimiters are all
+**kept as-is** — which byte serves as a delimiter is the sender's choice, X12
+does not dictate it, so any valid non-alphanumeric byte is conformant and is
+preserved. A `\n` terminator stays `\n`. A non-`~` terminator is flagged
+(`isa.segment-terminator-noncanonical`, warning) only because `~` is the
+near-universal convention. The terminator is *supplied* as `~` in exactly one
+case — the sender omitted it entirely (`isa.segment-terminator-stripped`) — where
+there is no byte to preserve. Bytes that cannot be a legal delimiter (trailing
+`\r\n` or spaces after the real terminator, an alphanumeric terminator) are a
+separate matter, stripped or refused by slice 1.
 
 **What reconstruction repairs** (each with a `Diagnostic`):
 
@@ -236,12 +243,15 @@ interchange is unprocessable until it is repaired.
 
 **The round-trip acceptance test.** `tests/test_reconstruct.py`: for every
 non-terminal corpus input, reconstruct, then re-parse the reconstruction through
-the whole pipeline. The reconstructed line is a **fixed point** — cleaning it
-again returns the identical bytes and elements — and none of the codes
-reconstruction owns (`isa.element-*`, `isa.leading-bytes`, `isa.trailing-*`,
-`isa.segment-terminator-*`, `isa.line-length`) reappears. Value-level findings
-(`isa.version-unrecognized`, `isa.isa11-not-standards-id`) are **out of scope**
-for this phase and may legitimately survive a round trip.
+the whole pipeline (re-wrapped with the terminator reconstruction preserved).
+The reconstructed line is a **fixed point** — cleaning it again returns the
+identical bytes and elements — and none of the codes reconstruction owns
+(`isa.element-*`, `isa.leading-bytes`, `isa.trailing-*`,
+`isa.segment-terminator-stripped`, `isa.line-length`) reappears. Findings
+reconstruction deliberately does **not** act on — value-level
+(`isa.version-unrecognized`, `isa.isa11-not-standards-id`) and the preserved
+non-`~` terminator (`isa.segment-terminator-noncanonical`) — are out of scope
+for this phase and legitimately survive a round trip.
 
 **Scope boundary.** Reconstruction validates and repairs *structure* — widths,
 delimiters, the terminator, the length. It does **not** judge element *values*:

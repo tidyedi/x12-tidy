@@ -25,9 +25,19 @@ Repairs (each carries a diagnostic so a human can veto):
   repetition separator -- is left untouched.
 * an element shorter than its fixed width -> space-padded on the right.
 * an element longer than its width by trailing spaces only -> trimmed.
-* the segment terminator -> normalised to ``~`` (it is not part of the 105-byte
-  line; the reconstructed line carries none, and :attr:`ReconstructedIsaLine.
-  segment_terminator` reports the canonical byte).
+
+The delimiters are **not** repaired. Which byte serves as the element,
+component, repetition, and segment delimiter is the sender's choice -- X12 does
+not dictate it -- so reconstruction preserves whatever the sender used. A
+segment terminator of ``\n`` stays ``\n``; it is never rewritten to ``~``. The
+105-byte line carries no terminator (it is a separate byte);
+``ReconstructedIsaLine.segment_terminator`` reports the sender's byte, and the
+eventual whole-interchange rejoin uses it. Bytes that *cannot* be a legal
+delimiter -- trailing ``\r\n`` or spaces after the real terminator, an
+alphanumeric terminator -- are a different matter and are stripped or refused by
+:func:`split_isa_line`. Only when the sender omitted the terminator entirely
+(GS followed ISA16 directly) is ``~`` supplied, because there is no byte to
+preserve.
 
 Refuses -- ``isa_line`` is ``None``, one fatal diagnostic:
 
@@ -61,8 +71,6 @@ ISA_ELEMENT_WIDTHS: tuple[int, ...] = (
 #: Length of the canonical ISA line -- the ``ISA`` tag through ISA16, **without**
 #: the segment terminator (a separate byte that would sit at offset 105).
 CANONICAL_LENGTH = 105
-#: The terminator every reconstructed line is normalised to.
-CANONICAL_TERMINATOR = b"~"
 
 _ISA_TAG = b"ISA"
 _LINE_BREAKS = (b"\r", b"\n")
@@ -97,11 +105,14 @@ class ReconstructedIsaLine:
 
     @property
     def segment_terminator(self) -> bytes:
-        """The terminator the reconstructed line uses -- always
-        :data:`CANONICAL_TERMINATOR` when a line was produced. The byte the
-        sender actually used is on ``decomposition.segment_terminator``."""
-        if self.isa_line is not None:
-            return CANONICAL_TERMINATOR
+        """The segment terminator to rejoin the interchange with -- the byte the
+        sender chose, preserved as-is (a ``\\n`` terminator stays ``\\n``). It is
+        ``~`` only when the sender omitted the terminator and it had to be
+        supplied. Empty when Step 1 never returned a run.
+
+        This is ``decomposition.segment_terminator``; the property exists so
+        callers holding a :class:`ReconstructedIsaLine` need not reach through.
+        """
         if self.decomposition is not None:
             return self.decomposition.segment_terminator
         return b""

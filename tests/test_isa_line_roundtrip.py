@@ -18,9 +18,9 @@ The claim under test (see the ISA-line design note):
 There is no third outcome: no silent wrong answer, no partial parse, no crash.
 
 This is *not* the canonical-reconstruction round trip (pad to fixed widths,
-normalise the terminator, re-parse to zero diagnostics) -- that step is not
-built yet. It is the decomposition round trip: whatever we hand back is a
-complete, reversible account of the bytes we were given.
+re-parse to zero diagnostics) -- that lives in ``test_reconstruct.py``. It is
+the decomposition round trip: whatever we hand back is a complete, reversible
+account of the bytes we were given.
 """
 
 from __future__ import annotations

@@ -46,16 +46,12 @@ def _cmd_check(path: Path) -> int:
 
     decomposition = result.decomposition
     if decomposition is not None:
-        found = decomposition.segment_terminator
-        terminator = f"{found!r}"
-        if result.isa_line is not None and found != result.segment_terminator:
-            terminator += f" (normalised to {result.segment_terminator!r})"
         print(
             "delimiters: "
             f"element={decomposition.element_separator!r} "
             f"repetition={decomposition.repetition_separator!r} "
             f"component={decomposition.component_separator!r} "
-            f"terminator={terminator}"
+            f"terminator={decomposition.segment_terminator!r}"
         )
 
     if result.isa_line is None:

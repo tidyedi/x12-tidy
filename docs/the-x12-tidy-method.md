@@ -76,7 +76,7 @@ established.
 | --- | --- | --- |
 | **locate** | the run has the *shape* of an ISA line (tag, `GS` boundary, 16 separators) | a run the delimiters can be parsed from |
 | **delimiters** | the four delimiter bytes, and which are usable | ground-truth delimiters |
-| **structure** | 16 elements at fixed width, one canonical 105-byte line, terminator `~` | a conformant ISA line |
+| **structure** | 16 elements at fixed width, one canonical 105-byte line, the sender's delimiters kept | a conformant ISA line |
 | **values** *(later)* | `ISA05` is a real qualifier, `ISA09` a real date, `ISA13` matches `IEA02` | a validated interchange |
 
 A note that says "that is the next step's problem" is pointing down this ladder.

@@ -46,7 +46,9 @@ from x12_tidy.diagnostics import Code, Diagnostic, resolved_severity
 
 #: ``ISA`` + ISA01..ISA16.
 ISA_ELEMENT_SEPARATORS = 16
-#: The canonical segment terminator; a non-``~`` terminator is normalised to it.
+#: The conventional segment terminator. The sender's own terminator is kept as
+#: chosen; this byte is only *supplied* when the sender omitted the terminator
+#: entirely and there is nothing to preserve.
 CANONICAL_TERMINATOR = b"~"
 #: ISA11's value for interchanges that predate the repetition separator.
 STANDARDS_IDENTIFIER = b"U"
@@ -73,6 +75,9 @@ class IsaDecomposition:
     element_separator: bytes
     repetition_separator: bytes | None
     component_separator: bytes
+    #: The byte the sender used to end each segment, kept as chosen. Only
+    #: ``CANONICAL_TERMINATOR`` when the sender omitted it (see the
+    #: ``isa.segment-terminator-stripped`` diagnostic).
     segment_terminator: bytes
     trailing: bytes
     #: ISA01..ISA16 exactly as split -- not width-checked. ISA16 is its one-byte
@@ -234,8 +239,9 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
     ):
         diags.append(Diagnostic(
             Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL,
-            f"the segment terminator is {segment_terminator!r}, not "
-            f"{CANONICAL_TERMINATOR!r}; it is usable but will be normalised.",
+            f"the segment terminator is {segment_terminator!r}, not the "
+            f"conventional {CANONICAL_TERMINATOR!r}; it is a legal choice and is "
+            "preserved as-is.",
             offset=last_piece_offset + 1,
         ))
 
