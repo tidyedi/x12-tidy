@@ -16,7 +16,8 @@ from _isa_helpers import build_isa
 from x12_tidy.structure import split_segments
 
 # The trailer baked into ``build_isa`` -- segments joined on "~", one unused
-# element ("**") in the BEG segment, a trailing terminator after IEA.
+# element ("**") in the BEG segment. The terminator closing the final IEA is
+# stripped before the split, so there is no trailing empty piece.
 _CLEAN_SEGMENTS = [
     b"GS*PO*SENDERGS*RECEIVERID*20240101*1200*1*X*004010",
     b"ST*850*0001",
@@ -24,7 +25,6 @@ _CLEAN_SEGMENTS = [
     b"SE*2*0001",
     b"GE*1*1",
     b"IEA*1*000000001",
-    b"",  # the final terminator leaves a trailing empty piece
 ]
 
 
@@ -49,10 +49,12 @@ def test_indentation_between_segments_is_left_trimmed() -> None:
     assert split_segments(raw) == _CLEAN_SEGMENTS
 
 
-def test_trailing_whitespace_after_iea_is_stripped() -> None:
+def test_trailing_whitespace_and_final_terminator_are_stripped() -> None:
     raw = build_isa() + b"\r\n\r\n   \t"
-    # strip() removes it before the split, so the result is unchanged.
+    # The trailing whitespace and the terminator closing IEA come off before
+    # the split -- no trailing empty piece.
     assert split_segments(raw) == _CLEAN_SEGMENTS
+    assert split_segments(raw)[-1] == b"IEA*1*000000001"
 
 
 def test_right_hand_side_of_a_segment_is_never_touched() -> None:
@@ -62,9 +64,10 @@ def test_right_hand_side_of_a_segment_is_never_touched() -> None:
     assert b"REF*ZZ*VALUE   " in segments
 
 
-def test_two_terminators_in_a_row_keep_the_empty_piece() -> None:
+def test_two_terminators_in_the_body_keep_the_empty_piece() -> None:
     trailer = b"GS*PO*A*B*20240101*1200*1*X*004010~ST*850*0001~~SE*2*0001~GE*1*1~IEA*1*000000001~"
     segments = split_segments(build_isa(trailer=trailer))
+    # the body "~~" leaves an empty piece; the terminator closing IEA does not
     assert segments == [
         b"GS*PO*A*B*20240101*1200*1*X*004010",
         b"ST*850*0001",
@@ -72,7 +75,6 @@ def test_two_terminators_in_a_row_keep_the_empty_piece() -> None:
         b"SE*2*0001",
         b"GE*1*1",
         b"IEA*1*000000001",
-        b"",
     ]
 
 
@@ -86,9 +88,6 @@ def test_non_standard_terminator_is_what_the_split_uses() -> None:
         b"ST*850*0001\rSE*1*0001\rGE*1*1\rIEA*1*000000001\r"
     )
     raw = build_isa(term=b"\r", trailer=trailer)
-    # strip() eats the final "\r" (it is whitespace), so there is no trailing
-    # empty piece here -- unlike a "~"-terminated interchange. The later
-    # empty-piece filter makes that difference moot.
     assert split_segments(raw) == [
         b"GS*PO*A*B*20240101*1200*1*X*004010",
         b"ST*850*0001",
