@@ -9,8 +9,10 @@ interchange:
 1. locate the ISA line and recover the segment terminator (via
    :mod:`x12_tidy.isa`);
 2. take everything from the ``GS`` functional-group header onward;
-3. ``strip`` it -- this drops any trailing whitespace after the final ``IEA``
-   segment. There is nothing to strip from the front: it starts at ``GS``;
+3. ``strip`` whitespace **and the segment terminator** from the ends -- this
+   drops any trailing whitespace after the final ``IEA`` segment and the
+   terminator that closes it, so the split does not leave a trailing empty
+   piece. There is nothing to strip from the front: it starts at ``GS``;
 4. split on the segment terminator;
 5. left-trim whitespace from each piece.
 
@@ -21,7 +23,7 @@ a delimiter or an element value. The split is on the *segment terminator* only;
 the element separator is never touched, so unused elements (``**``) stay inside
 their segment exactly as sent.
 
-Empty pieces -- from two terminators in a row -- are kept. Dropping them is a
+Empty pieces from two terminators *in the body* are kept. Dropping them is a
 later step (``[s for s in segments if s]``), and QA/QC, which runs after
 reconstruction, is where anything is judged. This function raises no diagnostic,
 validates nothing, and refuses nothing.
@@ -51,5 +53,6 @@ def split_segments(dirty: bytes) -> list[bytes]:
     if not terminator:
         return []
 
-    contents = dirty[located.isa_start + len(located.isa_line):].strip()
+    contents = dirty[located.isa_start + len(located.isa_line):]
+    contents = contents.strip(_WHITESPACE + terminator)
     return [piece.lstrip(_WHITESPACE) for piece in contents.split(terminator)]
