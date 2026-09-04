@@ -31,7 +31,7 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.separator-count-low` | fatal | Fewer than 16 element separators before GS |
 | `isa.tag-lowercase` | error | ISA segment tag is not uppercase |
 | `isa.tag-utf16` | fatal | File appears to be UTF-16 encoded |
-| `isa.trailing-junk` | error | Unexpected bytes between the segment terminator and GS |
+| `isa.trailing-junk` | warning | Unexpected bytes between the segment terminator and GS |
 | `isa.trailing-newline` | warning | Line breaks between the segment terminator and GS |
 | `isa.version-unrecognized` | warning | ISA12 is not a recognised version code |
 
@@ -175,9 +175,9 @@ The bytes 'I', 'S', 'A' appear separated by NUL bytes near the start of the file
 
 ### `isa.trailing-junk`
 
-*error* — Unexpected bytes between the segment terminator and GS
+*warning* — Unexpected bytes between the segment terminator and GS
 
-Bytes that are not line breaks sit between the ISA segment terminator and the GS header -- stray spaces, a comment, or transport framing. They are not part of the interchange and are stripped on reconstruction.
+Bytes that are not line breaks sit between the ISA segment terminator and the GS header -- stray spaces, a comment, or transport framing. Not part of the interchange under any legal delimiter choice -- non-conformant, like isa.trailing-newline -- and stripped on reconstruction.
 
 ### `isa.trailing-newline`
 
