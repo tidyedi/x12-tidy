@@ -332,13 +332,14 @@ META: dict[Code, CodeMeta] = {
         ),
     ),
     Code.ISA_TRAILING_JUNK: CodeMeta(
-        default_severity="error",
+        default_severity="warning",
         title="Unexpected bytes between the segment terminator and GS",
         explanation=(
             "Bytes that are not line breaks sit between the ISA segment "
             "terminator and the GS header -- stray spaces, a comment, or "
-            "transport framing. They are not part of the interchange and are "
-            "stripped on reconstruction."
+            "transport framing. Not part of the interchange under any legal "
+            "delimiter choice -- non-conformant, like isa.trailing-newline -- "
+            "and stripped on reconstruction."
         ),
     ),
 
