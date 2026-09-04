@@ -9,13 +9,23 @@ up the rest of the interchange.
 * :func:`split_segments` -- split the interchange into its raw segments.
 * :func:`drop_empty_segments` -- drop the empty pieces two terminators in a row
   leave behind.
+* :func:`clean_payload` -- assemble the cleansed whole-file payload: clean ISA
+  line + clean (empty-free) segments, rejoined on the sender's terminator.
 
-Both are mechanical transforms: no diagnostics, no validation, no refusal.
-Envelope QA/QC runs later, after reconstruction.
+The first two are mechanical transforms: no diagnostics, no validation, no
+refusal. ``clean_payload`` is the one-call pipeline built on top of them, and
+it does refuse (propagating the ISA phase's fatal) when there is no ISA line to
+build from. Envelope QA/QC runs later, after reconstruction.
 """
 
 from __future__ import annotations
 
+from x12_tidy.structure.payload import ReconstructedPayload, clean_payload
 from x12_tidy.structure.segments import drop_empty_segments, split_segments
 
-__all__ = ["split_segments", "drop_empty_segments"]
+__all__ = [
+    "split_segments",
+    "drop_empty_segments",
+    "ReconstructedPayload",
+    "clean_payload",
+]
