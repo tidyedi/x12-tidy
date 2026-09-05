@@ -88,7 +88,7 @@ reasons — and the first is fatal on its own:
    resolves that silently, matching *some* boundary; the trailing `GS\1` then
    anchors early, or the whole match fails, with no signal either way. x12-tidy
    does the opposite: it counts the separators, sees seventeen, and reports it
-   (`isa.no-functional-group`), naming both possible causes. And `GS\1` matches a
+   (`isa.separator-count-high`), naming both possible causes. And `GS\1` matches a
    `GS` + separator *anywhere* — inside ISA06 or ISA08 element data as readily as
    in a transaction set. A match gives you a boundary; it never gives you "this
    boundary is suspect, and here is why."
@@ -230,7 +230,7 @@ the count:
 - a `GS*` matched **inside** the ISA line (5.1) cuts the run short → fewer than
   16 separators → `isa.separator-count-low`;
 - a `GS*` matched **past** the real header (downstream, or a decoy `ISA*` prefix)
-  overshoots → more than 16 separators → `isa.no-functional-group`.
+  overshoots → more than 16 separators → `isa.separator-count-high`.
 
 ```python
 # d. the run must hold exactly 16 element separators
@@ -247,7 +247,7 @@ return _Attempt(isa_line, None)          # a real ISA line
 
 - **`< 16` → `isa.separator-count-low`** — element separators were removed; the
   ISA segment is deficient.
-- **`> 16` → `isa.no-functional-group`** — the `GS` that was found is not this ISA
+- **`> 16` → `isa.separator-count-high`** — the `GS` that was found is not this ISA
   line's header. Either there is no GS envelope and the match is inside a later
   segment, or the element separator occurs inside ISA06/ISA08 data. The
   diagnostic leads with the structural fact, not the separator count, which is
@@ -345,7 +345,7 @@ def _looks_like_segment_start(dirty: bytes, offset: int) -> bool:
 
 Nothing above is a silent repair. Each tolerance emits a stable diagnostic code —
 `isa.leading-bytes`, `isa.identifier-lowercase`, `isa.identifier-utf16`,
-`isa.no-functional-group`, `isa.gs-not-found`, and the rest (see
+`isa.separator-count-high`, `isa.gs-not-found`, and the rest (see
 [`diagnostics.md`](diagnostics.md)) — so the developer holding the bad file gets
 the exact list of what their partner did wrong, not a single exception at the
 first surprise.
@@ -375,10 +375,10 @@ def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
 | UTF-8 BOM, then a clean interchange | 106-byte run | `isa.leading-bytes` |
 | `SUBJECT: ISA FILE\n` + lowercase interchange | run returned | `isa.identifier-lowercase`, `isa.leading-bytes` |
 | ISA02 & ISA04 stripped (86-byte segment) | 86-byte run | none — still 16 separators |
-| No `GS` envelope; a `REF*GS*` deep in the data | fatal | `isa.no-functional-group` |
+| No `GS` envelope; a `REF*GS*` deep in the data | fatal | `isa.separator-count-high` |
 | Two interchanges concatenated, first `GS` missing | 2nd interchange | `isa.leading-bytes` |
 | UTF-16 LE encoded file | fatal | `isa.identifier-utf16` |
-| Element separator `*` occurs inside the sender's ID | fatal | `isa.no-functional-group` |
+| Element separator `*` occurs inside the sender's ID | fatal | `isa.separator-count-high` |
 | 2 MB of leading junk, then `ISA` | 106-byte run | `isa.leading-bytes` |
 
 ---

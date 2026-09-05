@@ -111,12 +111,11 @@ Key points:
   go to recovery:
   - `< 16` → `isa.separator-count-low` — element separators were removed, or the
     `GS` anchored on is a false match inside earlier data.
-  - `> 16` → `isa.no-functional-group` — the `GS` that was found is not this ISA
-    line's header (too many separators precede it). Either there is no GS
+  - `> 16` → `isa.separator-count-high` — the `GS` that was found is not this ISA
+    line's header (more than 16 separators precede it). Either there is no GS
     envelope and the match is inside a later segment, or the element separator
-    occurs inside ISA06/ISA08 data (an unparseable segment). The diagnostic
-    leads with the structural fact — no functional-group header — rather than
-    the separator count, which is the symptom.
+    occurs inside ISA06/ISA08 data (an unparseable segment). Pairs with
+    `isa.separator-count-low`.
 
   When no candidate yields exactly 16, the **first** candidate's failure is
   reported.
@@ -213,11 +212,10 @@ bar + slice 1), making no assumption about length or width. Once slice 1 returns
 The sender's element, component, repetition **and segment** delimiters are all
 **kept as-is** — which byte serves as a delimiter is the sender's choice, X12
 does not dictate it, so any valid non-alphanumeric byte is conformant and is
-preserved. A `\n` terminator stays `\n`. A non-`~` terminator is flagged
-(`isa.segment-terminator-noncanonical`, warning) only because `~` is the
-near-universal convention. The terminator is *supplied* as `~` in exactly one
-case — the sender omitted it entirely (`isa.segment-terminator-stripped`) — where
-there is no byte to preserve. Bytes that cannot be a legal delimiter (trailing
+preserved silently. A `\n` terminator stays `\n` and raises no finding. When
+the sender omitted the terminator entirely (`isa.segment-terminator-stripped`,
+fatal) x12-tidy refuses rather than guess `~` — a wrong terminator would break
+the split of every following segment. Bytes that cannot be a legal delimiter (trailing
 `\r\n` or spaces after the real terminator, an alphanumeric terminator) are a
 separate matter, stripped or refused by slice 1.
 
@@ -239,7 +237,6 @@ interchange is unprocessable until it is repaired.
 | --- | --- | --- |
 | anything slice 1 already made fatal | — | propagated |
 | element longer than its width with **real data** in the overflow | `isa.element-overflow` | intent is unknowable — a dropped element separator merged two fields, or the sender overran the field. Either guess risks corrupting an identifier (sender/receiver ID, control number). |
-| reassembled line not 105 bytes | `isa.line-length` | a guard; should never fire once the per-element widths hold |
 
 **The round-trip acceptance test.** `tests/test_reconstruct.py`: for every
 non-terminal corpus input, reconstruct, then re-parse the reconstruction through
@@ -247,11 +244,10 @@ the whole pipeline (re-wrapped with the terminator reconstruction preserved).
 The reconstructed line is a **fixed point** — cleaning it again returns the
 identical bytes and elements — and none of the codes reconstruction owns
 (`isa.element-*`, `isa.leading-bytes`, `isa.trailing-*`,
-`isa.segment-terminator-stripped`, `isa.line-length`) reappears. Findings
-reconstruction deliberately does **not** act on — value-level
-(`isa.version-unrecognized`, `isa.isa11-not-standards-id`) and the preserved
-non-`~` terminator (`isa.segment-terminator-noncanonical`) — are out of scope
-for this phase and legitimately survive a round trip.
+`isa.segment-terminator-stripped`) reappears. Findings reconstruction
+deliberately does **not** act on — value-level (`isa.version-unrecognized`,
+`isa.isa11-not-standards-id`) — are out of scope for this phase and
+legitimately survive a round trip.
 
 **Scope boundary.** Reconstruction validates and repairs *structure* — widths,
 delimiters, the terminator, the length. It does **not** judge element *values*:
@@ -342,7 +338,7 @@ branches adding two different codes touch different lines and merge cleanly; two
 branches adding the *same* code conflict, which is the correct outcome.
 
 - **`area` is the subject of the finding, never the code path that raised it.**
-  A short-ISA-line problem found while recovering is still `isa.line-length`,
+  A short-ISA-line problem found while recovering is still `isa.separator-count-low`,
   not `recovery.*`. Closed vocabulary: `isa`, `gs`, `st`, `delimiter`,
   `structure`. It grows roughly once a year.
 - The enum member name is the code string upper-cased with `.`/`-` → `_`:

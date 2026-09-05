@@ -20,20 +20,19 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 
 ## Summary
 
-- **47 codes** reviewed. **1 removed**, **1 to remove**, **2 severity changes**, **4 renamed (✅ done)**, **10 more reword**, **29 accepted unchanged**.
-- **1 research blocker** gates 3–5 items.
-- **1 verified defect** beyond wording (`isa.segment-terminator-stripped`), resolved by the severity decision.
+- **47 codes** reviewed. **2 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`), **1 severity change** (`isa.segment-terminator-stripped` → fatal), **4 renamed**, **10 more reworded**, **29 accepted unchanged** — all ✅ done and on `main` except the research-gated wording (3 codes) and the `isa.identifier-utf16` transcode.
+- **1 research blocker** gates the wording of `isa.element-separator-invalid`, `isa.segment-terminator-invalid`, `isa.delimiter-misaligned` and the `trailing-junk`/`trailing-newline` decision.
 - **1 gap** → possible new code (ST/SE cardinality).
 - **`isa.identifier-utf16` transcode = an explicit TODO for a later discussion** (user) — do not implement without a go-ahead.
 
-### Severity / existence changes (the only 4)
+### Severity / existence changes
 
-| code | current | → | status |
-|---|---|---|---|
-| `isa.line-length` | fatal | **removed** — unreachable guard | ✅ branch `refactor/remove-isa-line-length` (`013e252`, unmerged) |
-| `isa.segment-terminator-noncanonical` | warning | **removed** — non-`~` terminator is the sender's lawful choice, not a deviation | 🔶 |
-| `isa.segment-terminator-stripped` | error | **fatal** — stop fabricating `~`; refuse | 🔶 |
-| `isa.identifier-utf16` (was `isa.tag-utf16`) | fatal | **warning** — transcode UTF-16→single-byte + warn | 🔬 TODO for a later discussion; gated on the delimiter research + an explicit go-ahead |
+| code | change | status |
+|---|---|---|
+| `isa.line-length` | **removed** — unreachable guard | ✅ on `main` (#67) |
+| `isa.segment-terminator-noncanonical` | **removed** — non-`~` terminator is the sender's lawful choice, not a deviation | ✅ done (this PR) |
+| `isa.segment-terminator-stripped` | error → **fatal** — refuse, stop fabricating `~` | ✅ done (this PR) |
+| `isa.identifier-utf16` | fatal → **warning** — transcode UTF-16→single-byte + warn | 🔬 TODO for a later discussion; gated on the delimiter research + an explicit go-ahead |
 
 ---
 
@@ -45,25 +44,25 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 |---|---|---|---|
 | `isa.component-separator-invalid` | error | ✔️ | — |
 | `isa.delimiter-collision` | fatal | ✔️ | — |
-| `isa.delimiter-misaligned` | fatal | 🔶 / 🔬 | reword: name ISA16, name the "element separator inside ISA06/ISA08" cause, drop "delimiter-shaped bytes"; final wording waits on the delimiter research |
+| `isa.delimiter-misaligned` | fatal | 🔬 | reword pending the delimiter research (name ISA16, name the "separator inside ISA06/ISA08" cause, drop "delimiter-shaped bytes") |
 | `isa.element-embedded-newline` | warning | ✔️ | — |
 | `isa.element-overflow` | fatal | ✔️ | — |
 | `isa.element-separator-invalid` | fatal | 🔬 | reword pending research (rests on "delimiters are non-alphanumeric" — unconfirmed) |
 | `isa.element-width` | error | ✔️ | — |
-| `isa.gs-not-found` | fatal | 🔶 | reword to contrast with `isa.no-functional-group` / `separator-count-*`: THIS = no `GS`+separator appears anywhere after ISA |
+| `isa.gs-not-found` | fatal | ✅ done | reworded to contrast with `isa.separator-count-high` (this one = no `GS`+separator anywhere after ISA) |
 | `isa.interchange-too-short` | fatal | ✔️ | — |
-| `isa.isa11-not-standards-id` | error | 🔶 | retitle "ISA11 must be `U` on versions before 00403" |
-| `isa.isa16-missing` | fatal | 🔶 | retitle to name ISA16 (it carries the component separator); drop "Nothing follows ISA15" |
+| `isa.isa11-not-standards-id` | error | ✅ done | retitled "ISA11 must be 'U' on versions before 00403"; explanation notes ISA11 became the repetition separator at 00403 |
+| `isa.isa16-missing` | fatal | ✅ done | retitled "ISA16 is missing"; explanation names it as the component-separator element |
 | `isa.leading-bytes` | warning | ✔️ | — |
-| `isa.line-length` | fatal | ✅ **removed** | unreachable; branch `refactor/remove-isa-line-length` |
-| `isa.no-functional-group` | fatal | 🔶 | **`slug → isa.separator-count-high`** (`ISA_SEPARATOR_COUNT_HIGH`); pairs with `isa.separator-count-low`. A `GS`+separator was found but the run to it holds >16 element separators |
-| `isa.no-identifier` (was `isa.no-tag`) | fatal | ✅ renamed | branch `refactor/tag-to-identifier` (`f08294b`). "tag" → "segment identifier" done. Title-simplification ("No ISA segment in the file") still open |
+| `isa.line-length` | — | ✅ removed | unreachable guard; on `main` (#67) |
+| `isa.separator-count-high` (was `isa.no-functional-group`) | fatal | ✅ done | renamed (`ISA_SEPARATOR_COUNT_HIGH`), retitled "More than 16 element separators before GS", reworded to pair with `isa.separator-count-low` |
+| `isa.no-identifier` (was `isa.no-tag`) | fatal | ✅ done | renamed (#67); title simplified to "No ISA segment in the file" (this PR) |
 | `isa.repetition-separator-invalid` | error | ✔️ | — |
 | `isa.repetition-separator-missing` | error | ✔️ | — |
-| `isa.segment-terminator-invalid` | fatal | 🔶 / 🔬 | KEEP the gate. Drop "The terminator was probably stripped by the sender" (speculation). Retitle pending research. Co-fires with `isa.trailing-junk` in real cases — leave for later |
-| `isa.segment-terminator-noncanonical` | warning | 🔶 **remove** | non-`~` terminator is legal; not a deviation. Also drop it from the round-trip `_RECONSTRUCTION_OWNS` set |
-| `isa.segment-terminator-stripped` | error | 🔶 **→ fatal** | Verified defect: fabricating `~` cascades (a `\n`-terminated file with the terminator stripped → `split_segments` collapses the body → false `gs.missing-ge` + `structure.missing-iea`). Decision (Option A): refuse. Reword to drop "reconstructed as `~`". Remove from `_RECONSTRUCTION_OWNS`. `CANONICAL_TERMINATOR` may become unused |
-| `isa.separator-count-low` | fatal | ✔️ | — (its pair `separator-count-high` arrives via the `no-functional-group` rename) |
+| `isa.segment-terminator-invalid` | fatal | 🔶 done / 🔬 | speculation line dropped (this PR); gate kept. Retitle still pending the delimiter research. Co-fire with `isa.trailing-junk` left for later |
+| `isa.segment-terminator-noncanonical` | — | ✅ removed | this PR — code, emit site, and `_RECONSTRUCTION_OWNS` entry all gone; a non-`~` terminator is now preserved silently |
+| `isa.segment-terminator-stripped` | error → **fatal** | ✅ done | this PR — `split_isa_line` now refuses (returns not-usable) instead of fabricating `~`; reworded; removed from `_RECONSTRUCTION_OWNS`; `CANONICAL_TERMINATOR` constant deleted |
+| `isa.separator-count-low` | fatal | ✔️ | — (pairs with `isa.separator-count-high`) |
 | `isa.identifier-lowercase` (was `isa.tag-lowercase`) | error | ✅ renamed | branch `refactor/tag-to-identifier` (`f08294b`). "tag" → "segment identifier" done (slug, enum, title, explanation, `isa_line.py` message) |
 | `isa.identifier-utf16` (was `isa.tag-utf16`) | fatal | ✅ renamed / 🔬 severity | Rename done (`f08294b`). **STILL A TODO FOR LATER DISCUSSION** (user, do not implement yet): fatal → warning via transcode UTF-16→single-byte + warn — endianness is already detected (`I\x00S\x00A` LE vs `\x00I\x00S\x00A` BE), valid X12 is all-ASCII so lossless. "How to ingest" guidance → future `intake` package. Gated on the delimiter research + an explicit go-ahead |
 | `isa.trailing-junk` | warning | 🔬 | Keep for genuine foreign bytes (comment, transport framing). Resolve the consistency gap: identical junk after `GS~`/`ST~`/etc. is stripped silently by `split_segments` — flag uniformly (likely `structure.*`) or strip silently everywhere |
@@ -75,7 +74,7 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 | `gs.control-number-not-numeric` | fatal | ✔️ | — |
 | `gs.count-not-numeric` | fatal | ✔️ | — |
 | `gs.missing-ge` | fatal | ✔️ | — |
-| `gs.responsible-agency-invalid` | error | 🔶 | Retitle so it doesn't read as a trading party. GS07 (X12 data element **455**) names the standards body: `X` = Accredited Standards Committee X12, `T` = Transportation Data Coordinating Committee. Explanation should cite element 455. **Verify** 455 has no other valid values |
+| `gs.responsible-agency-invalid` | error | ✅ done | retitled "GS07 does not name a known standards organization"; explanation cites element 455 and says X / T are the only values X12 defines for it |
 | `gs.transaction-set-count-mismatch` | fatal | ✔️ | — |
 | `gs.version-mismatch` | fatal | ✔️ | — |
 | `st.control-number-duplicate` | fatal | ✔️ | — |
@@ -86,10 +85,10 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 | `structure.control-number-mismatch` | fatal | ✔️ | — |
 | `structure.control-number-not-numeric` | fatal | ✔️ | — |
 | `structure.count-not-numeric` | fatal | ✔️ | — |
-| `structure.foreign-content` | fatal | 🔶 | Keep the check. Retitle "Segment outside the envelope structure" — current "A segment appears where none is structurally valid" is too abstract; lean on the per-occurrence message |
+| `structure.foreign-content` | fatal | ✅ done | retitled "Segment outside the envelope structure" |
 | `structure.functional-group-count-mismatch` | fatal | ✔️ | — |
 | `structure.missing-iea` | fatal | ✔️ | — |
-| `structure.identifier-invalid` (was `structure.tag-shape-invalid`) | error | ✅ renamed / 🔶 wording | Rename + "tag" → "segment identifier" done (`f08294b`). **STILL OPEN:** retitle "A segment identifier does not begin with an uppercase letter" — current title still says "not uppercase alphabetic", but the check is first byte `isalpha()+isupper()` (A5); IDs may contain digits (`N1`, `PO1`, `G62`) |
+| `structure.identifier-invalid` (was `structure.tag-shape-invalid`) | error | ✅ done | renamed (#67); retitled "A segment identifier does not begin with an uppercase letter"; explanation notes IDs may contain digits (`N1`, `PO1`, `G62`) (this PR) |
 
 ---
 
@@ -117,17 +116,19 @@ Also to confirm: whether X12.6 sanctions a CR/LF **segment-terminator suffix**.
 
 ## Implementation tracking
 
-Branch `refactor/tag-to-identifier` bundles: this review doc, the
-"tag" → "segment identifier" sweep (4 code renames + all prose), the
-`isa.line-length` removal (cherry-picked), and `docs/using-x12-tidy.md`.
-377 tests green. Being pushed + PR'd + merged to `main` now.
-
 | item | state |
 |---|---|
-| `DIAGNOSTICS-REVIEW.md` | in this branch |
-| "tag" → "segment identifier" sweep | ✅ done |
-| remove `isa.line-length` | ✅ done |
-| `docs/using-x12-tidy.md` | ✅ committed |
-| everything else in the review | not started |
-
-- The 4 engineering-note **PDFs** still contain "tag" (`finding-the-elusive-isa-line.pdf` ×2, `reconstructing-the-isa-line.pdf` ×1). Re-printing them is **gated** — needs an explicit go-ahead in the moment.
+| `DIAGNOSTICS-REVIEW.md` | on `main` (#67) |
+| "tag" → "segment identifier" sweep (4 renames + prose) | ✅ on `main` (#67) |
+| remove `isa.line-length` | ✅ on `main` (#67) |
+| `docs/using-x12-tidy.md` | ✅ on `main` (#67) |
+| envelope package (`x12_tidy.envelope`) | ✅ on `main` (#69) |
+| `docs/images/` consolidation | ✅ on `main` (#70) |
+| **11 decided review items** (rewords + the 2 behaviour changes) | ✅ done — this PR |
+| top-level `from x12_tidy import tidy` re-export | ✅ this PR |
+| `qaqc/envelope.py` → `qaqc/checks.py` | ✅ this PR |
+| README / docs/README link to `using-x12-tidy.md` | ✅ this PR |
+| research-gated wording (3 codes) + `trailing-*` decision | not started — needs the X12.6 delimiter rule |
+| `isa.identifier-utf16` transcode | not started — explicit later-discussion TODO |
+| ST/SE cardinality | not started — undecided |
+| 4 note **PDFs** still contain "tag" | gated — re-print from the live site with a go-ahead |

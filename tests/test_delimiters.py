@@ -99,8 +99,9 @@ def test_pipe_separator_and_lf_terminator() -> None:
     d = split_isa_line(run_of(sep=b"|", term=b"\n"))
     assert (d.element_separator, d.component_separator, d.segment_terminator) \
         == (b"|", b":", b"\n")
-    assert codes(d.diagnostics) == [Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL]
-    assert d.usable  # a non-tilde terminator is a warning
+    # a non-tilde terminator is the sender's lawful choice -- no finding
+    assert d.diagnostics == []
+    assert d.usable
 
 
 def test_tilde_crlf_terminator_splits_deterministically() -> None:
@@ -116,8 +117,7 @@ def test_bare_crlf_terminator_is_one_byte_by_rule() -> None:
     # the 1-byte rule: \r is the terminator, \n falls to trailing
     assert d.segment_terminator == b"\r"
     assert d.trailing == b"\n"
-    assert Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL in codes(d.diagnostics)
-    assert Code.ISA_TRAILING_NEWLINE in codes(d.diagnostics)
+    assert codes(d.diagnostics) == [Code.ISA_TRAILING_NEWLINE]
     assert d.usable
 
 
@@ -136,11 +136,11 @@ def test_alphanumeric_element_separator_is_fatal() -> None:
     assert not d.usable
 
 
-def test_stripped_segment_terminator_is_reconstructed() -> None:
+def test_stripped_segment_terminator_is_fatal() -> None:
     d = split_isa_line(run_of(comp=b":", term=b""))
-    assert d.segment_terminator == b"~"
+    assert d.segment_terminator == b""  # not fabricated
     assert codes(d.diagnostics) == [Code.ISA_SEGMENT_TERMINATOR_STRIPPED]
-    assert d.usable
+    assert not d.usable  # refuse rather than guess "~"
 
 
 def test_terminator_equal_to_component_separator_is_fatal() -> None:
