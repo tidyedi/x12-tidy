@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 210" role="img" aria-label="A byte-map of the ISA segment: the tag ISA at byte 0, the element separator at byte 3, sixteen fixed-width elements ISA01 through ISA16, the component separator at byte 104, the segment terminator at byte 105, and the GS functional-group header beginning at byte 106.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 210" role="img" aria-label="A byte-map of the ISA segment: the identifier ISA at byte 0, the element separator at byte 3, sixteen fixed-width elements ISA01 through ISA16, the component separator at byte 104, the segment terminator at byte 105, and the GS functional-group header beginning at byte 106.">
   <style>
     :root {
       --fg: #3d4450; --muted: #6b7280; --rule: #d0d7de;

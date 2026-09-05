@@ -19,15 +19,15 @@ Flow
 1. Collect every offset of the exact bytes ``ISA`` (up to
    :data:`MAX_ISA_CANDIDATES`) and try each (step 3). The first that yields a
    clean run wins.
-2. If none did: a NUL-interleaved ``I S A`` near the start -> ``isa.tag-utf16``
+2. If none did: a NUL-interleaved ``I S A`` near the start -> ``isa.identifier-utf16``
    (fatal). Otherwise take one lower-case copy of the buffer, collect the
    ``isa`` offsets, and try those case-insensitively (``GS`` matched
-   case-insensitively too), carrying ``isa.tag-lowercase`` (error). This also
+   case-insensitively too), carrying ``isa.identifier-lowercase`` (error). This also
    rescues a lowercase segment that sits behind junk containing the literal
-   uppercase word ``ISA``. If that finds nothing usable either -> ``isa.no-tag``
+   uppercase word ``ISA``. If that finds nothing usable either -> ``isa.no-identifier``
    (fatal) -- unless a lowercase candidate looked like a real segment start
    (offset 0 or after a non-alphanumeric byte), in which case its failure is
-   reported with ``isa.tag-lowercase``.
+   reported with ``isa.identifier-lowercase``.
 3. For one candidate:
      a. ``cleansed = dirty[isa_start:]``;  ``len < 109`` -> fail
         (``isa.interchange-too-short``)
@@ -73,8 +73,8 @@ from dataclasses import dataclass, field
 
 from x12_tidy.diagnostics import Code, Diagnostic
 
-ISA_TAG = b"ISA"
-GS_TAG = b"GS"
+ISA_IDENTIFIER = b"ISA"
+GS_IDENTIFIER = b"GS"
 
 #: A standard fixed-format ISA line is 105 bytes; the 1-byte segment terminator
 #: sits at offset 105, so a conformant file has "GS" + element separator here.
@@ -86,7 +86,7 @@ ISA_ELEMENT_SEPARATORS = 16
 #: Cap on how many ``ISA`` occurrences to try before giving up -- guards against
 #: a pathological file that is mostly the bytes ``ISA``.
 MAX_ISA_CANDIDATES = 16
-#: What a UTF-16-encoded ``ISA`` tag looks like (LE, then BE).
+#: What a UTF-16-encoded ``ISA`` identifier looks like (LE, then BE).
 _UTF16_MARKERS = (b"I\x00S\x00A", b"\x00I\x00S\x00A")
 #: How far into the file to look for the UTF-16 markers.
 _UTF16_SCAN_LEN = 512
@@ -98,7 +98,7 @@ class IsaLineResult:
 
     ``isa_line`` is ``None`` exactly when a fatal diagnostic was raised.
     ``isa_start`` is the byte offset of the winning (or, on failure, the first
-    tried) ISA tag in the original input -- ``-1`` if no tag was found at all.
+    tried) ISA identifier in the original input -- ``-1`` if no identifier was found at all.
     """
 
     isa_line: bytes | None
@@ -112,18 +112,18 @@ class IsaLineResult:
 
 @dataclass
 class _Attempt:
-    """What trying one ISA-tag candidate produced."""
+    """What trying one ISA-identifier candidate produced."""
 
     isa_line: bytes | None
     failure: Diagnostic | None  # set iff isa_line is None
 
 
-def _isa_offsets(haystack: bytes, tag: bytes = ISA_TAG) -> list[int]:
+def _isa_offsets(haystack: bytes, identifier: bytes = ISA_IDENTIFIER) -> list[int]:
     offsets: list[int] = []
-    at = haystack.find(tag)
+    at = haystack.find(identifier)
     while at != -1 and len(offsets) < MAX_ISA_CANDIDATES:
         offsets.append(at)
-        at = haystack.find(tag, at + 1)
+        at = haystack.find(identifier, at + 1)
     return offsets
 
 
@@ -136,7 +136,7 @@ def _try_candidate(
     if len(cleansed) < MIN_INTERCHANGE_LEN:
         return _Attempt(None, Diagnostic(
             Code.ISA_INTERCHANGE_TOO_SHORT,
-            f"only {len(cleansed)} byte(s) from the ISA tag onward; an X12 "
+            f"only {len(cleansed)} byte(s) from the ISA identifier onward; an X12 "
             f"interchange needs at least a {MIN_INTERCHANGE_LEN}-byte ISA line "
             f"plus a 'GS' header.",
             offset=isa_start,
@@ -144,7 +144,7 @@ def _try_candidate(
 
     # b. the element separator is, by rule, the 4th byte of the ISA segment
     element_separator = cleansed[3:4]
-    gs_identifier = GS_TAG + element_separator
+    gs_identifier = GS_IDENTIFIER + element_separator
 
     hay = cleansed.lower() if case_insensitive else cleansed
     needle = gs_identifier.lower() if case_insensitive else gs_identifier
@@ -177,7 +177,7 @@ def _try_candidate(
         return _Attempt(None, Diagnostic(
             Code.ISA_NO_FUNCTIONAL_GROUP,
             f"a {gs_identifier!r} sequence sits {gs_pos} byte(s) past the ISA "
-            f"tag, but {separator_count} element separator(s) "
+            f"identifier, but {separator_count} element separator(s) "
             f"({element_separator!r}) precede it -- an ISA header has "
             f"{ISA_ELEMENT_SEPARATORS}, so this is not the functional-group "
             f"header. No GS envelope bounds the ISA segment (the match is "
@@ -191,37 +191,37 @@ def _try_candidate(
 
 def extract_isa_line(dirty: bytes) -> IsaLineResult:
     """Return the ISA line from ``dirty`` -- see the module docstring."""
-    # Fast path: exact uppercase ISA tags. The overwhelming common case, and it
+    # Fast path: exact uppercase ISA identifiers. The overwhelming common case, and it
     # never copies the buffer.
-    upper = _isa_offsets(dirty, ISA_TAG)
+    upper = _isa_offsets(dirty, ISA_IDENTIFIER)
     result, upper_failure = _try_all(dirty, upper, case_insensitive=False)
     if result is not None:
         return result
 
-    # No uppercase tag produced an ISA line. UTF-16 only matters when there is
-    # no uppercase tag at all.
+    # No uppercase identifier produced an ISA line. UTF-16 only matters when there is
+    # no uppercase identifier at all.
     if not upper and any(m in dirty[:_UTF16_SCAN_LEN] for m in _UTF16_MARKERS):
         return IsaLineResult(None, -1, [Diagnostic(
-            Code.ISA_TAG_UTF16,
-            "the ISA tag appears with interleaved NUL bytes; the file looks "
+            Code.ISA_IDENTIFIER_UTF16,
+            "the ISA identifier appears with interleaved NUL bytes; the file looks "
             "UTF-16 encoded. X12 requires a single-byte encoding.",
             offset=0,
         )])
 
     # Case-insensitive fallback -- one full-buffer lower-case copy, only on this
-    # already-failed path. Handles a lowercase/mixed-case ISA tag, including one
+    # already-failed path. Handles a lowercase/mixed-case ISA identifier, including one
     # that sits behind junk containing the literal uppercase word "ISA".
     lowered = dirty.lower()
     ci_failure: tuple[int, Diagnostic] | None = None
-    if ISA_TAG.lower() in lowered:
-        ci_offsets = _isa_offsets(lowered, ISA_TAG.lower())
+    if ISA_IDENTIFIER.lower() in lowered:
+        ci_offsets = _isa_offsets(lowered, ISA_IDENTIFIER.lower())
         result, ci_failure = _try_all(dirty, ci_offsets, case_insensitive=True)
         if result is not None:
             return result
 
     # Nothing produced an ISA line. Report the most useful failure.
     if upper_failure is not None:
-        isa_start, failure = upper_failure          # an uppercase tag existed
+        isa_start, failure = upper_failure          # an uppercase identifier existed
         return IsaLineResult(None, isa_start, _cap_note([failure], len(upper)))
     if ci_failure is not None and _looks_like_segment_start(dirty, ci_failure[0]):
         isa_start, failure = ci_failure             # a real lowercase attempt
@@ -230,8 +230,8 @@ def extract_isa_line(dirty: bytes) -> IsaLineResult:
         ])
     # "isa" only ever appeared inside a word, or not at all.
     return IsaLineResult(None, -1, [Diagnostic(
-        Code.ISA_NO_TAG,
-        "no 'ISA' segment tag anywhere in the file; not an X12 interchange.",
+        Code.ISA_NO_IDENTIFIER,
+        "no 'ISA' segment identifier anywhere in the file; not an X12 interchange.",
     )])
 
 
@@ -294,8 +294,8 @@ def _context_diagnostics(
 
 def _lowercase_tag_diagnostic(isa_start: int) -> Diagnostic:
     return Diagnostic(
-        Code.ISA_TAG_LOWERCASE,
-        "the ISA segment tag is not uppercase ('isa' or mixed case); X12 "
-        "segment tags are uppercase. Parsed case-insensitively.",
+        Code.ISA_IDENTIFIER_LOWERCASE,
+        "the ISA segment identifier is not uppercase ('isa' or mixed case); X12 "
+        "segment identifiers are uppercase. Parsed case-insensitively.",
         offset=isa_start,
     )

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 290" role="img" aria-label="Two byte streams compared. In the conformant stream, byte 106 lands exactly on the GS tag. In the received stream, a three-byte BOM is prepended and one element is stripped, so byte 106 now lands in the middle of an element, not on GS.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 290" role="img" aria-label="Two byte streams compared. In the conformant stream, byte 106 lands exactly on the GS identifier. In the received stream, a three-byte BOM is prepended and one element is stripped, so byte 106 now lands in the middle of an element, not on GS.">
   <style>
     :root {
       --fg: #3d4450; --muted: #6b7280; --rule: #d0d7de;

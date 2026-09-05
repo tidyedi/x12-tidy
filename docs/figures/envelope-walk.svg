@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 260" role="img" aria-label="A sequence of segment tags: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 260" role="img" aria-label="A sequence of segment identifiers: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
   <style>
     svg { color: #17212b; }
     :root {
@@ -19,7 +19,7 @@
   <g font-size="12">
     <text x="12" y="18" fill="var(--ink-soft)" font-size="10.5" letter-spacing="0.06em">THE SEGMENT LIST, ONE PASS</text>
 
-    <!-- tag boxes -->
+    <!-- identifier boxes -->
     <g font-size="12.5">
       <rect x="12"  y="30" width="70" height="32" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
       <text x="47"  y="51" text-anchor="middle" fill="var(--accent)">GS</text>

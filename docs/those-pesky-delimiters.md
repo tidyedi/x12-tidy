@@ -60,7 +60,7 @@ slid out from under you.
 
 ## 2. The one you can still trust: the element separator
 
-Byte 3 does not move. The tag `ISA` is exactly three bytes — it can't be
+Byte 3 does not move. The identifier `ISA` is exactly three bytes — it can't be
 stripped, padded, or shifted, and it is the anchor
 [locating the line](finding-the-elusive-isa-line.md) already used. Whatever byte
 sits at index 3 of the run is the element separator, full stop. It is the one fixed offset that survives, because it sits *before* the

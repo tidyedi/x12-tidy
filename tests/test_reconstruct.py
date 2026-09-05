@@ -182,7 +182,7 @@ def test_upstream_fatal_is_propagated_with_no_line() -> None:
 def test_no_isa_tag_returns_none() -> None:
     result = clean_isa_line(b"GS*PO*A*B*20240101*1200*1*X*004010~" * 5)
     assert result.isa_line is None
-    assert Code.ISA_NO_TAG in _codes(result)
+    assert Code.ISA_NO_IDENTIFIER in _codes(result)
 
 
 # --------------------------------------------------------------------------
@@ -198,7 +198,7 @@ def test_no_isa_tag_returns_none() -> None:
 #: again. That is correct, not a lingering repair.
 _RECONSTRUCTION_OWNS: frozenset[Code] = frozenset({
     Code.ISA_LEADING_BYTES,
-    Code.ISA_TAG_LOWERCASE,
+    Code.ISA_IDENTIFIER_LOWERCASE,
     Code.ISA_TRAILING_NEWLINE,
     Code.ISA_TRAILING_JUNK,
     Code.ISA_SEGMENT_TERMINATOR_STRIPPED,

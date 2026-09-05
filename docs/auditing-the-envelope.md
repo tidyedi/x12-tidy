@@ -78,7 +78,7 @@ sender wrote.
 | `ISA`/`IEA`, `GS`/`GE`, `ST`/`SE` pairing and nesting | `structure.missing-iea`, `gs.missing-ge`, `st.missing-se` |
 | stated counts match the real count | `structure.functional-group-count-mismatch`, `gs.transaction-set-count-mismatch`, `st.segment-count-mismatch` |
 | control numbers agree front-to-back, and are unique in scope | `structure.control-number-mismatch`, `gs.control-number-duplicate`, `st.control-number-duplicate` |
-| a segment tag begins with an uppercase letter (the A5 gate) | `structure.tag-shape-invalid` |
+| a segment identifier begins with an uppercase letter (the A5 gate) | `structure.identifier-invalid` |
 | `GS08` agrees with `ISA12` | `gs.version-mismatch` |
 | `ISA15` is `T`, `P`, or `I` | `isa.usage-indicator-invalid` |
 | `GS07` is `X` or `T` — the complete list | `gs.responsible-agency-invalid` |
@@ -164,7 +164,7 @@ in this tool is.
 The per-case tests mirror [the earlier notes](reassembling-the-interchange.md#7-proving-it):
 one deviation, one expected code, run against a fully-assembled payload
 instead of a bare ISA line — a missing `SE`, a duplicated `GS06`, a lowercase
-tag, a version mismatch, and so on, one test each.
+identifier, a version mismatch, and so on, one test each.
 
 Writing them surfaced a real gap the way [the delimiter
 sweep](those-pesky-delimiters.md#6-proving-it-the-delimiters-dont-move) once

@@ -83,7 +83,7 @@ established.
 
 | phase | establishes | hands forward |
 | --- | --- | --- |
-| **locate** | the run has the *shape* of an ISA line (tag, `GS` boundary, 16 separators) | a run the delimiters can be parsed from |
+| **locate** | the run has the *shape* of an ISA line (identifier, `GS` boundary, 16 separators) | a run the delimiters can be parsed from |
 | **delimiters** | the four delimiter bytes, and which are usable | ground-truth delimiters |
 | **structure** | 16 elements at fixed width, one canonical 105-byte line — then, past the ISA line, one reassembled payload | a conformant ISA line, then a whole payload |
 | **values** | pairing and nesting hold, counts and control numbers agree, `ISA13` matches `IEA02` | an audited interchange |

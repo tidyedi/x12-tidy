@@ -5,7 +5,7 @@
 
 Covers only the decided checks: envelope pairing (GS/GE, ST/SE, ISA/IEA),
 control-number and count agreement, control-number uniqueness, the A5
-tag-shape gate, ISA12/GS08 version agreement, ISA15 validity, and GS07
+identifier-shape gate, ISA12/GS08 version agreement, ISA15 validity, and GS07
 validity. Rows without a decision (ISA05/07, ISA14, GS01, ST01 shape,
 date/time format) are deliberately not tested here because they are not
 built.
@@ -167,7 +167,7 @@ def test_tag_shape_invalid() -> None:
         b"BEG*00*NE*PO0001**20240101~", b"beg*00*NE*PO0001**20240101~"
     )
     result = check_payload(clean_payload(build_isa(trailer=trailer)))
-    assert Code.STRUCTURE_TAG_SHAPE_INVALID in _codes(result.diagnostics)
+    assert Code.STRUCTURE_IDENTIFIER_INVALID in _codes(result.diagnostics)
 
 
 def test_foreign_content_after_iea() -> None:
