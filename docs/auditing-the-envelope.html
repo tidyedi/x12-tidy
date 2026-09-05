@@ -506,7 +506,7 @@
       not a defect &mdash; only an <em>unusable</em> value is.</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap"><b>EnvelopeFacts</b> &mdash; src/x12_tidy/qaqc/envelope.py</p>
+      <p class="code-cap"><b>EnvelopeFacts</b> &mdash; src/x12_tidy/envelope/qaqc/envelope.py</p>
 <pre><code><span class="k">@dataclass</span>
 <span class="k">class</span> EnvelopeFacts:
     sender_qualifier: bytes
@@ -626,7 +626,7 @@ gs08_stripped = gs08.strip().lstrip(b<span class="s">"0"</span>)
       <a href="reassembling-the-interchange.html">the assembly step</a> to
       find more than one interchange boundary, not this one to guess harder.
       It's tracked, not fixed here.</p>
-      <p><code>x12_tidy.tidy.tidy(dirty: bytes) -&gt; TidyResult</code> is the
+      <p><code>x12_tidy.envelope.tidy.tidy(dirty: bytes) -&gt; TidyResult</code> is the
       whole-package entry point once both steps exist:
       <a href="reassembling-the-interchange.html">reassemble</a>, then audit,
       one combined diagnostic list, cleanse findings first.</p>

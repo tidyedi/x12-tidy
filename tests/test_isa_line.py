@@ -14,7 +14,7 @@ import pytest
 
 from _isa_helpers import ISA_ELEMENTS, build_isa, isa_segment
 from x12_tidy.diagnostics import Code
-from x12_tidy.isa import IsaLineResult, extract_isa_line
+from x12_tidy.envelope.isa import IsaLineResult, extract_isa_line
 
 
 def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:

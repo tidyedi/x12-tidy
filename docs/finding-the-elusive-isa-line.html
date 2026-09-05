@@ -718,7 +718,7 @@
       That is caught in 5.2, not here.</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, steps b–c</p>
+      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, steps b–c</p>
       <pre><code><span class="c"># b. the element separator is, by rule, the 4th byte of the ISA segment</span>
 element_separator = cleansed[3:4]
 gs_identifier     = GS_IDENTIFIER + element_separator
@@ -755,7 +755,7 @@ gs_identifier     = GS_IDENTIFIER + element_separator
       </ul>
     </div>
     <div class="code-fig">
-      <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, step d</p>
+      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, step d</p>
       <pre><code><span class="c"># d. the run must hold exactly 16 element separators</span>
 isa_line        = cleansed[:gs_pos]
 separator_count = isa_line.count(element_separator)
@@ -778,7 +778,7 @@ separator_count = isa_line.count(element_separator)
       reported.</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>_isa_offsets</b> &amp; the candidate loop</p>
+      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_isa_offsets</b> &amp; the candidate loop</p>
       <pre><code><span class="k">def</span> _isa_offsets(haystack: bytes, identifier: bytes = ISA_IDENTIFIER) -&gt; list[int]:
     offsets: list[int] = []
     at = haystack.find(identifier)
@@ -866,7 +866,7 @@ separator_count = isa_line.count(element_separator)
       existed at all.</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>extract_isa_line</b>, the two phases</p>
+      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>extract_isa_line</b>, the two phases</p>
       <pre><code><span class="k">def</span> extract_isa_line(dirty: bytes) -&gt; IsaLineResult:
     <span class="c"># Fast path: exact uppercase ISA identifiers. Never copies the buffer.</span>
     upper = _isa_offsets(dirty, ISA_IDENTIFIER)
@@ -893,7 +893,7 @@ separator_count = isa_line.count(element_separator)
       sits where a segment could start.</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>_looks_like_segment_start</b></p>
+      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_looks_like_segment_start</b></p>
       <pre><code><span class="k">def</span> _looks_like_segment_start(dirty: bytes, offset: int) -&gt; bool:
     <span class="s">"""Start of file, or right after a non-alphanumeric byte. Distinguishes a</span>
 <span class="s">    real lowercase `isa*` from `isa` buried in a word like "advisable"."""</span>

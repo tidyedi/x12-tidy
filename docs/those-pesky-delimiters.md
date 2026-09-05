@@ -10,7 +10,7 @@ line that no longer sits where the standard says it should.*
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/figures/` in sync with
-> `src/x12_tidy/isa/delimiters.py`.
+> `src/x12_tidy/envelope/isa/delimiters.py`.
 
 The companion note, [Finding the Elusive ISA Line](finding-the-elusive-isa-line.md),
 ends with a run of bytes: `ISA` up to just before `GS`, holding exactly sixteen

@@ -122,12 +122,12 @@ isa.element-width  (error)
 ## The library — one call
 
 ```python
-from x12_tidy.tidy import tidy
+from x12_tidy.envelope.tidy import tidy
 
 result = tidy(dirty)          # dirty: bytes  ->  TidyResult
 ```
 
-> The import stutters (`x12_tidy.tidy` the module, `tidy` the function) because
+> The import stutters (`x12_tidy.envelope.tidy` the module, `tidy` the function) because
 > `x12_tidy/__init__.py` does not re-export yet. `from x12_tidy import tidy`
 > currently gives you the *module*; call `tidy.tidy(dirty)` in that case.
 
@@ -192,7 +192,7 @@ meta(diag.code).deprecated       # bool
 
 ```python
 from pathlib import Path
-from x12_tidy.tidy import tidy
+from x12_tidy.envelope.tidy import tidy
 from x12_tidy.diagnostics import resolved_severity
 
 result = tidy(Path("broken.edi").read_bytes())
@@ -255,7 +255,7 @@ dirty bytes
 ### ISA line only
 
 ```python
-from x12_tidy.isa import (
+from x12_tidy.envelope.isa import (
     extract_isa_line,      # -> IsaLineResult
     split_isa_line,        # -> IsaDecomposition
     reconstruct_isa_line,  # -> ReconstructedIsaLine
@@ -281,7 +281,7 @@ r.was_clean             # bool (property)
 ### Whole payload
 
 ```python
-from x12_tidy.structure import clean_payload    # -> ReconstructedPayload
+from x12_tidy.envelope.structure import clean_payload    # -> ReconstructedPayload
 
 p = clean_payload(dirty)
 p.payload        # bytes | None  (None on refusal, same condition as clean_isa_line)
@@ -294,14 +294,14 @@ p.was_clean      # bool (property)
 `clean_payload` is **assembly only** — it does not repair a body segment, check
 that a identifier is real, or validate envelope consistency. That is QA/QC.
 
-There are also two purely mechanical helpers in `x12_tidy.structure`,
+There are also two purely mechanical helpers in `x12_tidy.envelope.structure`,
 `split_segments` and `drop_empty_segments` — no diagnostics, no validation, no
 refusal — plus `split_elements`.
 
 ### Envelope QA/QC
 
 ```python
-from x12_tidy.qaqc import check_payload     # -> QaQcResult
+from x12_tidy.envelope.qaqc import check_payload     # -> QaQcResult
 
 q = check_payload(p)          # p: ReconstructedPayload
 q.facts          # EnvelopeFacts | None

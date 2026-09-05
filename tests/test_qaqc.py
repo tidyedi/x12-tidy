@@ -15,9 +15,9 @@ from __future__ import annotations
 
 from _isa_helpers import build_isa
 from x12_tidy.diagnostics import Code
-from x12_tidy.qaqc import check_payload
-from x12_tidy.structure import clean_payload
-from x12_tidy.tidy import tidy
+from x12_tidy.envelope.qaqc import check_payload
+from x12_tidy.envelope.structure import clean_payload
+from x12_tidy.envelope.tidy import tidy
 
 # A hand-verified fully-correct interchange: one functional group, one
 # transaction set, three segments in it (ST, BEG, SE -- SE01 counts SE itself).

@@ -25,8 +25,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from x12_tidy.diagnostics import Diagnostic
-from x12_tidy.qaqc import EnvelopeFacts, check_payload
-from x12_tidy.structure import clean_payload
+from x12_tidy.envelope.qaqc import EnvelopeFacts, check_payload
+from x12_tidy.envelope.structure import clean_payload
 
 
 @dataclass

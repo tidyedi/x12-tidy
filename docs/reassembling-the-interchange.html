@@ -412,7 +412,7 @@
       <strong>no diagnostics, no validation, no refusal.</strong></p>
     </div>
     <div class="code-fig">
-      <p class="code-cap"><b>split_segments</b> &mdash; src/x12_tidy/structure/segments.py</p>
+      <p class="code-cap"><b>split_segments</b> &mdash; src/x12_tidy/envelope/structure/segments.py</p>
 <pre><code><span class="k">def</span> split_segments(dirty: bytes) -> list[bytes]:
     located = extract_isa_line(dirty)
     <span class="k">if</span> located.isa_line <span class="k">is</span> <span class="k">None</span>:
@@ -470,7 +470,7 @@
       the first place.</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap"><b>clean_payload</b> &mdash; src/x12_tidy/structure/payload.py</p>
+      <p class="code-cap"><b>clean_payload</b> &mdash; src/x12_tidy/envelope/structure/payload.py</p>
 <pre><code><span class="k">def</span> clean_payload(dirty: bytes) -> ReconstructedPayload:
     isa_result = clean_isa_line(dirty)
     <span class="k">if</span> isa_result.isa_line <span class="k">is</span> <span class="k">None</span>:

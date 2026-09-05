@@ -3,7 +3,7 @@
 
 r"""Step 2, slice 1: parse the delimiters out of the ISA line.
 
-:func:`~x12_tidy.isa.extract_isa_line` (Step 1) hands back the run of bytes from
+:func:`~x12_tidy.envelope.isa.extract_isa_line` (Step 1) hands back the run of bytes from
 ``ISA`` to just before ``GS`` -- guaranteed to hold *exactly* 16 element
 separators and to end at the ``GS`` boundary. That is enough to recover every
 X12 delimiter without ever trusting a byte offset.
@@ -110,7 +110,7 @@ def _version_has_repetition_separator(version: bytes) -> bool | None:
 
 def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
     """Recover the delimiters from ``run`` -- the byte run from
-    :func:`~x12_tidy.isa.extract_isa_line`. ``base_offset`` is the offset of
+    :func:`~x12_tidy.envelope.isa.extract_isa_line`. ``base_offset`` is the offset of
     ``run`` within the original input, added to every diagnostic offset.
 
     See the module docstring for the method and the severity rule.

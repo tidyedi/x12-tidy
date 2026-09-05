@@ -10,7 +10,7 @@ the canonical 105-byte ISA line — and why that is a total function.*
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/figures/` in sync with
-> `src/x12_tidy/isa/reconstruct.py`.
+> `src/x12_tidy/envelope/isa/reconstruct.py`.
 
 This is the third act of [the x12-tidy method](the-x12-tidy-method.md). The
 first note located the run; the [second](those-pesky-delimiters.md) recovered

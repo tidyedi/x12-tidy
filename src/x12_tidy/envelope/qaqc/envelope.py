@@ -12,7 +12,7 @@ indicator validity, and ``GS07`` responsible-agency validity. Deliberately
 ``ISA07`` qualifiers, ``ISA14``, ``GS01``, ``ST01`` shape, or any date/time
 format check. Also not covered: multiple interchanges in one file -- `.segments`
 already assumes a single interchange (a known gap in
-:func:`~x12_tidy.structure.split_segments`, tracked separately, not fixed
+:func:`~x12_tidy.envelope.structure.split_segments`, tracked separately, not fixed
 here).
 
 **Severity here means something different from the ISA-reconstruction phase.**
@@ -22,7 +22,7 @@ a stop signal: every check below always runs to completion, on every segment,
 regardless of what's found. Nothing in this module ever aborts the walk early.
 
 One pass over the segment list (`.segments` from
-:class:`~x12_tidy.structure.ReconstructedPayload`) drives all of it: a small
+:class:`~x12_tidy.envelope.structure.ReconstructedPayload`) drives all of it: a small
 stack tracks the currently-open functional group and, inside it, the
 currently-open transaction set. Pairing failures, nesting violations, and
 count/control-number mismatches all fall out of that one walk. A missing
@@ -36,8 +36,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from x12_tidy.diagnostics import Code, Diagnostic
-from x12_tidy.structure.payload import ReconstructedPayload
-from x12_tidy.structure.segments import split_elements
+from x12_tidy.envelope.structure.payload import ReconstructedPayload
+from x12_tidy.envelope.structure.segments import split_elements
 
 _VALID_USAGE_INDICATORS = (b"T", b"P", b"I")
 _VALID_RESPONSIBLE_AGENCIES = (b"X", b"T")

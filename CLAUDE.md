@@ -36,6 +36,13 @@ everything"; measure it by "correct outcome for every input class."
 
 ## Architecture
 
+Everything that locates and cleans the interchange **envelope** (ISA/IEA,
+GS/GE, ST/SE) lives under **`src/x12_tidy/envelope/`** — the `isa`, `structure`,
+and `qaqc` sub-packages plus `tidy.py`. `from x12_tidy.envelope import tidy`
+re-exports the public surface. `src/x12_tidy/diagnostics/` is shared and stays
+at the top level. Future packages (transaction-set content, code sets,
+implementation conventions) slot in beside `envelope/`.
+
 ### The method — anchor on structure, never byte offset
 
 A conventional X12 reader trusts the ISA line's fixed byte positions (element
@@ -47,7 +54,7 @@ only the weakest facts that pin them down (starts with `ISA`, ends just before
 width stops being load-bearing and everything downstream is ordinary parsing plus
 repair. `docs/the-x12-tidy-method.md` is the full statement.
 
-### The ISA pipeline (`src/x12_tidy/isa/`)
+### The ISA pipeline (`src/x12_tidy/envelope/isa/`)
 
 `clean_isa_line(dirty)` chains three stages, each in its own module, each
 returning a result object that accumulates diagnostics from every prior stage:
@@ -67,7 +74,7 @@ it only fixes things that cannot be a legal delimiter (wrong element widths,
 trailing junk after the terminator, embedded CR/LF). It never guesses intent: an
 element overrunning its width with real data is `fatal`, not a truncation.
 
-### Whole-interchange structure (`src/x12_tidy/structure/`)
+### Whole-interchange structure (`src/x12_tidy/envelope/structure/`)
 
 `split_segments` / `drop_empty_segments` — purely mechanical transforms over
 `bytes`, **no diagnostics, no validation, no refusal**. They split the interchange
@@ -78,7 +85,7 @@ It refuses (propagating the ISA phase's fatal) exactly when there is no ISA line
 to build from; it does no per-segment repair and no envelope judgement — that is
 QA/QC, next.
 
-### Envelope QA/QC (`src/x12_tidy/qaqc/`)
+### Envelope QA/QC (`src/x12_tidy/envelope/qaqc/`)
 
 `check_payload(ReconstructedPayload) -> QaQcResult` runs once a payload exists.
 One pass over `.segments` (a small open-group/open-transaction-set stack) covers
@@ -98,7 +105,7 @@ stop signal. Every check always runs to completion regardless of what's found;
 nothing in `qaqc` aborts the walk early. Contrast the ISA phase, where `fatal`
 does stop parsing.
 
-`x12_tidy.tidy.tidy(dirty: bytes) -> TidyResult` is the whole-package entry
+`x12_tidy.envelope.tidy.tidy(dirty: bytes) -> TidyResult` is the whole-package entry
 point: `clean_payload` then `check_payload`, one combined diagnostic list
 (cleanse findings first). `payload`/`facts` are both `None` only when the file
 could not be cleansed at all.

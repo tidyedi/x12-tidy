@@ -5,12 +5,12 @@ r"""Step 2, slice 2: reconstruct the canonical ISA line.
 
 The methodology, and why it works where fixed-offset parsers do not:
 
-* :func:`~x12_tidy.isa.extract_isa_line` and
-  :func:`~x12_tidy.isa.split_isa_line` exist only to recover the four
+* :func:`~x12_tidy.envelope.isa.extract_isa_line` and
+  :func:`~x12_tidy.envelope.isa.split_isa_line` exist only to recover the four
   delimiters, and they do it from *structure* (the ``ISA`` identifier, the ``GS``
   boundary, exactly sixteen element separators) -- never from a byte offset or
   an element width. So they succeed on an ISA line that is the "wrong" length.
-* Once :class:`~x12_tidy.isa.IsaDecomposition` comes back with **no fatal**,
+* Once :class:`~x12_tidy.envelope.isa.IsaDecomposition` comes back with **no fatal**,
   width stops being load-bearing. The sixteen elements are already split
   (:attr:`IsaDecomposition.elements` -- no second split here); each is
   normalised to its fixed width, and the line is reassembled at 105 bytes. A
@@ -57,8 +57,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from x12_tidy.diagnostics import Code, Diagnostic
-from x12_tidy.isa.delimiters import IsaDecomposition, split_isa_line
-from x12_tidy.isa.isa_line import extract_isa_line
+from x12_tidy.envelope.isa.delimiters import IsaDecomposition, split_isa_line
+from x12_tidy.envelope.isa.isa_line import extract_isa_line
 
 #: Fixed byte width of each ISA element, ISA01..ISA16. The sum is 86; with the
 #: ``ISA`` identifier (3 bytes) and the sixteen element separators (16) that makes the

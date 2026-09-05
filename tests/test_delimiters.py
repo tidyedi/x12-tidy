@@ -19,7 +19,7 @@ import pytest
 
 from _isa_helpers import ISA_ELEMENTS, build_isa
 from x12_tidy.diagnostics import Code, resolved_severity
-from x12_tidy.isa import extract_isa_line, split_isa_line
+from x12_tidy.envelope.isa import extract_isa_line, split_isa_line
 
 
 def run_of(**kwargs: object) -> bytes:

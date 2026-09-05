@@ -13,9 +13,9 @@
 
 from __future__ import annotations
 
-from x12_tidy.isa.delimiters import IsaDecomposition, split_isa_line
-from x12_tidy.isa.isa_line import IsaLineResult, extract_isa_line
-from x12_tidy.isa.reconstruct import (
+from x12_tidy.envelope.isa.delimiters import IsaDecomposition, split_isa_line
+from x12_tidy.envelope.isa.isa_line import IsaLineResult, extract_isa_line
+from x12_tidy.envelope.isa.reconstruct import (
     ReconstructedIsaLine,
     clean_isa_line,
     reconstruct_isa_line,

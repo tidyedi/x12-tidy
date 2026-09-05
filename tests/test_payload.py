@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from _isa_helpers import ISA_ELEMENTS, build_isa
 from x12_tidy.diagnostics import Code
-from x12_tidy.structure import ReconstructedPayload, clean_payload
+from x12_tidy.envelope.structure import ReconstructedPayload, clean_payload
 
 
 def _codes(result: ReconstructedPayload) -> list[Code]:
