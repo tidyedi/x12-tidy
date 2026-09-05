@@ -759,8 +759,6 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
       <table>
         <thead><tr><th>input</th><th>outcome</th></tr></thead>
         <tbody>
-          <tr><td>conformant ISA line</td>
-              <td>returned unchanged &mdash; <span class="verdict v-ok">was_clean</span></td></tr>
           <tr><td>blank fixed-width fields right-trimmed</td>
               <td>padded back &mdash; <code>isa.element-width</code> per field</td></tr>
           <tr><td>element over-padded with spaces</td>
@@ -775,6 +773,8 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
               <td><code>~</code> supplied &mdash; nothing to preserve &mdash; <code>isa.segment-terminator-stripped</code></td></tr>
           <tr><td>pipe / caret / any valid delimiters</td>
               <td>kept as&#8209;is; the delimiters are the sender's choice</td></tr>
+          <tr><td>conformant ISA line</td>
+              <td>returned unchanged &mdash; <span class="verdict v-ok">was_clean</span> &mdash; the one row with nothing to repair</td></tr>
           <tr><td>element over width with real data</td>
               <td class="verdict v-flag">fatal &mdash; isa.element-overflow</td></tr>
           <tr><td>anything the delimiter step made fatal</td>

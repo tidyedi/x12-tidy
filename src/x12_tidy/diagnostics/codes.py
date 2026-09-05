@@ -161,8 +161,11 @@ META: dict[Code, CodeMeta] = {
             "The bytes 'I', 'S', 'A' appear separated by NUL bytes near the "
             "start of the file, which is what a UTF-16-encoded 'ISA' looks "
             "like. X12 interchanges must use a single-byte encoding (ASCII, "
-            "Latin-1, or UTF-8 without a wide encoding). Re-export the file and "
-            "try again."
+            "Latin-1, or UTF-8 without a wide encoding). This is fatal rather "
+            "than transcoded: guessing the byte order and trusting or "
+            "inferring a BOM before parsing has even started is exactly the "
+            "kind of guess x12-tidy refuses to make elsewhere. Re-export the "
+            "file in a single-byte encoding and try again."
         ),
     ),
     Code.ISA_LEADING_BYTES: CodeMeta(
