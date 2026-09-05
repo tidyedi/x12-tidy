@@ -16,6 +16,16 @@ dist/
 # macOS
 .DS_Store
 
+# Local reference screenshots / scratch images dropped in the repo root or
+# screenshots/ to visualise what's being built toward. Never commit, never
+# push, and never delete these without the owner's explicit approval.
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webp
+/screenshots/
+
 # Editors
 .idea/
 .vscode/
