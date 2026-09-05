@@ -75,10 +75,7 @@ def _cmd_check(path: Path) -> int:
     if cleaned.payload is None:
         return 1 if worst_problem else 0
 
-    print(
-        f"isa_line ({len(cleaned.isa_result.isa_line)} bytes): "
-        f"{cleaned.isa_result.isa_line!r}"
-    )
+    print(f"payload ({len(cleaned.payload)} bytes): {cleaned.payload!r}")
     if qaqc is not None and qaqc.facts is not None:
         _print_facts(qaqc.facts)
     if not diagnostics:
