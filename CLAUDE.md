@@ -136,6 +136,15 @@ could not be cleansed at all.
   phase *owns* reappears). Value-level and deliberately-preserved findings (e.g.
   a non-`~` terminator) legitimately survive a round trip.
 
+## Owner's private files
+
+`owner_notes/` is the repo owner's private scratch space — reference
+screenshots and working notes for what a piece is being built toward. It is
+git-ignored locally (`.git/info/exclude`, never committed or pushed). **Never
+read, list-and-act-on, move, rename, modify, `git add`, or delete anything in
+`owner_notes/`, and never remove the directory.** Ignore it entirely. The same
+goes for loose image files in the repo root.
+
 ## Conventions
 
 - Pure functions over `bytes`, never `str`.
