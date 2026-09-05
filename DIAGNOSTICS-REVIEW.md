@@ -117,12 +117,17 @@ Also to confirm: whether X12.6 sanctions a CR/LF **segment-terminator suffix**.
 
 ## Implementation tracking
 
-| item | branch | state |
-|---|---|---|
-| remove `isa.line-length` | `refactor/remove-isa-line-length` (`013e252`) | committed, **not pushed / not merged** |
-| this doc | `docs/diagnostics-review` | pushed, no PR |
-| "tag" → "segment identifier" sweep (4 code renames + all prose) | `refactor/tag-to-identifier` (`f08294b`) | committed, **not pushed / not merged**; 377 tests green |
-| everything else | — | not started |
+Branch `refactor/tag-to-identifier` bundles: this review doc, the
+"tag" → "segment identifier" sweep (4 code renames + all prose), the
+`isa.line-length` removal (cherry-picked), and `docs/using-x12-tidy.md`.
+377 tests green. Being pushed + PR'd + merged to `main` now.
 
-- `docs/using-x12-tidy.md` (developer usage guide) is written but **untracked**.
+| item | state |
+|---|---|
+| `DIAGNOSTICS-REVIEW.md` | in this branch |
+| "tag" → "segment identifier" sweep | ✅ done |
+| remove `isa.line-length` | ✅ done |
+| `docs/using-x12-tidy.md` | ✅ committed |
+| everything else in the review | not started |
+
 - The 4 engineering-note **PDFs** still contain "tag" (`finding-the-elusive-isa-line.pdf` ×2, `reconstructing-the-isa-line.pdf` ×1). Re-printing them is **gated** — needs an explicit go-ahead in the moment.
