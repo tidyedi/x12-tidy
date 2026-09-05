@@ -52,9 +52,9 @@ class Code(Enum):
     """
 
     # -- isa: locating and bounding the ISA line (Step 1) --
-    ISA_NO_TAG = "isa.no-tag"
-    ISA_TAG_LOWERCASE = "isa.tag-lowercase"
-    ISA_TAG_UTF16 = "isa.tag-utf16"
+    ISA_NO_IDENTIFIER = "isa.no-identifier"
+    ISA_IDENTIFIER_LOWERCASE = "isa.identifier-lowercase"
+    ISA_IDENTIFIER_UTF16 = "isa.identifier-utf16"
     ISA_LEADING_BYTES = "isa.leading-bytes"
     ISA_INTERCHANGE_TOO_SHORT = "isa.interchange-too-short"
     ISA_GS_NOT_FOUND = "isa.gs-not-found"
@@ -81,7 +81,6 @@ class Code(Enum):
     ISA_ELEMENT_EMBEDDED_NEWLINE = "isa.element-embedded-newline"
     ISA_ELEMENT_WIDTH = "isa.element-width"
     ISA_ELEMENT_OVERFLOW = "isa.element-overflow"
-    ISA_LINE_LENGTH = "isa.line-length"
 
     # -- isa: QA/QC on a standalone ISA element value (post-reconstruction) --
     ISA_USAGE_INDICATOR_INVALID = "isa.usage-indicator-invalid"
@@ -94,7 +93,7 @@ class Code(Enum):
     )
     STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC = "structure.control-number-not-numeric"
     STRUCTURE_COUNT_NOT_NUMERIC = "structure.count-not-numeric"
-    STRUCTURE_TAG_SHAPE_INVALID = "structure.tag-shape-invalid"
+    STRUCTURE_IDENTIFIER_INVALID = "structure.identifier-invalid"
     STRUCTURE_FOREIGN_CONTENT = "structure.foreign-content"
 
     # -- gs: functional-group-level envelope QA/QC (GS/GE) --
@@ -135,26 +134,26 @@ class CodeMeta:
 
 
 META: dict[Code, CodeMeta] = {
-    Code.ISA_NO_TAG: CodeMeta(
+    Code.ISA_NO_IDENTIFIER: CodeMeta(
         default_severity="fatal",
-        title="No ISA segment tag in the file",
+        title="No ISA segment identifier in the file",
         explanation=(
             "The byte sequence 'ISA' does not appear anywhere in the file, so "
             "there is no X12 interchange to inspect. Nothing downstream can run."
         ),
     ),
-    Code.ISA_TAG_LOWERCASE: CodeMeta(
+    Code.ISA_IDENTIFIER_LOWERCASE: CodeMeta(
         default_severity="error",
-        title="ISA segment tag is not uppercase",
+        title="ISA segment identifier is not uppercase",
         explanation=(
-            "The segment tag was found as 'isa' or mixed case (e.g. 'Isa'). "
-            "X12 segment tags are uppercase. x12-tidy matched it "
+            "The segment identifier was found as 'isa' or mixed case (e.g. 'Isa'). "
+            "X12 segment identifiers are uppercase. x12-tidy matched it "
             "case-insensitively and continued -- a file with a non-uppercase "
-            "ISA tag almost certainly has every other segment tag the same way, "
+            "ISA identifier almost certainly has every other segment identifier the same way, "
             "which downstream steps must also tolerate."
         ),
     ),
-    Code.ISA_TAG_UTF16: CodeMeta(
+    Code.ISA_IDENTIFIER_UTF16: CodeMeta(
         default_severity="fatal",
         title="File appears to be UTF-16 encoded",
         explanation=(
@@ -183,7 +182,7 @@ META: dict[Code, CodeMeta] = {
         default_severity="fatal",
         title="Too short to be an X12 interchange",
         explanation=(
-            "Fewer than 109 bytes follow the 'ISA' tag -- not enough room for a "
+            "Fewer than 109 bytes follow the 'ISA' identifier -- not enough room for a "
             "105-byte ISA line, its segment terminator, and a 'GS' header. A "
             "real interchange (ISA / GS / ST / ... / SE / GE / IEA) is far "
             "longer, so there is nothing to recover."
@@ -207,7 +206,7 @@ META: dict[Code, CodeMeta] = {
             "*ISA16); that count is part of the minimum bar for calling a run "
             "an ISA line at all. The run before the 'GS' header holds fewer -- "
             "element separators were removed, or the 'GS' anchored on is a "
-            "false match inside earlier data. Every candidate ISA tag was "
+            "false match inside earlier data. Every candidate ISA identifier was "
             "tried; none produced a 16-separator run. This is not an ISA line "
             "and is not recoverable."
         ),
@@ -416,17 +415,6 @@ META: dict[Code, CodeMeta] = {
             "reconstructed."
         ),
     ),
-    Code.ISA_LINE_LENGTH: CodeMeta(
-        default_severity="fatal",
-        title="The reconstructed ISA line is not 105 bytes",
-        explanation=(
-            "After padding every element to its fixed width and rejoining on "
-            "the element separator, the ISA line is not the required 105 bytes. "
-            "This should not happen once the per-element widths hold; it is a "
-            "guard that refuses to emit a non-conformant line."
-        ),
-    ),
-
     # -- isa: QA/QC on a standalone ISA element value --
     Code.ISA_USAGE_INDICATOR_INVALID: CodeMeta(
         default_severity="error",
@@ -486,12 +474,12 @@ META: dict[Code, CodeMeta] = {
             "numeric. A non-numeric value cannot be a valid count."
         ),
     ),
-    Code.STRUCTURE_TAG_SHAPE_INVALID: CodeMeta(
+    Code.STRUCTURE_IDENTIFIER_INVALID: CodeMeta(
         default_severity="error",
-        title="A segment tag is not uppercase alphabetic",
+        title="A segment identifier is not uppercase alphabetic",
         explanation=(
-            "Every X12 segment tag begins with an uppercase letter (X12.6). A "
-            "segment whose tag does not -- lowercase, numeric, empty -- cannot "
+            "Every X12 segment identifier begins with an uppercase letter (X12.6). A "
+            "segment whose identifier does not -- lowercase, numeric, empty -- cannot "
             "be identified as a real segment."
         ),
     ),

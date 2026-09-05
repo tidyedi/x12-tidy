@@ -7,7 +7,7 @@ The methodology, and why it works where fixed-offset parsers do not:
 
 * :func:`~x12_tidy.isa.extract_isa_line` and
   :func:`~x12_tidy.isa.split_isa_line` exist only to recover the four
-  delimiters, and they do it from *structure* (the ``ISA`` tag, the ``GS``
+  delimiters, and they do it from *structure* (the ``ISA`` identifier, the ``GS``
   boundary, exactly sixteen element separators) -- never from a byte offset or
   an element width. So they succeed on an ISA line that is the "wrong" length.
 * Once :class:`~x12_tidy.isa.IsaDecomposition` comes back with **no fatal**,
@@ -46,8 +46,6 @@ Refuses -- ``isa_line`` is ``None``, one fatal diagnostic:
   (``isa.element-overflow``). We cannot know the sender's intent -- a dropped
   element separator merging two fields, or an overrun field -- and guessing
   risks corrupting an identifier.
-* a reassembled line that is somehow not 105 bytes (``isa.line-length``) -- a
-  guard that should never fire once the per-element widths hold.
 
 Scope: **structure only** -- widths, delimiters, the terminator, the length. Not
 element *values* (is ISA05 a real qualifier, ISA09 a real date, does ISA13 match
@@ -63,16 +61,16 @@ from x12_tidy.isa.delimiters import IsaDecomposition, split_isa_line
 from x12_tidy.isa.isa_line import extract_isa_line
 
 #: Fixed byte width of each ISA element, ISA01..ISA16. The sum is 86; with the
-#: ``ISA`` tag (3 bytes) and the sixteen element separators (16) that makes the
+#: ``ISA`` identifier (3 bytes) and the sixteen element separators (16) that makes the
 #: canonical 105-byte ISA line.
 ISA_ELEMENT_WIDTHS: tuple[int, ...] = (
     2, 10, 2, 10, 2, 15, 2, 15, 6, 4, 1, 5, 9, 1, 1, 1,
 )
-#: Length of the canonical ISA line -- the ``ISA`` tag through ISA16, **without**
+#: Length of the canonical ISA line -- the ``ISA`` identifier through ISA16, **without**
 #: the segment terminator (a separate byte that would sit at offset 105).
 CANONICAL_LENGTH = 105
 
-_ISA_TAG = b"ISA"
+_ISA_IDENTIFIER = b"ISA"
 _LINE_BREAKS = (b"\r", b"\n")
 #: 1-based index of ISA16 (always the component separator) and ISA11 (the
 #: repetition separator, version-gated). Elements whose *value is a delimiter*
@@ -219,16 +217,12 @@ def _rebuild(
         elements.append(value)
 
     line = (
-        _ISA_TAG + element_separator + element_separator.join(elements)
+        _ISA_IDENTIFIER + element_separator + element_separator.join(elements)
     )
 
-    if len(line) != CANONICAL_LENGTH:
-        diagnostics.append(Diagnostic(
-            Code.ISA_LINE_LENGTH,
-            f"the reconstructed ISA line is {len(line)} byte(s), not "
-            f"{CANONICAL_LENGTH}; refusing to emit a non-conformant line.",
-            offset=base_offset,
-        ))
-        return None, (), diagnostics
+    # Every element above is forced to its fixed width (or the function has
+    # already returned on overflow), so the length is arithmetically fixed.
+    # A tripwire for a future change to the reconstruction, never a real input.
+    assert len(line) == CANONICAL_LENGTH
 
     return line, tuple(elements), diagnostics

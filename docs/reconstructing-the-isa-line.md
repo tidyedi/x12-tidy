@@ -103,7 +103,7 @@ ISA03  2   ISA07  2   ISA11  1   ISA15  1
 ISA04 10   ISA08 15   ISA12  5   ISA16  1
 ```
 
-They sum to 86; with the `ISA` tag (3) and the sixteen element separators (16)
+They sum to 86; with the `ISA` identifier (3) and the sixteen element separators (16)
 that is the canonical 105 bytes. Per element:
 
 - **shorter than its width** → space-pad on the right. `isa.element-width`.

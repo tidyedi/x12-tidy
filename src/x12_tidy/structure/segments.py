@@ -17,7 +17,7 @@ interchange:
 5. left-trim whitespace from each piece.
 
 The result is the list of segment byte strings, in order, unchanged except for
-the leading whitespace removed in step 5. A segment tag is alphabetic and comes
+the leading whitespace removed in step 5. A segment identifier is alphabetic and comes
 first, so leading whitespace is never segment content -- ``lstrip`` cannot reach
 a delimiter or an element value. The split is on the *segment terminator* only;
 the element separator is never touched, so unused elements (``**``) stay inside
@@ -73,9 +73,9 @@ def drop_empty_segments(segments: list[bytes]) -> list[bytes]:
 def split_elements(segment: bytes, element_separator: bytes) -> list[bytes]:
     """Split one segment into its elements on ``element_separator``.
 
-    ``segment.split(element_separator)[0]`` is the segment tag; the rest are
+    ``segment.split(element_separator)[0]`` is the segment identifier; the rest are
     its elements, ISA-style numbering (index 1 is the first element after the
-    tag). Purely mechanical -- no diagnostic, no validation of the tag or any
+    identifier). Purely mechanical -- no diagnostic, no validation of the identifier or any
     element's content. QA/QC reads elements this way rather than re-splitting
     inline at every call site.
     """

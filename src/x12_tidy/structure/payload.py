@@ -7,7 +7,7 @@ r"""Assemble the cleansed payload -- the whole-file counterpart to
 Scope: **assembly only**. This cleans the ISA line, splits the rest into
 segments, drops the empty pieces, and glues everything back together on the
 sender's own segment terminator. It does not repair a body segment, check that
-a segment tag is a real tag, or validate envelope/control-number consistency
+a segment identifier is a real identifier, or validate envelope/control-number consistency
 (``GS``/``ST`` nesting, counts, ``IEA02`` vs ``ISA13``) -- that is QA/QC, which
 runs after this, once there is a clean payload to run it against.
 

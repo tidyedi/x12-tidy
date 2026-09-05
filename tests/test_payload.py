@@ -4,7 +4,7 @@
 """``clean_payload`` -- assembly only.
 
 Cleans the ISA line, splits and cleans the body, glues everything back
-together on the sender's own terminator. Per-segment repair, tag validation,
+together on the sender's own terminator. Per-segment repair, identifier validation,
 and envelope checks are QA/QC's job, after this -- these tests only pin the
 assembly contract and the refusal.
 """
@@ -81,7 +81,7 @@ def test_refuses_when_isa_line_cannot_be_recovered() -> None:
     assert result.payload is None
     assert result.segments == ()
     assert result.diagnostics  # a refusal must say why
-    assert Code.ISA_NO_TAG in _codes(result)
+    assert Code.ISA_NO_IDENTIFIER in _codes(result)
 
 
 def test_refuses_on_empty_input() -> None:

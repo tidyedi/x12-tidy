@@ -393,7 +393,7 @@
     </ul>
     <div class="prose">
       <p>Nothing new can go fatal here. Whether the <em>body</em> is
-      well-formed &mdash; real tags, matched openers and closers, counts that
+      well-formed &mdash; real identifiers, matched openers and closers, counts that
       add up &mdash; is not this step's question. This step's only job is
       mechanical: <strong>assemble one payload out of what the earlier steps
       already trust.</strong></p>
@@ -433,7 +433,7 @@
       <em>and the terminator</em> from both ends, so a trailing blank line or
       a doubled closing terminator does not leave a spurious empty piece at
       the end. Split on the segment terminator. Left-trim each piece &mdash; a
-      segment tag is alphabetic and first, so leading whitespace is never
+      segment identifier is alphabetic and first, so leading whitespace is never
       segment content.</p>
       <p>That produces the <em>raw</em> segments, empties included: two
       terminators in a row (<code>~~</code>) split into an empty string
@@ -447,7 +447,7 @@
     </div>
     <div class="prose">
       <p>Neither function asks <em>why</em> the terminators were doubled, or
-      whether a tag is real, or whether <code>GS</code> opens and
+      whether a identifier is real, or whether <code>GS</code> opens and
       <code>GE</code> closes in the right order. <strong>Judging requires
       context this step deliberately does not have.</strong> That is
       <a href="auditing-the-envelope.html">the next note</a>'s job, once there
@@ -585,9 +585,9 @@
     </div>
     <div class="prose">
       <p><code>ReconstructedPayload.segments</code> is the <em>raw</em> body:
-      whatever tags and elements the sender sent, empties dropped, nothing
+      whatever identifiers and elements the sender sent, empties dropped, nothing
       else touched. It has not been asked whether <code>beg</code> is a real
-      tag, whether <code>GS</code>/<code>GE</code> and <code>ST</code>/<code>SE</code>
+      identifier, whether <code>GS</code>/<code>GE</code> and <code>ST</code>/<code>SE</code>
       nest correctly, whether <code>SE01</code> counts the segments it claims
       to, or whether <code>ISA13</code> matches <code>IEA02</code>.
       <a href="auditing-the-envelope.html">Auditing the Envelope</a> is where

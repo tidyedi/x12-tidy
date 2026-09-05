@@ -409,10 +409,10 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 — Anatomy of a conformant ISA line</span>
-        <svg viewBox="0 0 760 220" role="img" aria-label="A byte-map of the ISA segment: the tag ISA at byte 0, the element separator at byte 3, sixteen fixed-width elements ISA01 through ISA16, the component separator at byte 104, the segment terminator at byte 105, and the GS functional-group header beginning at byte 106.">
+        <svg viewBox="0 0 760 220" role="img" aria-label="A byte-map of the ISA segment: the identifier ISA at byte 0, the element separator at byte 3, sixteen fixed-width elements ISA01 through ISA16, the component separator at byte 104, the segment terminator at byte 105, and the GS functional-group header beginning at byte 106.">
           <!-- main band -->
           <g font-family="'IBM Plex Mono', monospace" font-size="12">
-            <!-- ISA tag -->
+            <!-- ISA identifier -->
             <rect x="10" y="60" width="52" height="40" fill="none" stroke="currentColor" stroke-width="1.2"/>
             <text x="36" y="85" text-anchor="middle" fill="currentColor">ISA</text>
 
@@ -478,7 +478,7 @@
     <div class="prose">
       <p>The fixed&#8209;offset reader from &sect;1 fails on real files. The next
       instinct — and it is the right instinct to have — is a pattern: match the
-      tag, capture whatever byte is acting as the separator, hop over sixteen
+      identifier, capture whatever byte is acting as the separator, hop over sixteen
       fields, then find the header.</p>
     </div>
     <div class="code-fig">
@@ -565,10 +565,10 @@
       <li><b>Two&#8209;byte terminators.</b> The segment terminator is
         <code>\r\n</code>, or <code>~\r</code>, so the "one byte at 105" model is
         off&#8209;by&#8209;one for the whole file.</li>
-      <li><b>Non&#8209;uppercase tags.</b> <code>isa</code>, or <code>Isa</code> —
+      <li><b>Non&#8209;uppercase identifiers.</b> <code>isa</code>, or <code>Isa</code> —
         a system that lower&#8209;cased the payload somewhere in transit. A
         case&#8209;sensitive <code>find(b"ISA")</code> reports an empty file.</li>
-      <li><b>Wide encodings.</b> The file is UTF&#8209;16; the tag is
+      <li><b>Wide encodings.</b> The file is UTF&#8209;16; the identifier is
         <code>I&nbsp;00&nbsp;S&nbsp;00&nbsp;A&nbsp;00</code>. Nothing matches
         <code>ISA</code>.</li>
       <li><b>The element separator inside element data.</b> A sender whose ID
@@ -587,7 +587,7 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 2 — Why fixed offsets break</span>
-        <svg viewBox="0 0 760 300" role="img" aria-label="Two byte streams compared. In the conformant stream, byte 106 lands exactly on the GS tag. In the received stream, a three-byte BOM is prepended and one element is stripped, so byte 106 now lands in the middle of an element, not on GS.">
+        <svg viewBox="0 0 760 300" role="img" aria-label="Two byte streams compared. In the conformant stream, byte 106 lands exactly on the GS identifier. In the received stream, a three-byte BOM is prepended and one element is stripped, so byte 106 now lands in the middle of an element, not on GS.">
           <g font-family="'IBM Plex Mono', monospace" font-size="11.5">
 
             <!-- row A: conformant -->
@@ -648,7 +648,7 @@
       element gets padded by rule, not inferred. The interleaved-NUL pattern
       (<code>I\x00S\x00A</code>, or the big-endian mirror) is cheap and
       unambiguous to detect, so x12-tidy names it and stops
-      (<code>isa.tag-utf16</code>, &ldquo;re-export the file&rdquo;) rather
+      (<code>isa.identifier-utf16</code>, &ldquo;re-export the file&rdquo;) rather
       than attempt a conversion that could silently mis-decode and hand back a
       diagnosis of the wrong bytes.
     </div>
@@ -721,7 +721,7 @@
       <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, steps b–c</p>
       <pre><code><span class="c"># b. the element separator is, by rule, the 4th byte of the ISA segment</span>
 element_separator = cleansed[3:4]
-gs_identifier     = GS_TAG + element_separator
+gs_identifier     = GS_IDENTIFIER + element_separator
 
 <span class="c"># c. find where the ISA line ends == where the GS segment starts</span>
 <span class="k">if</span> hay[STANDARD_GS_OFFSET:STANDARD_GS_OFFSET + 3] == needle:
@@ -779,12 +779,12 @@ separator_count = isa_line.count(element_separator)
     </div>
     <div class="code-fig">
       <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>_isa_offsets</b> &amp; the candidate loop</p>
-      <pre><code><span class="k">def</span> _isa_offsets(haystack: bytes, tag: bytes = ISA_TAG) -&gt; list[int]:
+      <pre><code><span class="k">def</span> _isa_offsets(haystack: bytes, identifier: bytes = ISA_IDENTIFIER) -&gt; list[int]:
     offsets: list[int] = []
-    at = haystack.find(tag)
+    at = haystack.find(identifier)
     <span class="k">while</span> at != -1 <span class="k">and</span> len(offsets) &lt; MAX_ISA_CANDIDATES:
         offsets.append(at)
-        at = haystack.find(tag, at + 1)
+        at = haystack.find(identifier, at + 1)
     <span class="k">return</span> offsets
 
 <span class="c"># _try_all: first clean run wins; else the first failure is remembered</span>
@@ -857,7 +857,7 @@ separator_count = isa_line.count(element_separator)
     <div class="prose">
       <p>Matching <code>ISA</code> case&#8209;insensitively means lower&#8209;casing the
       whole buffer — an allocation the size of the file. The common case (an
-      uppercase tag that parses) must not pay for it. So the structure is
+      uppercase identifier that parses) must not pay for it. So the structure is
       two&#8209;phase: try the exact&#8209;uppercase candidates first, touching
       nothing; only when all of them fail take one <code>lower()</code> copy and
       retry. This also rescues a valid lowercase segment sitting <em>behind</em>
@@ -868,20 +868,20 @@ separator_count = isa_line.count(element_separator)
     <div class="code-fig">
       <p class="code-cap">x12_tidy/isa/isa_line.py &nbsp;·&nbsp; <b>extract_isa_line</b>, the two phases</p>
       <pre><code><span class="k">def</span> extract_isa_line(dirty: bytes) -&gt; IsaLineResult:
-    <span class="c"># Fast path: exact uppercase ISA tags. Never copies the buffer.</span>
-    upper = _isa_offsets(dirty, ISA_TAG)
+    <span class="c"># Fast path: exact uppercase ISA identifiers. Never copies the buffer.</span>
+    upper = _isa_offsets(dirty, ISA_IDENTIFIER)
     result, upper_failure = _try_all(dirty, upper, case_insensitive=False)
     <span class="k">if</span> result <span class="k">is not</span> None:
         <span class="k">return</span> result
 
-    <span class="c"># No uppercase tag parsed. UTF-16 only matters when there is none at all.</span>
+    <span class="c"># No uppercase identifier parsed. UTF-16 only matters when there is none at all.</span>
     <span class="k">if not</span> upper <span class="k">and</span> any(m <span class="k">in</span> dirty[:_UTF16_SCAN_LEN] <span class="k">for</span> m <span class="k">in</span> _UTF16_MARKERS):
-        <span class="k">return</span> IsaLineResult(None, -1, [Diagnostic(Code.ISA_TAG_UTF16, ...)])
+        <span class="k">return</span> IsaLineResult(None, -1, [Diagnostic(Code.ISA_IDENTIFIER_UTF16, ...)])
 
     <span class="c"># One full-buffer lower-case copy, only on this already-failed path.</span>
     lowered = dirty.lower()
-    <span class="k">if</span> ISA_TAG.lower() <span class="k">in</span> lowered:
-        ci_offsets = _isa_offsets(lowered, ISA_TAG.lower())
+    <span class="k">if</span> ISA_IDENTIFIER.lower() <span class="k">in</span> lowered:
+        ci_offsets = _isa_offsets(lowered, ISA_IDENTIFIER.lower())
         result, ci_failure = _try_all(dirty, ci_offsets, case_insensitive=True)
         <span class="k">if</span> result <span class="k">is not</span> None:
             <span class="k">return</span> result
@@ -889,7 +889,7 @@ separator_count = isa_line.count(element_separator)
     </div>
     <div class="prose">
       <p>One guard keeps the fallback honest: the string <code>isa</code> occurs
-      inside ordinary words. A lowercase candidate is only reported as a tag if it
+      inside ordinary words. A lowercase candidate is only reported as a identifier if it
       sits where a segment could start.</p>
     </div>
     <div class="code-fig">
@@ -906,8 +906,8 @@ separator_count = isa_line.count(element_separator)
       every byte — no cheaper than <code>lower()</code>, and with no way to skip
       the work when the file is already uppercase. It matches <code>isa</code>
       inside <em>advisable</em> just as eagerly, with no signal to separate that
-      from a real lowercase tag. And it still produces a match, not the
-      <code>isa.tag-lowercase</code> diagnostic that tells the developer their
+      from a real lowercase identifier. And it still produces a match, not the
+      <code>isa.identifier-lowercase</code> diagnostic that tells the developer their
       partner lower&#8209;cased the payload. The flag saves the one line that was
       never the problem.
     </div>
@@ -915,8 +915,8 @@ separator_count = isa_line.count(element_separator)
     <h3>5.5&nbsp;&nbsp;Name every deviation</h3>
     <div class="prose">
       <p>Nothing above is a silent repair. Each tolerance emits a stable diagnostic
-      code — <code>isa.leading-bytes</code>, <code>isa.tag-lowercase</code>,
-      <code>isa.tag-utf16</code>, <code>isa.no-functional-group</code>,
+      code — <code>isa.leading-bytes</code>, <code>isa.identifier-lowercase</code>,
+      <code>isa.identifier-utf16</code>, <code>isa.no-functional-group</code>,
       <code>isa.gs-not-found</code>, and the rest — so the developer holding the
       bad file gets the exact list of what their partner did wrong, not a single
       exception at the first surprise.</p>
@@ -962,7 +962,7 @@ separator_count = isa_line.count(element_separator)
           <tr>
             <td><code>SUBJECT: ISA FILE\n</code> + lowercase interchange</td>
             <td class="verdict v-ok">run returned</td>
-            <td><code>isa.tag-lowercase</code>, <code>isa.leading-bytes</code></td>
+            <td><code>isa.identifier-lowercase</code>, <code>isa.leading-bytes</code></td>
           </tr>
           <tr>
             <td>ISA02 &amp; ISA04 stripped (86&#8209;byte segment)</td>
@@ -982,7 +982,7 @@ separator_count = isa_line.count(element_separator)
           <tr>
             <td>UTF&#8209;16 LE encoded file</td>
             <td class="verdict v-flag">fatal</td>
-            <td><code>isa.tag-utf16</code></td>
+            <td><code>isa.identifier-utf16</code></td>
           </tr>
           <tr>
             <td>Element separator <code>*</code> occurs inside the sender's ID</td>

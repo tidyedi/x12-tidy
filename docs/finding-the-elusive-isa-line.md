@@ -38,7 +38,7 @@ width. The segment is exactly 105 bytes plus its terminator. The functional-grou
 header that follows, `GS` + the element separator, therefore begins at byte 106 —
 always, by rule.
 
-![Anatomy of a conformant ISA line: the tag ISA at byte 0, the element separator
+![Anatomy of a conformant ISA line: the identifier ISA at byte 0, the element separator
 at byte 3, sixteen fixed-width elements, the component separator at byte 104, the
 terminator at byte 105, and GS beginning at byte 106.](figures/isa-anatomy.svg)
 
@@ -58,7 +58,7 @@ and any trailing bytes included. Splitting the run into elements comes later.
 ## 2. Why a regex can't do it
 
 The fixed-offset reader fails on real files. The next instinct — and it is the
-right instinct to have — is a pattern: match the tag, capture whatever byte is
+right instinct to have — is a pattern: match the identifier, capture whatever byte is
 acting as the separator, hop over sixteen fields, then find the header.
 
 ```
@@ -122,8 +122,8 @@ fixed-offset reader; several break a delimiter-first reader too.
 | **Stripped empty elements** | The ISA segment is shorter than 105 bytes; every fixed offset after the first gap is wrong, including byte 106 |
 | **Appended newlines** — `CR LF` after *every* terminator | `GS` is pushed to byte 108 |
 | **Two-byte terminators** — `\r\n`, or `~\r` | The "one byte at 105" model is off-by-one for the whole file |
-| **Non-uppercase tags** — `isa`, `Isa` | A case-sensitive `find(b"ISA")` reports an empty file |
-| **Wide encodings** — the file is UTF-16; the tag is `I 00 S 00 A 00` | Nothing matches `ISA` |
+| **Non-uppercase identifiers** — `isa`, `Isa` | A case-sensitive `find(b"ISA")` reports an empty file |
+| **Wide encodings** — the file is UTF-16; the identifier is `I 00 S 00 A 00` | Nothing matches `ISA` |
 | **The element separator inside element data** — a sender whose ID contains `*` while using `*` as the separator | The segment has 17 separators and no single correct parse |
 | **A `GS` + separator lookalike** — a `REF*GS*…` element deep in a transaction set (when the real functional-group envelope is missing), or a sender ID ending in `GS` right inside ISA06 | `b"GS" + sep` matches before, or instead of, the real header |
 | **The bytes `ISA` in junk** — `SUBJECT: ISA FILE`, a path like `/feeds/ISA/…` | The first match is not the segment |
@@ -148,7 +148,7 @@ guess this tool refuses to make everywhere else in this note — an ambiguous
 separator count gets reported, not resolved; a truncated element gets padded
 by rule, not inferred. The interleaved-NUL pattern (`I\x00S\x00A`, or the
 big-endian mirror) is cheap and unambiguous to detect, so x12-tidy names it
-and stops (`isa.tag-utf16`, "re-export the file") rather than attempt a
+and stops (`isa.identifier-utf16`, "re-export the file") rather than attempt a
 conversion that could silently mis-decode and hand back a diagnosis of the
 wrong bytes.
 
@@ -207,7 +207,7 @@ caught here; it is caught in 5.2.
 ```python
 # b. the element separator is, by rule, the 4th byte of the ISA segment
 element_separator = cleansed[3:4]
-gs_identifier     = GS_TAG + element_separator
+gs_identifier     = GS_IDENTIFIER + element_separator
 
 # c. find where the ISA line ends == where the GS segment starts
 if hay[STANDARD_GS_OFFSET:STANDARD_GS_OFFSET + 3] == needle:
@@ -262,12 +262,12 @@ candidate whose run clears the bar wins; the bytes before it become an
 what gets reported.
 
 ```python
-def _isa_offsets(haystack: bytes, tag: bytes = ISA_TAG) -> list[int]:
+def _isa_offsets(haystack: bytes, identifier: bytes = ISA_IDENTIFIER) -> list[int]:
     offsets: list[int] = []
-    at = haystack.find(tag)
+    at = haystack.find(identifier)
     while at != -1 and len(offsets) < MAX_ISA_CANDIDATES:
         offsets.append(at)
-        at = haystack.find(tag, at + 1)
+        at = haystack.find(identifier, at + 1)
     return offsets
 
 # _try_all: first clean run wins; else the first failure is remembered
@@ -292,7 +292,7 @@ moves on.
 ### 5.4 Case-insensitive, but only after the fast path fails
 
 Matching `ISA` case-insensitively means lower-casing the whole buffer — an
-allocation the size of the file. The common case (an uppercase tag that parses)
+allocation the size of the file. The common case (an uppercase identifier that parses)
 must not pay for it. So the structure is two-phase: try the exact-uppercase
 candidates first, touching nothing; only when all of them fail take one `lower()`
 copy and retry. This also rescues a valid lowercase segment sitting *behind* junk
@@ -301,20 +301,20 @@ because it only fell back when no `ISA` existed at all.
 
 ```python
 def extract_isa_line(dirty: bytes) -> IsaLineResult:
-    # Fast path: exact uppercase ISA tags. Never copies the buffer.
-    upper = _isa_offsets(dirty, ISA_TAG)
+    # Fast path: exact uppercase ISA identifiers. Never copies the buffer.
+    upper = _isa_offsets(dirty, ISA_IDENTIFIER)
     result, upper_failure = _try_all(dirty, upper, case_insensitive=False)
     if result is not None:
         return result
 
-    # No uppercase tag parsed. UTF-16 only matters when there is none at all.
+    # No uppercase identifier parsed. UTF-16 only matters when there is none at all.
     if not upper and any(m in dirty[:_UTF16_SCAN_LEN] for m in _UTF16_MARKERS):
-        return IsaLineResult(None, -1, [Diagnostic(Code.ISA_TAG_UTF16, ...)])
+        return IsaLineResult(None, -1, [Diagnostic(Code.ISA_IDENTIFIER_UTF16, ...)])
 
     # One full-buffer lower-case copy, only on this already-failed path.
     lowered = dirty.lower()
-    if ISA_TAG.lower() in lowered:
-        ci_offsets = _isa_offsets(lowered, ISA_TAG.lower())
+    if ISA_IDENTIFIER.lower() in lowered:
+        ci_offsets = _isa_offsets(lowered, ISA_IDENTIFIER.lower())
         result, ci_failure = _try_all(dirty, ci_offsets, case_insensitive=True)
         if result is not None:
             return result
@@ -322,7 +322,7 @@ def extract_isa_line(dirty: bytes) -> IsaLineResult:
 ```
 
 One guard keeps the fallback honest: the string `isa` occurs inside ordinary
-words. A lowercase candidate is only reported as a tag if it sits where a segment
+words. A lowercase candidate is only reported as a identifier if it sits where a segment
 could start.
 
 ```python
@@ -337,14 +337,14 @@ def _looks_like_segment_start(dirty: bytes, offset: int) -> bool:
 > regex over a 2 MB buffer still visits every byte — no cheaper than `lower()`,
 > and with no way to skip the work when the file is already uppercase. It matches
 > `isa` inside *advisable* just as eagerly, with no signal to separate that from a
-> real lowercase tag. And it still produces a match, not the `isa.tag-lowercase`
+> real lowercase identifier. And it still produces a match, not the `isa.identifier-lowercase`
 > diagnostic that tells the developer their partner lower-cased the payload. The
 > flag saves the one line that was never the problem.
 
 ### 5.5 Name every deviation
 
 Nothing above is a silent repair. Each tolerance emits a stable diagnostic code —
-`isa.leading-bytes`, `isa.tag-lowercase`, `isa.tag-utf16`,
+`isa.leading-bytes`, `isa.identifier-lowercase`, `isa.identifier-utf16`,
 `isa.no-functional-group`, `isa.gs-not-found`, and the rest (see
 [`diagnostics.md`](diagnostics.md)) — so the developer holding the bad file gets
 the exact list of what their partner did wrong, not a single exception at the
@@ -373,11 +373,11 @@ def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
 | Input | Result | Diagnostics |
 | --- | --- | --- |
 | UTF-8 BOM, then a clean interchange | 106-byte run | `isa.leading-bytes` |
-| `SUBJECT: ISA FILE\n` + lowercase interchange | run returned | `isa.tag-lowercase`, `isa.leading-bytes` |
+| `SUBJECT: ISA FILE\n` + lowercase interchange | run returned | `isa.identifier-lowercase`, `isa.leading-bytes` |
 | ISA02 & ISA04 stripped (86-byte segment) | 86-byte run | none — still 16 separators |
 | No `GS` envelope; a `REF*GS*` deep in the data | fatal | `isa.no-functional-group` |
 | Two interchanges concatenated, first `GS` missing | 2nd interchange | `isa.leading-bytes` |
-| UTF-16 LE encoded file | fatal | `isa.tag-utf16` |
+| UTF-16 LE encoded file | fatal | `isa.identifier-utf16` |
 | Element separator `*` occurs inside the sender's ID | fatal | `isa.no-functional-group` |
 | 2 MB of leading junk, then `ISA` | 106-byte run | `isa.leading-bytes` |
 

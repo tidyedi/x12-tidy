@@ -54,7 +54,7 @@ def test_check_reports_isa_phase_refusal_and_exits_nonzero(
     path = _write(tmp_path, b"not an edi file at all")
     assert main(["check", str(path)]) == 1
     err = capsys.readouterr().err
-    assert "isa.no-tag" in err
+    assert "isa.no-identifier" in err
 
 
 def test_check_missing_file_is_a_usage_error(

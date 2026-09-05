@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Auditing the Envelope</title>
-<meta name="description" content="Once a payload exists, checking whether the interchange's own bookkeeping is honest — envelope pairing, counts, control-number agreement, tag shape, version agreement — and why 'fatal' stops meaning what it meant three notes ago.">
+<meta name="description" content="Once a payload exists, checking whether the interchange's own bookkeeping is honest — envelope pairing, counts, control-number agreement, identifier shape, version agreement — and why 'fatal' stops meaning what it meant three notes ago.">
 <link rel="canonical" href="https://docs.tidyedi.com/auditing-the-envelope.html">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Auditing the Envelope">
@@ -417,7 +417,7 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 &mdash; The walk, one pass</span>
-        <img src="figures/envelope-walk.svg" alt="A sequence of segment tags: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
+        <img src="figures/envelope-walk.svg" alt="A sequence of segment identifiers: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
       </div>
       <figcaption><b>A small stack, not a parser</b> &mdash; one open group,
         one open transaction set, tracked as the walker crosses each opener
@@ -459,8 +459,8 @@
               <td><code>structure.functional-group-count-mismatch</code>, <code>gs.transaction-set-count-mismatch</code>, <code>st.segment-count-mismatch</code></td></tr>
           <tr><td>control numbers agree front-to-back, and are unique in scope</td>
               <td><code>structure.control-number-mismatch</code>, <code>gs.control-number-duplicate</code>, <code>st.control-number-duplicate</code></td></tr>
-          <tr><td>a segment tag begins with an uppercase letter (the A5 gate)</td>
-              <td><code>structure.tag-shape-invalid</code></td></tr>
+          <tr><td>a segment identifier begins with an uppercase letter (the A5 gate)</td>
+              <td><code>structure.identifier-invalid</code></td></tr>
           <tr><td><code>GS08</code> agrees with <code>ISA12</code></td>
               <td><code>gs.version-mismatch</code></td></tr>
           <tr><td><code>ISA15</code> is T, P, or I</td>
@@ -584,7 +584,7 @@ gs08_stripped = gs08.strip().lstrip(b<span class="s">"0"</span>)
       <a href="reassembling-the-interchange.html">the earlier notes</a>: one
       deviation, one expected code, run against a fully-assembled payload
       instead of a bare ISA line &mdash; a missing <code>SE</code>, a
-      duplicated <code>GS06</code>, a lowercase tag, a version mismatch, and
+      duplicated <code>GS06</code>, a lowercase identifier, a version mismatch, and
       so on, one test each.</p>
       <p>Writing them surfaced a real gap the way
       <a href="those-pesky-delimiters.html#proof">the delimiter sweep</a> once did. Every closer the walker can see reopened

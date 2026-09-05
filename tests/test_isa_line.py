@@ -18,8 +18,8 @@ from x12_tidy.isa import IsaLineResult, extract_isa_line
 
 
 def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
-    """The run starts with an ISA tag, is a prefix of dirty[isa_start:], and is
-    immediately followed by a GS tag (case-insensitive -- a lowercase file is
+    """The run starts with an ISA identifier, is a prefix of dirty[isa_start:], and is
+    immediately followed by a GS identifier (case-insensitive -- a lowercase file is
     parsed case-insensitively)."""
     if r.isa_line is None:
         return
@@ -36,9 +36,9 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
      build_isa(pre=b"\xef\xbb\xbf"), [Code.ISA_LEADING_BYTES], True),
     ("human text before ISA",
      build_isa(pre=b"sent 2024-01-01\r\n"), [Code.ISA_LEADING_BYTES], True),
-    ("no ISA tag at all",
+    ("no ISA identifier at all",
      b"GS*PO*A*B*20240101*1200*1*X*004010~ST*850*1~SE*1*1~GE*1*1~IEA*1*1~",
-     [Code.ISA_NO_TAG], False),
+     [Code.ISA_NO_IDENTIFIER], False),
     ("too short to be an interchange",
      b"ISA*00*x~GS*", [Code.ISA_INTERCHANGE_TOO_SHORT], False),
     ("newline appended after terminator (~\\r\\n)",
@@ -95,24 +95,24 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
      [Code.ISA_SEPARATOR_COUNT_LOW], False),
 
     # --- lowercase / wide-encoding ---
-    ("lowercase 'isa' segment tag",
+    ("lowercase 'isa' segment identifier",
      build_isa().lower(),
-     [Code.ISA_TAG_LOWERCASE], True),
-    ("mixed-case 'Isa' tag",
+     [Code.ISA_IDENTIFIER_LOWERCASE], True),
+    ("mixed-case 'Isa' identifier",
      build_isa().replace(b"ISA", b"Isa", 1),
-     [Code.ISA_TAG_LOWERCASE], True),
+     [Code.ISA_IDENTIFIER_LOWERCASE], True),
     ("uppercase 'ISA' in junk, real segment is lowercase",
      b"SUBJECT: ISA FILE\r\n" + build_isa().lower(),
-     [Code.ISA_TAG_LOWERCASE, Code.ISA_LEADING_BYTES], True),
+     [Code.ISA_IDENTIFIER_LOWERCASE, Code.ISA_LEADING_BYTES], True),
     ("plain text with 'isa' only inside a word, no EDI",
      b"this reading is advisable for everyone involved. " * 4,
-     [Code.ISA_NO_TAG], False),
+     [Code.ISA_NO_IDENTIFIER], False),
     ("UTF-16LE encoded file",
      build_isa().decode().encode("utf-16-le"),
-     [Code.ISA_TAG_UTF16], False),
+     [Code.ISA_IDENTIFIER_UTF16], False),
     ("UTF-16BE encoded file",
      build_isa().decode().encode("utf-16-be"),
-     [Code.ISA_TAG_UTF16], False),
+     [Code.ISA_IDENTIFIER_UTF16], False),
 ]
 
 

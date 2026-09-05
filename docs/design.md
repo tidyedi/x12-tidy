@@ -52,7 +52,7 @@ possible later move for speed).
 | term | meaning |
 | --- | --- |
 | `dirty` | the raw file bytes, exactly as received |
-| `cleansed` | `dirty` with everything before the first `ISA` tag removed |
+| `cleansed` | `dirty` with everything before the first `ISA` identifier removed |
 | *identify* | emit a diagnostic and continue |
 | *identify and exit* | emit a diagnostic and stop (a `fatal`) |
 
@@ -122,12 +122,12 @@ Key points:
   reported.
 - **Lowercase and wide encodings.** The uppercase `ISA` candidates are tried
   first (no buffer copy). Only if none parse: a NUL-interleaved `I S A` near the
-  start → `isa.tag-utf16` (fatal, "re-export the file"); otherwise one
+  start → `isa.identifier-utf16` (fatal, "re-export the file"); otherwise one
   lower-case copy of the buffer, and the `isa` offsets are tried
   case-insensitively (`GS` matched case-insensitively too) carrying
-  `isa.tag-lowercase` (error). This also rescues a lowercase segment sitting
+  `isa.identifier-lowercase` (error). This also rescues a lowercase segment sitting
   behind junk that contains the literal uppercase word `ISA`. A file with a
-  non-uppercase ISA tag has non-uppercase tags throughout, which later steps
+  non-uppercase ISA identifier has non-uppercase identifiers throughout, which later steps
   must tolerate.
 - The returned run **includes** the segment terminator and any trailing bytes
   (appended newlines, stray spaces, even a comment line) between it and `GS`.
@@ -136,7 +136,7 @@ Key points:
 
 Not caught here (Step 2's job): the element separator being alphanumeric or a
 control byte, the separator colliding with the terminator, element widths, a
-duplicated `ISA` tag inside an otherwise-16-separator run.
+duplicated `ISA` identifier inside an otherwise-16-separator run.
 
 **Residual limitation.** If leading junk is itself shaped *exactly* like an ISA
 line — the bytes `ISA`, then 16 element separators, then `GS` + that separator,
@@ -275,7 +275,7 @@ cleansed-body variable it assembles from.
   and the terminator that closes it), split on the recovered segment terminator,
   and left-trim whitespace from each piece. The split is on the *segment
   terminator* only — an element separator is never a split point, so unused
-  elements (`**`) stay inside their segment. A segment tag is alphabetic and
+  elements (`**`) stay inside their segment. A segment identifier is alphabetic and
   first, so leading whitespace is never segment content; the right-hand side of
   a piece is never touched (a space-padded final element is real data). Empty
   pieces (two terminators in a row) are kept here. **No diagnostics, no
@@ -301,7 +301,7 @@ One pass over the segments (a small open-group/open-transaction-set stack)
 covers: `ISA`/`IEA`, `GS`/`GE`, and `ST`/`SE` pairing and nesting; control-number
 agreement and uniqueness (`ISA13`/`IEA02`, `GS06`/`GE02`, `ST02`/`SE02`);
 segment/transaction-set/group counts (`SE01`, `GE01`, `IEA01`); the A5
-tag-shape gate; `ISA12`/`GS08` version agreement; `ISA15` usage-indicator
+identifier-shape gate; `ISA12`/`GS08` version agreement; `ISA15` usage-indicator
 validity; `GS07` responsible-agency validity; and foreign content — a segment
 with no structurally valid place to be, including a duplicated `IEA` once the
 interchange is already closed. Deliberately not covered, no decision made yet:

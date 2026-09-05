@@ -122,7 +122,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
         diags.append(Diagnostic(
             Code.ISA_DELIMITER_MISALIGNED,
             f"the run is {len(run)} byte(s) -- too short to hold an ISA segment "
-            "tag and an element separator.",
+            "identifier and an element separator.",
             offset=base_offset,
         ))
         return IsaDecomposition(

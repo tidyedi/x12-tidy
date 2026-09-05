@@ -31,7 +31,7 @@ interchange, and the one payload they and the ISA line become.
   line, the body split into segments with the empty ones dropped, and
   everything rejoined on the sender's own terminator.
 
-Nothing new can go fatal here. Whether the *body* is well-formed — real tags,
+Nothing new can go fatal here. Whether the *body* is well-formed — real identifiers,
 matched openers and closers, counts that add up — is not this step's question.
 This step's only job is mechanical: **assemble one payload out of what the
 earlier steps already trust.**
@@ -61,7 +61,7 @@ Take everything after the ISA line — which, by [the locating
 step](finding-the-elusive-isa-line.md)'s own contract, ends immediately before
 `GS`. Strip whitespace *and the terminator* from both ends, so a trailing blank
 line or a doubled closing terminator does not leave a spurious empty piece at
-the end. Split on the segment terminator. Left-trim each piece — a segment tag
+the end. Split on the segment terminator. Left-trim each piece — a segment identifier
 is alphabetic and first, so leading whitespace is never segment content.
 
 That produces the *raw* segments, empties included: two terminators in a row
@@ -73,7 +73,7 @@ def drop_empty_segments(segments: list[bytes]) -> list[bytes]:
     return [segment for segment in segments if segment]
 ```
 
-Neither function asks *why* the terminators were doubled, or whether a tag is
+Neither function asks *why* the terminators were doubled, or whether a identifier is
 real, or whether `GS` opens and `GE` closes in the right order. **Judging
 requires context this step deliberately does not have.** That is [the next
 note](auditing-the-envelope.md)'s job, once there is a whole payload to judge.
@@ -165,9 +165,9 @@ third outcome.
 
 ## 6. Where validation takes over
 
-`ReconstructedPayload.segments` is the *raw* body: whatever tags and elements
+`ReconstructedPayload.segments` is the *raw* body: whatever identifiers and elements
 the sender sent, empties dropped, nothing else touched. It has not been asked
-whether `beg` is a real tag, whether `GS`/`GE` and `ST`/`SE` nest correctly,
+whether `beg` is a real identifier, whether `GS`/`GE` and `ST`/`SE` nest correctly,
 whether `SE01` counts the segments it claims to, or whether `ISA13` matches
 `IEA02`. [Auditing the Envelope](auditing-the-envelope.md) is where all of
 that lives — the first place x12-tidy checks not just the *shape* of a

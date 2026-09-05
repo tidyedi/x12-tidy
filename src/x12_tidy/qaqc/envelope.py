@@ -5,7 +5,7 @@ r"""Envelope QA/QC -- checks that run once a cleansed payload exists.
 
 Scope: everything decided in the QA/QC design pass -- envelope pairing
 (``GS``/``GE``, ``ST``/``SE``, and the interchange's own ``ISA``/``IEA``),
-control-number and count agreement, control-number uniqueness, segment-tag
+control-number and count agreement, control-number uniqueness, segment-identifier
 shape (the A5 gate), the ``ISA12``/``GS08`` version check, ``ISA15`` usage
 indicator validity, and ``GS07`` responsible-agency validity. Deliberately
 **not** covered here (no decision made yet, do not add without one): ``ISA05``/
@@ -48,8 +48,8 @@ def _is_numeric(value: bytes) -> bool:
     return bool(stripped) and stripped.isdigit()
 
 
-def _tag_shape_valid(tag: bytes) -> bool:
-    first = tag[:1]
+def _identifier_shape_valid(identifier: bytes) -> bool:
+    first = identifier[:1]
     return bool(first) and first.isalpha() and first.isupper()
 
 
@@ -127,9 +127,9 @@ class _Walker:
     def run(self, segments: tuple[bytes, ...], element_separator: bytes) -> None:
         for segment in segments:
             elements = split_elements(segment, element_separator)
-            tag = elements[0] if elements else b""
-            self._check_tag_shape(tag, segment)
-            self._dispatch(tag, elements, segment)
+            identifier = elements[0] if elements else b""
+            self._check_identifier_shape(identifier, segment)
+            self._dispatch(identifier, elements, segment)
 
         if self._current_group is not None:
             self._close_group(self._current_group, None)  # never found GE
@@ -137,21 +137,21 @@ class _Walker:
 
         self._check_iea()
 
-    def _check_tag_shape(self, tag: bytes, segment: bytes) -> None:
-        if not _tag_shape_valid(tag):
+    def _check_identifier_shape(self, identifier: bytes, segment: bytes) -> None:
+        if not _identifier_shape_valid(identifier):
             self.diagnostics.append(Diagnostic(
-                Code.STRUCTURE_TAG_SHAPE_INVALID,
-                f"segment {segment!r} has a tag that does not begin with an "
+                Code.STRUCTURE_IDENTIFIER_INVALID,
+                f"segment {segment!r} has a identifier that does not begin with an "
                 "uppercase letter.",
             ))
 
-    def _dispatch(self, tag: bytes, elements: list[bytes], segment: bytes) -> None:
-        if tag == b"GS":
+    def _dispatch(self, identifier: bytes, elements: list[bytes], segment: bytes) -> None:
+        if identifier == b"GS":
             if self._current_group is not None:
                 self._close_group(self._current_group, None)  # never found GE
             self._current_group = self._open_group(elements)
             return
-        if tag == b"ST":
+        if identifier == b"ST":
             if self._current_group is None:
                 self._foreign_content(segment, "ST outside any functional group")
                 return
@@ -162,7 +162,7 @@ class _Walker:
                 st02=st02, segment_count=1
             )
             return
-        if tag == b"SE":
+        if identifier == b"SE":
             group = self._current_group
             if group is None or group.current_st is None:
                 self._foreign_content(segment, "SE with no matching ST")
@@ -170,14 +170,14 @@ class _Walker:
             group.current_st.segment_count += 1
             self._close_st(group, elements)
             return
-        if tag == b"GE":
+        if identifier == b"GE":
             if self._current_group is None:
                 self._foreign_content(segment, "GE with no matching GS")
                 return
             self._close_group(self._current_group, elements)
             self._current_group = None
             return
-        if tag == b"IEA":
+        if identifier == b"IEA":
             if self._iea_elements is not None:
                 self._foreign_content(
                     segment, "IEA with the interchange already closed"
