@@ -151,7 +151,6 @@ permissive parsing never invents.
 
 | input | outcome |
 | --- | --- |
-| conformant ISA line | returned unchanged, `was_clean` |
 | blank fixed-width fields right-trimmed | padded back, `isa.element-width` per field |
 | element over-padded with spaces | trimmed, `isa.element-width` |
 | ISA segment hard-wrapped (`\r`/`\n` in a text element) | line breaks → spaces, `isa.element-embedded-newline`, then re-measured |
@@ -159,6 +158,7 @@ permissive parsing never invents.
 | trailing bytes after the terminator (`~\r\n`, `~ `) | the real terminator kept; the trailing `\r\n` / spaces stripped (`isa.trailing-newline` / `isa.trailing-junk`) |
 | terminator omitted entirely (GS follows ISA16) | `~` supplied — nothing to preserve — `isa.segment-terminator-stripped` |
 | pipe / caret / any valid delimiters | kept as-is; the delimiters are the sender's choice |
+| conformant ISA line | returned unchanged, `was_clean` — the one row with nothing to repair |
 | element over width with real data | **fatal** `isa.element-overflow` |
 | anything the delimiter step made fatal | propagated; no line |
 | reassembled length ≠ 105 | **fatal** `isa.line-length` (a guard) |

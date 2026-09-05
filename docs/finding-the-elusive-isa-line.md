@@ -136,6 +136,22 @@ Three prepended bytes and one omitted element are enough to make `data[106:109]`
 land in the middle of an element. **The byte position is not an invariant. The
 `GS` header that follows the ISA line is.**
 
+**Why UTF-16 is fatal, not transcoded.** Every other row in that table is a
+malformed X12 interchange — the bytes are still X12, just not conformant ones,
+and locating the ISA line tolerates that. A UTF-16-encoded file isn't a
+malformed interchange; it isn't X12 bytes at all. The standard predates
+Unicode and is single-byte-per-character throughout — there is no legal X12
+interchange that is anything else. Decoding one would mean guessing the
+variant (LE or BE), trusting or inferring a byte-order mark, and re-encoding
+the whole file before parsing has even started. That is exactly the kind of
+guess this tool refuses to make everywhere else in this note — an ambiguous
+separator count gets reported, not resolved; a truncated element gets padded
+by rule, not inferred. The interleaved-NUL pattern (`I\x00S\x00A`, or the
+big-endian mirror) is cheap and unambiguous to detect, so x12-tidy names it
+and stops (`isa.tag-utf16`, "re-export the file") rather than attempt a
+conversion that could silently mis-decode and hand back a diagnosis of the
+wrong bytes.
+
 ---
 
 ## 4. One job: return the run
