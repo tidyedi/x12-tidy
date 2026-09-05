@@ -30,6 +30,10 @@ searched for, yes, that too.)
   — reading the four delimiters from a line whose byte offsets have moved
 - [Reconstructing the ISA Line](https://docs.tidyedi.com/reconstructing-the-isa-line.html)
   — rebuilding the canonical 105-byte line once the delimiters are trusted
+- [Reassembling the Interchange](https://docs.tidyedi.com/reassembling-the-interchange.html)
+  — splitting the body into segments and rejoining it with the ISA line into one payload
+- [Auditing the Envelope](https://docs.tidyedi.com/auditing-the-envelope.html)
+  — checking whether the interchange's own bookkeeping (pairing, counts, control numbers) is honest
 
 **Reference** — [`design.md`](docs/design.md) (architecture, the diagnostic-code
 scheme) · [`docs/diagnostics.md`](docs/diagnostics.md) (every code, generated) ·

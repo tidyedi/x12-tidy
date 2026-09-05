@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reassembling the Interchange</title>
+<meta name="description" content="Turning a reconstructed ISA line and a pile of raw segments into one cleansed payload — split into segments, empties dropped, rejoined on the sender's own terminator. Why doing the ISA-line location work twice costs nothing, and where mechanical assembly stops and judgment begins.">
+<link rel="canonical" href="https://docs.tidyedi.com/reassembling-the-interchange.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Reassembling the Interchange">
+<meta property="og:description" content="Turning a reconstructed ISA line and raw segments into one cleansed payload — and why doing the location work twice is free.">
+<meta property="og:url" content="https://docs.tidyedi.com/reassembling-the-interchange.html">
+<meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root {
+    --paper:   #edf0f2;
+    --surface:  #f8fafb;
+    --ink:      #17212b;
+    --ink-soft: #566470;
+    --rule:     #d2d8dc;
+    --accent:   #0e6f86;
+    --accent-soft: #dbeaee;
+    --valid:    #467a4e;
+    --deviation:#ac5230;
+    --code-bg:  #f1f4f5;
+    --code-ink: #223039;
+
+    --measure: 40rem;
+    --wide: 53rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #0f151b;
+      --surface:  #161f27;
+      --ink:      #dce4e9;
+      --ink-soft: #93a1ac;
+      --rule:     #2a343d;
+      --accent:   #45b8d0;
+      --accent-soft: #123039;
+      --valid:    #74b079;
+      --deviation:#dd8b64;
+      --code-bg:  #131b22;
+      --code-ink: #c9d5dc;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #0f151b;
+    --surface:  #161f27;
+    --ink:      #dce4e9;
+    --ink-soft: #93a1ac;
+    --rule:     #2a343d;
+    --accent:   #45b8d0;
+    --accent-soft: #123039;
+    --valid:    #74b079;
+    --deviation:#dd8b64;
+    --code-bg:  #131b22;
+    --code-ink: #c9d5dc;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  .sitebar {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sitebar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  .sitebar svg { width: 26px; height: 26px; display: block; border-radius: 6px; }
+  .sitebar .edi { color: #1F6B4D; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .sitebar .edi { color: #5CBB8E; }
+  }
+  :root[data-theme="dark"] .sitebar .edi { color: #5CBB8E; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 1.0625rem;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: 0 1.5rem; }
+  .prose { max-width: var(--measure); margin-inline: auto; }
+
+  h1, h2, h3, .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0.6rem 0 0;
+  }
+  .thesis {
+    font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--ink);
+    font-style: italic;
+    max-width: 34rem;
+    margin: 1.6rem 0 0;
+  }
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+    position: relative;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2.4rem 0 0.4rem;
+    color: var(--ink);
+  }
+  p { margin: 1.1rem 0 0; }
+  .prose > p:first-child, section > p:first-of-type { margin-top: 1rem; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--accent-soft);
+    color: var(--ink);
+    padding: 0.08em 0.34em;
+    border-radius: 3px;
+  }
+
+  section { margin-top: 4.5rem; }
+  .sec-head {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.4rem;
+  }
+  .sec-head .eyebrow { display: block; margin-bottom: 0.5rem; }
+  .sec-num {
+    color: var(--accent);
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+  }
+
+  figure {
+    margin: 2.4rem auto;
+    max-width: var(--wide);
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  .fig-frame {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.6rem 1.4rem 1.1rem;
+  }
+  .fig-label { display: block; margin-bottom: 1rem; }
+  figcaption {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 0.9rem;
+    max-width: 44rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .code-fig { margin: 2rem auto; max-width: var(--wide); }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 1.15rem 1.3rem;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    line-height: 1.62;
+    tab-size: 4;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .c  { color: var(--ink-soft); font-style: italic; }
+  .s  { color: var(--valid); }
+  .k  { color: var(--accent); font-weight: 500; }
+  .code-cap {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.55rem;
+  }
+  .code-cap b { color: var(--accent); font-weight: 500; }
+
+  .table-fig { margin: 2rem auto; max-width: var(--wide); overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink-soft);
+  }
+  td code, th code { font-size: 0.82em; background: var(--code-bg); }
+  .verdict { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; white-space: nowrap; }
+  .v-ok  { color: var(--valid); }
+  .v-flag{ color: var(--deviation); }
+
+  .note {
+    max-width: var(--measure);
+    margin: 1.8rem auto 0;
+    padding: 1rem 1.2rem;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+  .note .kicker { display:block; margin-bottom: 0.35rem; color: var(--accent); }
+
+  ul.plain { max-width: var(--measure); margin: 1.2rem auto 0; padding: 0; list-style: none; }
+  ul.plain li {
+    position: relative;
+    padding: 0.75rem 0 0.75rem 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  ul.plain li:last-child { border-bottom: 1px solid var(--rule); }
+  ul.plain li::before {
+    content: "";
+    position: absolute; left: 0; top: 1.15rem;
+    width: 7px; height: 7px;
+    background: var(--deviation);
+    border-radius: 1px;
+  }
+  ul.plain li b { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; }
+
+  header.hero {
+    padding: clamp(3.5rem, 9vw, 6rem) 0 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .byline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 2rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem;
+  }
+  footer {
+    margin-top: 5rem;
+    border-top: 1px solid var(--rule);
+    padding: 2.5rem 0 4rem;
+  }
+  footer p { max-width: var(--measure); margin-inline: auto; color: var(--ink-soft); font-size: 0.95rem; }
+
+  @media (min-width: 60rem) {
+    .sec-head { position: relative; }
+    .sec-head .sec-num-rail {
+      position: absolute;
+      left: -3.5rem;
+      top: 2.1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
+    }
+  }
+  .sec-num-rail { display: none; }
+  @media (min-width: 60rem) { .sec-num-rail { display: block; } .sec-head h2 .sec-num { display: none; } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: color 0.15s ease; }
+  }
+
+  @media print {
+    .sitebar { padding-top: 0.4rem; }
+    header.hero { padding: 1rem 0; }
+    section { margin-top: 2rem; }
+    figure, .fig-frame, pre, table, .note, .table-fig, .code-fig { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    a { color: inherit; }
+    .byline a { text-decoration: underline; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="sitebar">
+  <a href="https://tidyedi.com">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#1F6B4D"/>
+      <rect x="11" y="15" width="35" height="5.4" rx="2.7" fill="#F3F8F5" opacity="0.34"/>
+      <rect x="18" y="26" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="37" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="48" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+    </svg>
+    <span>Tidy<span class="edi">EDI</span></span>
+  </a>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">X12 EDI &nbsp;&middot;&nbsp; Defensive parsing</span>
+    <h1>Reassembling the&nbsp;Interchange</h1>
+    <p class="thesis">Turning a reconstructed ISA line and a pile of raw
+      segments into one cleansed payload &mdash; and why doing the location
+      work <em>twice</em> is free.</p>
+    <div class="byline">
+      <span>Engineering note</span>
+      <span>x12&#8209;tidy&nbsp;/&nbsp;structure</span>
+      <span>~1,400 words</span>
+      <span><a href="the-x12-tidy-method.html">The method</a></span>
+      <span><a href="reconstructing-the-isa-line.html">&#8592; Reconstructing the ISA Line</a></span>
+      <span><a href="auditing-the-envelope.html">Auditing the Envelope &#8594;</a></span>
+    </div>
+  </header>
+
+  <section id="claim">
+    <div class="sec-head">
+      <span class="sec-num-rail">01</span>
+      <span class="eyebrow">The claim</span>
+      <h2><span class="sec-num">01&nbsp;&nbsp;</span>Refuse exactly when the ISA line does</h2>
+    </div>
+    <div class="prose">
+      <p>This is the fourth act of <a href="the-x12-tidy-method.html">the
+      x12-tidy method</a>. The first three notes stop at one clean 105-byte
+      line. This one is about everything after it &mdash; the
+      <code>GS</code>/<code>ST</code>/<code>SE</code>/<code>GE</code>/<code>IEA</code>
+      segments that make up the rest of the interchange, and the one payload
+      they and the ISA line become.</p>
+      <p><code>clean_payload(dirty)</code> is a total function over the same
+      input space as <code>clean_isa_line</code>, because it is built on top
+      of it:</p>
+    </div>
+    <ul class="plain">
+      <li>if the ISA line cannot be recovered, <code>clean_payload</code>
+        refuses &mdash; same diagnostics, no payload, nothing to split</li>
+      <li>otherwise it hands back one <code>ReconstructedPayload</code>: the
+        reconstructed ISA line, the body split into segments with the empty
+        ones dropped, and everything rejoined on the sender's own
+        terminator</li>
+    </ul>
+    <div class="prose">
+      <p>Nothing new can go fatal here. Whether the <em>body</em> is
+      well-formed &mdash; real tags, matched openers and closers, counts that
+      add up &mdash; is not this step's question. This step's only job is
+      mechanical: <strong>assemble one payload out of what the earlier steps
+      already trust.</strong></p>
+    </div>
+  </section>
+
+  <section id="mechanical">
+    <div class="sec-head">
+      <span class="sec-num-rail">02</span>
+      <span class="eyebrow">Two transforms</span>
+      <h2><span class="sec-num">02&nbsp;&nbsp;</span>Two purely mechanical transforms</h2>
+    </div>
+    <div class="prose">
+      <p><code>split_segments</code> and <code>drop_empty_segments</code>
+      share one property, and the code says so directly:
+      <strong>no diagnostics, no validation, no refusal.</strong></p>
+    </div>
+    <div class="code-fig">
+      <p class="code-cap"><b>split_segments</b> &mdash; src/x12_tidy/structure/segments.py</p>
+<pre><code><span class="k">def</span> split_segments(dirty: bytes) -> list[bytes]:
+    located = extract_isa_line(dirty)
+    <span class="k">if</span> located.isa_line <span class="k">is</span> <span class="k">None</span>:
+        <span class="k">return</span> []
+    decomposition = split_isa_line(located.isa_line, base_offset=located.isa_start)
+    terminator = decomposition.segment_terminator
+    <span class="k">if</span> <span class="k">not</span> terminator:
+        <span class="k">return</span> []
+    contents = dirty[located.isa_start + len(located.isa_line):]
+    contents = contents.strip(_WHITESPACE + terminator)
+    <span class="k">return</span> [piece.lstrip(_WHITESPACE) <span class="k">for</span> piece <span class="k">in</span> contents.split(terminator)]
+</code></pre>
+    </div>
+    <div class="prose">
+      <p>Take everything after the ISA line &mdash; which, by
+      <a href="finding-the-elusive-isa-line.html">the locating step</a>'s own
+      contract, ends immediately before <code>GS</code>. Strip whitespace
+      <em>and the terminator</em> from both ends, so a trailing blank line or
+      a doubled closing terminator does not leave a spurious empty piece at
+      the end. Split on the segment terminator. Left-trim each piece &mdash; a
+      segment tag is alphabetic and first, so leading whitespace is never
+      segment content.</p>
+      <p>That produces the <em>raw</em> segments, empties included: two
+      terminators in a row (<code>~~</code>) split into an empty string
+      between them, and an empty string is not a segment.</p>
+    </div>
+    <div class="code-fig">
+      <p class="code-cap"><b>drop_empty_segments</b></p>
+<pre><code><span class="k">def</span> drop_empty_segments(segments: list[bytes]) -> list[bytes]:
+    <span class="k">return</span> [segment <span class="k">for</span> segment <span class="k">in</span> segments <span class="k">if</span> segment]
+</code></pre>
+    </div>
+    <div class="prose">
+      <p>Neither function asks <em>why</em> the terminators were doubled, or
+      whether a tag is real, or whether <code>GS</code> opens and
+      <code>GE</code> closes in the right order. <strong>Judging requires
+      context this step deliberately does not have.</strong> That is
+      <a href="auditing-the-envelope.html">the next note</a>'s job, once there
+      is a whole payload to judge.</p>
+    </div>
+  </section>
+
+  <section id="redundant-parse">
+    <div class="sec-head">
+      <span class="sec-num-rail">03</span>
+      <span class="eyebrow">A deliberate cost</span>
+      <h2><span class="sec-num">03&nbsp;&nbsp;</span>The redundant parse, and why it costs nothing</h2>
+    </div>
+    <div class="prose">
+      <p>Look again at <code>split_segments</code>: it calls
+      <code>extract_isa_line</code> and <code>split_isa_line</code> itself.
+      But <code>clean_payload</code> already called the full pipeline &mdash;
+      <code>clean_isa_line</code>, which runs those same two functions
+      internally, plus reconstruction &mdash; to get the repaired ISA line in
+      the first place.</p>
+    </div>
+    <div class="code-fig">
+      <p class="code-cap"><b>clean_payload</b> &mdash; src/x12_tidy/structure/payload.py</p>
+<pre><code><span class="k">def</span> clean_payload(dirty: bytes) -> ReconstructedPayload:
+    isa_result = clean_isa_line(dirty)
+    <span class="k">if</span> isa_result.isa_line <span class="k">is</span> <span class="k">None</span>:
+        <span class="k">return</span> ReconstructedPayload(<span class="k">None</span>, isa_result, (), list(isa_result.diagnostics))
+
+    segments = tuple(drop_empty_segments(split_segments(dirty)))
+    terminator = isa_result.segment_terminator
+    body = b<span class="s">""</span>.join(segment + terminator <span class="k">for</span> segment <span class="k">in</span> segments)
+    payload = isa_result.isa_line + terminator + body
+
+    <span class="k">return</span> ReconstructedPayload(payload, isa_result, segments, list(isa_result.diagnostics))
+</code></pre>
+    </div>
+    <div class="prose">
+      <p>So the ISA line gets located and its delimiters decomposed
+      <strong>twice</strong> &mdash; once by <code>clean_isa_line</code>, once
+      again by <code>split_segments</code>. That looks like waste. It isn't,
+      for two reasons.</p>
+      <p><strong>It's pure and cheap.</strong> Locating and decomposing do no
+      I/O, allocate nothing large, and run once per call regardless of file
+      size beyond the initial scan. Paying for it twice on a single
+      interchange is not a cost anyone will notice.</p>
+      <p><strong>It's the price of keeping <code>split_segments</code>
+      honest.</strong> If <code>split_segments</code> instead took the
+      already-computed decomposition as an argument, it would stop being a
+      pure function of <code>dirty</code> alone &mdash; every caller would
+      have to thread the right upstream result through, and a mismatched pair
+      (segments split with one decomposition, an ISA line reconstructed from
+      another) becomes a class of bug that can exist. Recomputing from
+      <code>dirty</code> each time makes that bug <em>impossible</em>, not
+      just unlikely.</p>
+    </div>
+    <div class="note">
+      <span class="kicker">Why the two calls never disagree</span>
+      Reconstruction never rewrites the sender's segment terminator byte
+      &mdash; <a href="reconstructing-the-isa-line.html">the previous
+      note</a> establishes that a <code>\n</code> terminator stays
+      <code>\n</code>. So <code>isa_result.segment_terminator</code>, computed
+      via the reconstructed line, and the terminator <code>split_segments</code>
+      recovers independently from the same bytes, are always the same byte.
+      The body is split on it and rejoined on it without the two calls ever
+      having to be reconciled.
+    </div>
+  </section>
+
+  <section id="one-terminator">
+    <div class="sec-head">
+      <span class="sec-num-rail">04</span>
+      <span class="eyebrow">Regeneration, not repair</span>
+      <h2><span class="sec-num">04&nbsp;&nbsp;</span>Reassembly always ends in exactly one terminator</h2>
+    </div>
+    <div class="prose">
+      <p>Whatever the sender put after the last real segment &mdash; nothing,
+      one terminator, a terminator plus a stray newline, two terminators in a
+      row &mdash; the strip in <code>split_segments</code> removes all of it
+      from the end, and the join in <code>clean_payload</code> puts back
+      exactly one terminator after every segment, including the last. The
+      output always ends the same way, regardless of how the input did.</p>
+      <p>This is not a <em>repair</em> in the sense the ISA-line phase uses
+      the word &mdash; there is no diagnostic for it, because nothing about it
+      was wrong. A trailing terminator is not preserved information; it is
+      punctuation the join regenerates. There is nothing to flag, so nothing
+      is flagged.</p>
+    </div>
+    <figure>
+      <div class="fig-frame">
+        <span class="fig-label">Fig. 1 &mdash; Split, drop, rejoin</span>
+        <img src="figures/reassembly-collapse.svg" alt="Three rows: raw split keeps an empty piece between two segments where the sender doubled the terminator; dropping empty segments removes that piece; rejoining puts exactly one terminator after every remaining segment, including the last, regardless of what the sender originally left at the end.">
+      </div>
+      <figcaption><b>Two terminators in a row produce an empty piece; dropping
+        empties removes it; rejoining always ends in exactly one
+        terminator</b> &mdash; whatever the sender left at the end.</figcaption>
+    </figure>
+  </section>
+
+  <section id="outcomes">
+    <div class="sec-head">
+      <span class="sec-num-rail">05</span>
+      <span class="eyebrow">Every branch</span>
+      <h2><span class="sec-num">05&nbsp;&nbsp;</span>The closed set of outcomes</h2>
+    </div>
+    <div class="table-fig">
+      <table>
+        <thead><tr><th>input</th><th>outcome</th></tr></thead>
+        <tbody>
+          <tr><td>ISA line cannot be recovered</td>
+              <td class="verdict v-flag">refused &mdash; no payload, no segments, the ISA-phase diagnostics say why</td></tr>
+          <tr><td>clean input</td>
+              <td><code>payload == dirty</code>, byte-identical &mdash; <span class="verdict v-ok">was_clean</span></td></tr>
+          <tr><td>a right-trimmed ISA element</td>
+              <td>the <em>reconstructed</em> line anchors the payload, not the dirty one &mdash; the repair carries all the way through</td></tr>
+          <tr><td>two terminators in a row (<code>~~</code>)</td>
+              <td>the empty piece is dropped; not present in <code>.segments</code></td></tr>
+          <tr><td>non-<code>~</code> terminator (<code>\n</code>, bare <code>\r</code>)</td>
+              <td>preserved through the whole payload, not just the ISA line</td></tr>
+          <tr><td>trailing junk after the last segment</td>
+              <td>stripped; the reassembled payload ends in exactly one terminator</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p>Every row that isn't a refusal produces exactly one payload. There is
+      still no third outcome.</p>
+    </div>
+  </section>
+
+  <section id="handoff">
+    <div class="sec-head">
+      <span class="sec-num-rail">06</span>
+      <span class="eyebrow">Scope boundary</span>
+      <h2><span class="sec-num">06&nbsp;&nbsp;</span>Where validation takes over</h2>
+    </div>
+    <div class="prose">
+      <p><code>ReconstructedPayload.segments</code> is the <em>raw</em> body:
+      whatever tags and elements the sender sent, empties dropped, nothing
+      else touched. It has not been asked whether <code>beg</code> is a real
+      tag, whether <code>GS</code>/<code>GE</code> and <code>ST</code>/<code>SE</code>
+      nest correctly, whether <code>SE01</code> counts the segments it claims
+      to, or whether <code>ISA13</code> matches <code>IEA02</code>.
+      <a href="auditing-the-envelope.html">Auditing the Envelope</a> is where
+      all of that lives &mdash; the first place x12-tidy checks not just the
+      <em>shape</em> of a segment, but whether the interchange's own
+      bookkeeping is honest.</p>
+    </div>
+  </section>
+
+  <section id="proof">
+    <div class="sec-head">
+      <span class="sec-num-rail">07</span>
+      <span class="eyebrow">Proving it</span>
+      <h2><span class="sec-num">07&nbsp;&nbsp;</span>Proving it</h2>
+    </div>
+    <div class="prose">
+      <p>The corpus for this step is the payload built from every case the
+      ISA-line notes already prove, plus a family of body-only deviations
+      layered on top of a known-good ISA line: a doubled terminator mid-body,
+      a non-<code>~</code> terminator carried all the way through, and a dirty
+      ISA element whose repair has to survive the join. Each is checked
+      against the same shape of invariant the earlier notes use:</p>
+    </div>
+    <div class="code-fig">
+      <p class="code-cap">the assembly invariant</p>
+<pre><code>result = clean_payload(dirty)
+<span class="k">if</span> result.payload <span class="k">is</span> <span class="k">None</span>:
+    <span class="k">assert</span> result.diagnostics        <span class="c"># a refusal must say why</span>
+<span class="k">else</span>:
+    <span class="k">assert</span> b<span class="s">""</span> <span class="k">not</span> <span class="k">in</span> result.segments                    <span class="c"># no empty pieces</span>
+    <span class="k">assert</span> result.payload.startswith(result.isa_result.isa_line)
+    <span class="k">assert</span> result.payload == (
+        result.isa_result.isa_line + terminator
+        + terminator.join(result.segments) + terminator
+    )
+</code></pre>
+    </div>
+    <div class="prose">
+      <p>That last assertion is the whole claim in one line: the payload is
+      <em>exactly</em> the reconstructed ISA line, the terminator, the cleaned
+      segments joined on that same terminator, and one final terminator
+      &mdash; never the dirty bytes, never a stray empty piece, never a
+      different terminator than the one the sender chose.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><span class="eyebrow" style="display:block;margin-bottom:0.6rem">The pattern</span>
+      Once a step downstream depends on something upstream already computed,
+      don't thread the dependency through &mdash; recompute it from the same
+      raw input, if recomputing is cheap and pure. It costs a little CPU and
+      buys back a whole class of &ldquo;these two callers used different
+      versions of the same fact&rdquo; bugs. Keep mechanical transforms free of
+      judgment even when a judgment would be easy to bolt on; a step that only
+      assembles is a step you can trust regardless of what validation looks
+      like once it exists. And when a repair regenerates something rather than
+      preserving it &mdash; a trailing terminator, not a sender's identifier
+      &mdash; there is nothing to name, because nothing was wrong.</p>
+  </footer>
+
+</div>
+</body>
+</html>

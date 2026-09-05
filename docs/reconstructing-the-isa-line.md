@@ -172,10 +172,13 @@ Reconstruction validates and repairs *structure* — widths, delimiters, the
 terminator, the length. It does not judge element *values*: whether `ISA05` is a
 real interchange-ID qualifier, `ISA09` a real date, `ISA15` a legal usage
 indicator, or whether `ISA13` matches the `IEA02` that closes the interchange.
-That is the next phase — the GS/ST envelope and control-number checks — and it
-is a genuine backstop, not an afterthought. See
-[the ladder](the-x12-tidy-method.md#the-ladder-shape--delimiters--structure--values):
-shape, then delimiters, then structure here, then values.
+That is later work — shape, then delimiters, then structure here, then values,
+per [the method's ladder](the-x12-tidy-method.md). One clean ISA line is not
+yet a whole interchange, either: [the next
+note](reassembling-the-interchange.md) is about turning this line and the
+segments after it into one payload, and [the one after
+that](auditing-the-envelope.md) is the genuine backstop — checking whether the
+envelope's own bookkeeping, `ISA13`/`IEA02` included, actually holds up.
 
 ## 7. Proving it: reconstruct, then re-parse
 

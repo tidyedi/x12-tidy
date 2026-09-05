@@ -140,7 +140,9 @@ could not be cleansed at all.
 
 - Pure functions over `bytes`, never `str`.
 - Type hints everywhere; `pathlib.Path` over `os.path`.
-- `docs/` holds four engineering notes as `.md` + hand-maintained `.html` + `.pdf`
+- `docs/` holds six engineering notes as `.md` + hand-maintained `.html` (the
+  first four also have a `.pdf`; the newest two — `reassembling-the-interchange`,
+  `auditing-the-envelope` — don't yet, print those only when explicitly asked)
   plus SVG figures in `docs/figures/`; served at docs.tidyedi.com via GitHub
   Pages. Keep prose and figures in sync with code changes — there is no `.html`
   generator, so edit the `.md` and `.html` together; PDFs are re-printed from the
