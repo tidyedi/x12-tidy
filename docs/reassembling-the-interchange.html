@@ -10,13 +10,13 @@
 <meta property="og:title" content="Reassembling the Interchange">
 <meta property="og:description" content="Turning a reconstructed ISA line and raw segments into one cleansed payload — and why doing the location work twice is free.">
 <meta property="og:url" content="https://docs.tidyedi.com/reassembling-the-interchange.html">
-<meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<meta property="og:image" content="https://docs.tidyedi.com/images/brand/social-card-1280x640.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
-<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="twitter:image" content="https://docs.tidyedi.com/images/brand/social-card-1280x640.png">
+<link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/images/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/images/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
@@ -538,7 +538,7 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 &mdash; Split, drop, rejoin</span>
-        <img src="figures/reassembly-collapse.svg" alt="Three rows: raw split keeps an empty piece between two segments where the sender doubled the terminator; dropping empty segments removes that piece; rejoining puts exactly one terminator after every remaining segment, including the last, regardless of what the sender originally left at the end.">
+        <img src="images/figures/reassembly-collapse.svg" alt="Three rows: raw split keeps an empty piece between two segments where the sender doubled the terminator; dropping empty segments removes that piece; rejoining puts exactly one terminator after every remaining segment, including the last, regardless of what the sender originally left at the end.">
       </div>
       <figcaption><b>Two terminators in a row produce an empty piece; dropping
         empties removes it; rejoining always ends in exactly one
