@@ -81,7 +81,6 @@ class Code(Enum):
     ISA_ELEMENT_EMBEDDED_NEWLINE = "isa.element-embedded-newline"
     ISA_ELEMENT_WIDTH = "isa.element-width"
     ISA_ELEMENT_OVERFLOW = "isa.element-overflow"
-    ISA_LINE_LENGTH = "isa.line-length"
 
     # -- isa: QA/QC on a standalone ISA element value (post-reconstruction) --
     ISA_USAGE_INDICATOR_INVALID = "isa.usage-indicator-invalid"
@@ -416,17 +415,6 @@ META: dict[Code, CodeMeta] = {
             "reconstructed."
         ),
     ),
-    Code.ISA_LINE_LENGTH: CodeMeta(
-        default_severity="fatal",
-        title="The reconstructed ISA line is not 105 bytes",
-        explanation=(
-            "After padding every element to its fixed width and rejoining on "
-            "the element separator, the ISA line is not the required 105 bytes. "
-            "This should not happen once the per-element widths hold; it is a "
-            "guard that refuses to emit a non-conformant line."
-        ),
-    ),
-
     # -- isa: QA/QC on a standalone ISA element value --
     Code.ISA_USAGE_INDICATOR_INVALID: CodeMeta(
         default_severity="error",

@@ -46,8 +46,6 @@ Refuses -- ``isa_line`` is ``None``, one fatal diagnostic:
   (``isa.element-overflow``). We cannot know the sender's intent -- a dropped
   element separator merging two fields, or an overrun field -- and guessing
   risks corrupting an identifier.
-* a reassembled line that is somehow not 105 bytes (``isa.line-length``) -- a
-  guard that should never fire once the per-element widths hold.
 
 Scope: **structure only** -- widths, delimiters, the terminator, the length. Not
 element *values* (is ISA05 a real qualifier, ISA09 a real date, does ISA13 match
@@ -222,13 +220,9 @@ def _rebuild(
         _ISA_IDENTIFIER + element_separator + element_separator.join(elements)
     )
 
-    if len(line) != CANONICAL_LENGTH:
-        diagnostics.append(Diagnostic(
-            Code.ISA_LINE_LENGTH,
-            f"the reconstructed ISA line is {len(line)} byte(s), not "
-            f"{CANONICAL_LENGTH}; refusing to emit a non-conformant line.",
-            offset=base_offset,
-        ))
-        return None, (), diagnostics
+    # Every element above is forced to its fixed width (or the function has
+    # already returned on overflow), so the length is arithmetically fixed.
+    # A tripwire for a future change to the reconstruction, never a real input.
+    assert len(line) == CANONICAL_LENGTH
 
     return line, tuple(elements), diagnostics

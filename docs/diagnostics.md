@@ -22,7 +22,6 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.isa11-not-standards-id` | error | ISA11 is not the standards identifier on an older version |
 | `isa.isa16-missing` | fatal | Nothing follows ISA15 in the ISA line |
 | `isa.leading-bytes` | warning | Bytes precede the ISA segment |
-| `isa.line-length` | fatal | The reconstructed ISA line is not 105 bytes |
 | `isa.no-functional-group` | fatal | ISA segment is not bounded by a GS functional-group header |
 | `isa.no-identifier` | fatal | No ISA segment identifier in the file |
 | `isa.repetition-separator-invalid` | error | The repetition separator is not a usable delimiter |
@@ -119,12 +118,6 @@ After the 16th element separator there are no bytes at all -- no ISA16 (which ca
 *warning* — Bytes precede the ISA segment
 
 One or more bytes appear before the ISA segment. A conformant X12 file begins with 'ISA' as its very first byte. Common causes are a UTF-8 byte-order mark, whitespace, or transport headers left in by the sender. x12-tidy strips them and continues; the reported bytes are what was removed.
-
-### `isa.line-length`
-
-*fatal* — The reconstructed ISA line is not 105 bytes
-
-After padding every element to its fixed width and rejoining on the element separator, the ISA line is not the required 105 bytes. This should not happen once the per-element widths hold; it is a guard that refuses to emit a non-conformant line.
 
 ### `isa.no-functional-group`
 
