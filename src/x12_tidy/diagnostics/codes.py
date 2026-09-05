@@ -83,6 +83,37 @@ class Code(Enum):
     ISA_ELEMENT_OVERFLOW = "isa.element-overflow"
     ISA_LINE_LENGTH = "isa.line-length"
 
+    # -- isa: QA/QC on a standalone ISA element value (post-reconstruction) --
+    ISA_USAGE_INDICATOR_INVALID = "isa.usage-indicator-invalid"
+
+    # -- structure: interchange-level envelope QA/QC (ISA/IEA) --
+    STRUCTURE_MISSING_IEA = "structure.missing-iea"
+    STRUCTURE_CONTROL_NUMBER_MISMATCH = "structure.control-number-mismatch"
+    STRUCTURE_FUNCTIONAL_GROUP_COUNT_MISMATCH = (
+        "structure.functional-group-count-mismatch"
+    )
+    STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC = "structure.control-number-not-numeric"
+    STRUCTURE_COUNT_NOT_NUMERIC = "structure.count-not-numeric"
+    STRUCTURE_TAG_SHAPE_INVALID = "structure.tag-shape-invalid"
+    STRUCTURE_FOREIGN_CONTENT = "structure.foreign-content"
+
+    # -- gs: functional-group-level envelope QA/QC (GS/GE) --
+    GS_MISSING_GE = "gs.missing-ge"
+    GS_CONTROL_NUMBER_MISMATCH = "gs.control-number-mismatch"
+    GS_TRANSACTION_SET_COUNT_MISMATCH = "gs.transaction-set-count-mismatch"
+    GS_CONTROL_NUMBER_NOT_NUMERIC = "gs.control-number-not-numeric"
+    GS_COUNT_NOT_NUMERIC = "gs.count-not-numeric"
+    GS_CONTROL_NUMBER_DUPLICATE = "gs.control-number-duplicate"
+    GS_VERSION_MISMATCH = "gs.version-mismatch"
+    GS_RESPONSIBLE_AGENCY_INVALID = "gs.responsible-agency-invalid"
+
+    # -- st: transaction-set-level envelope QA/QC (ST/SE) --
+    ST_MISSING_SE = "st.missing-se"
+    ST_CONTROL_NUMBER_MISMATCH = "st.control-number-mismatch"
+    ST_SEGMENT_COUNT_MISMATCH = "st.segment-count-mismatch"
+    ST_COUNT_NOT_NUMERIC = "st.count-not-numeric"
+    ST_CONTROL_NUMBER_DUPLICATE = "st.control-number-duplicate"
+
     @property
     def area(self) -> str:
         return self.value.split(".", 1)[0]
@@ -390,6 +421,211 @@ META: dict[Code, CodeMeta] = {
             "the element separator, the ISA line is not the required 105 bytes. "
             "This should not happen once the per-element widths hold; it is a "
             "guard that refuses to emit a non-conformant line."
+        ),
+    ),
+
+    # -- isa: QA/QC on a standalone ISA element value --
+    Code.ISA_USAGE_INDICATOR_INVALID: CodeMeta(
+        default_severity="error",
+        title="ISA15 is not a recognized usage indicator",
+        explanation=(
+            "ISA15 (Usage Indicator) must be 'T' (Test), 'P' (Production), or "
+            "'I' (Information) -- all three are legitimate values, so this only "
+            "fires when it is none of them. Which of the three is present is not "
+            "itself a defect and is reported separately as an informational "
+            "fact, not a diagnostic."
+        ),
+    ),
+
+    # -- structure: interchange-level envelope QA/QC --
+    Code.STRUCTURE_MISSING_IEA: CodeMeta(
+        default_severity="fatal",
+        title="No IEA segment closes the interchange",
+        explanation=(
+            "Every ISA interchange must be closed by a matching IEA segment. "
+            "None was found before the end of the file. This is QA/QC's "
+            "'fatal' -- a display/trust signal, not a stop: the rest of the "
+            "payload is still scanned and every other finding is still "
+            "reported."
+        ),
+    ),
+    Code.STRUCTURE_CONTROL_NUMBER_MISMATCH: CodeMeta(
+        default_severity="fatal",
+        title="ISA13 does not match IEA02",
+        explanation=(
+            "The Interchange Control Number set in the ISA segment (ISA13) "
+            "must equal the one echoed back in the IEA segment (IEA02). A "
+            "mismatch usually indicates a corrupted or hand-edited file."
+        ),
+    ),
+    Code.STRUCTURE_FUNCTIONAL_GROUP_COUNT_MISMATCH: CodeMeta(
+        default_severity="fatal",
+        title="IEA01 does not match the number of functional groups found",
+        explanation=(
+            "IEA01 (Number of Included Functional Groups) must equal the "
+            "actual count of GS segments in the interchange."
+        ),
+    ),
+    Code.STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC: CodeMeta(
+        default_severity="fatal",
+        title="ISA13 is not all-numeric",
+        explanation=(
+            "ISA13 (Interchange Control Number) is defined as numeric (type "
+            "N0). A non-numeric value cannot be a valid control number, "
+            "regardless of whether it happens to match IEA02."
+        ),
+    ),
+    Code.STRUCTURE_COUNT_NOT_NUMERIC: CodeMeta(
+        default_severity="fatal",
+        title="IEA01 is not all-numeric",
+        explanation=(
+            "IEA01 (Number of Included Functional Groups) is defined as "
+            "numeric. A non-numeric value cannot be a valid count."
+        ),
+    ),
+    Code.STRUCTURE_TAG_SHAPE_INVALID: CodeMeta(
+        default_severity="error",
+        title="A segment tag is not uppercase alphabetic",
+        explanation=(
+            "Every X12 segment tag begins with an uppercase letter (X12.6). A "
+            "segment whose tag does not -- lowercase, numeric, empty -- cannot "
+            "be identified as a real segment."
+        ),
+    ),
+    Code.STRUCTURE_FOREIGN_CONTENT: CodeMeta(
+        default_severity="fatal",
+        title="A segment appears where none is structurally valid",
+        explanation=(
+            "A segment sits outside any recognized structural context -- "
+            "before the first functional group, between a functional group's "
+            "close and the next one, after the interchange trailer, or a "
+            "closing segment (SE, GE, IEA) with nothing open to close -- "
+            "including a second IEA once the interchange is already closed. "
+            "This covers every shape of 'a segment turned up in a place the "
+            "envelope structure does not allow', including a body segment "
+            "with no open transaction set to belong to."
+        ),
+    ),
+
+    # -- gs: functional-group-level envelope QA/QC --
+    Code.GS_MISSING_GE: CodeMeta(
+        default_severity="fatal",
+        title="No GE segment closes this functional group",
+        explanation=(
+            "Every GS functional group must be closed by a matching GE "
+            "segment before the next GS or the interchange trailer. None was "
+            "found; the group's boundary was inferred from the next such "
+            "marker so that everything inside it could still be checked."
+        ),
+    ),
+    Code.GS_CONTROL_NUMBER_MISMATCH: CodeMeta(
+        default_severity="fatal",
+        title="GS06 does not match GE02",
+        explanation=(
+            "The Group Control Number set in the GS segment (GS06) must equal "
+            "the one echoed back in the GE segment (GE02)."
+        ),
+    ),
+    Code.GS_TRANSACTION_SET_COUNT_MISMATCH: CodeMeta(
+        default_severity="fatal",
+        title="GE01 does not match the number of transaction sets found",
+        explanation=(
+            "GE01 (Number of Transaction Sets Included) must equal the actual "
+            "count of ST segments in the functional group."
+        ),
+    ),
+    Code.GS_CONTROL_NUMBER_NOT_NUMERIC: CodeMeta(
+        default_severity="fatal",
+        title="GS06 is not all-numeric",
+        explanation=(
+            "GS06 (Group Control Number) is defined as numeric (type N0). A "
+            "non-numeric value cannot be a valid control number, regardless of "
+            "whether it happens to match GE02."
+        ),
+    ),
+    Code.GS_COUNT_NOT_NUMERIC: CodeMeta(
+        default_severity="fatal",
+        title="GE01 is not all-numeric",
+        explanation=(
+            "GE01 (Number of Transaction Sets Included) is defined as "
+            "numeric. A non-numeric value cannot be a valid count."
+        ),
+    ),
+    Code.GS_CONTROL_NUMBER_DUPLICATE: CodeMeta(
+        default_severity="fatal",
+        title="GS06 is reused by another functional group in this interchange",
+        explanation=(
+            "Each functional group's Group Control Number (GS06) must be "
+            "unique within the interchange, so its GE can be unambiguously "
+            "matched back to it."
+        ),
+    ),
+    Code.GS_VERSION_MISMATCH: CodeMeta(
+        default_severity="fatal",
+        title="GS08 does not agree with the interchange's version (ISA12)",
+        explanation=(
+            "GS08 (Version/Release/Industry Identifier Code) must agree with "
+            "ISA12 (Interchange Control Version Number) on the version and "
+            "release. Compared with leading zeros stripped from both sides, "
+            "since real-world senders commonly send GS08 as '4010' rather than "
+            "the textbook zero-padded '004010'. Runs regardless of GS07."
+        ),
+    ),
+    Code.GS_RESPONSIBLE_AGENCY_INVALID: CodeMeta(
+        default_severity="error",
+        title="GS07 is not a recognized responsible agency code",
+        explanation=(
+            "GS07 (Responsible Agency Code) must be 'X' (Accredited Standards "
+            "Committee X12) or 'T' (Transportation Data Coordinating "
+            "Committee) -- the complete code list for this element."
+        ),
+    ),
+
+    # -- st: transaction-set-level envelope QA/QC --
+    Code.ST_MISSING_SE: CodeMeta(
+        default_severity="fatal",
+        title="No SE segment closes this transaction set",
+        explanation=(
+            "Every ST transaction set must be closed by a matching SE segment "
+            "before the next ST, the enclosing GE, or the interchange trailer. "
+            "None was found; the transaction set's boundary was inferred from "
+            "the next such marker so that everything inside it could still be "
+            "checked."
+        ),
+    ),
+    Code.ST_CONTROL_NUMBER_MISMATCH: CodeMeta(
+        default_severity="fatal",
+        title="ST02 does not match SE02",
+        explanation=(
+            "The Transaction Set Control Number set in the ST segment (ST02) "
+            "must equal the one echoed back in the SE segment (SE02)."
+        ),
+    ),
+    Code.ST_SEGMENT_COUNT_MISMATCH: CodeMeta(
+        default_severity="fatal",
+        title="SE01 does not match the actual segment count",
+        explanation=(
+            "SE01 (Number of Included Segments) must equal the actual count "
+            "of segments in the transaction set, from ST through SE inclusive."
+        ),
+    ),
+    Code.ST_COUNT_NOT_NUMERIC: CodeMeta(
+        default_severity="fatal",
+        title="SE01 is not all-numeric",
+        explanation=(
+            "SE01 (Number of Included Segments) is defined as numeric. A "
+            "non-numeric value cannot be a valid count."
+        ),
+    ),
+    Code.ST_CONTROL_NUMBER_DUPLICATE: CodeMeta(
+        default_severity="fatal",
+        title="ST02 is reused by another transaction set in this functional group",
+        explanation=(
+            "Each transaction set's Control Number (ST02) must be unique "
+            "within its functional group, so its SE can be unambiguously "
+            "matched back to it. Unlike GS06/control numbers elsewhere, ST02 "
+            "is alphanumeric (type AN), not numeric -- uniqueness is still "
+            "required even though numeric format is not."
         ),
     ),
 }

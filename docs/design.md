@@ -256,19 +256,18 @@ for this phase and legitimately survive a round trip.
 **Scope boundary.** Reconstruction validates and repairs *structure* — widths,
 delimiters, the terminator, the length. It does **not** judge element *values*:
 whether ISA05 is a real qualifier, ISA09 a real date, ISA15 a valid usage
-indicator, or whether ISA13 matches IEA02. That is later work (the GS/ST
-envelope QA/QC phase).
+indicator, or whether ISA13 matches IEA02. That is envelope QA/QC's job, which
+runs once a payload exists (below).
 
-**Open naming question.** `clean_isa_line(dirty)` is currently the one-call
-pipeline entry point. The name overloads "cleaning the ISA line", which through
-Step 1 and slice 1 meant *recovering the delimiters so a clean-up is possible* —
-not producing the cleansed artifact. The raw-bytes-in → cleansed-contents-out
-orchestrator is really the whole-document cleanse (below), not an ISA-line
-function. This is flagged for resolution before the phase is finalised.
+**Naming, resolved.** `clean_isa_line(dirty)` stays the ISA-line-only pipeline
+entry point. The raw-bytes-in → cleansed-contents-out orchestrator, which
+overloading that name would have obscured, was given its own name instead:
+`clean_payload` (`x12_tidy.structure.clean_payload`) — chosen over
+"interchange"/"transmission" and to avoid colliding with the internal
+cleansed-body variable it assembles from.
 
-**The whole-document cleanse — in progress.** Reconstruction produces a clean
-ISA *line*; the tool must ultimately return cleansed *contents*. This is built
-in pieces:
+**The whole-document cleanse — done.** Reconstruction produces a clean ISA
+*line*; the tool returns cleansed *contents*. Built in pieces:
 
 * **Segment split (`x12_tidy.structure.split_segments`) — done.** A mechanical
   transform. Take everything from `GS` onward, `strip()` whitespace *and the
@@ -285,16 +284,27 @@ in pieces:
   empty pieces two terminators in a row leave behind are not segments; this
   removes them. Still mechanical — no judgement about *why* the terminators were
   doubled.
-* **Later:** reconstruct each segment, rejoin, splice in the reconstructed ISA
-  line.
-* **Later still — QA/QC**, which runs *after* reconstruction: each piece must be
-  a real segment (valid tag), envelope nesting, control-number matching,
-  segment counts, foreign content between segments, truncation, multiple
-  interchanges, `TA1`, `BIN`/`BDS`. This is where the `structure.*` diagnostics
-  live.
+* **Reassemble (`x12_tidy.structure.clean_payload`) — done.** Cleans the ISA
+  line, splits and drops empties from the body, and rejoins everything on the
+  sender's own segment terminator into one payload. Refuses exactly when the
+  ISA line can't be recovered; still no per-segment repair or envelope
+  judgement.
 
-The recovery path (a permissive re-parse when the standard gate fails) is
-drafted in scratch (`recover_isa_line.py`) and folds into this work.
+**Envelope QA/QC (`x12_tidy.qaqc.check_payload`) — done.** Runs once a payload
+exists, and unlike the ISA-reconstruction gate, `fatal` here never halts the
+walk — it is a display/trust signal, and every check still runs to completion.
+One pass over the segments (a small open-group/open-transaction-set stack)
+covers: `ISA`/`IEA`, `GS`/`GE`, and `ST`/`SE` pairing and nesting; control-number
+agreement and uniqueness (`ISA13`/`IEA02`, `GS06`/`GE02`, `ST02`/`SE02`);
+segment/transaction-set/group counts (`SE01`, `GE01`, `IEA01`); the A5
+tag-shape gate; `ISA12`/`GS08` version agreement; `ISA15` usage-indicator
+validity; `GS07` responsible-agency validity; and foreign content — a segment
+with no structurally valid place to be, including a duplicated `IEA` once the
+interchange is already closed. Deliberately not covered, no decision made yet:
+`ISA05`/`ISA07` qualifiers, `ISA14`, `GS01`, `ST01` shape, date/time format,
+`TA1`, `BIN`/`BDS`, and multiple interchanges in one file (`.segments` still
+assumes exactly one). `x12_tidy.tidy.tidy()` is the whole-package entry point:
+cleanse, then QA/QC, one combined diagnostic list.
 
 ---
 

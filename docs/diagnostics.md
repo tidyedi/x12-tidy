@@ -33,6 +33,7 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.tag-utf16` | fatal | File appears to be UTF-16 encoded |
 | `isa.trailing-junk` | warning | Unexpected bytes between the segment terminator and GS |
 | `isa.trailing-newline` | warning | Line breaks between the segment terminator and GS |
+| `isa.usage-indicator-invalid` | error | ISA15 is not a recognized usage indicator |
 | `isa.version-unrecognized` | warning | ISA12 is not a recognised version code |
 
 ### `isa.component-separator-invalid`
@@ -185,8 +186,169 @@ Bytes that are not line breaks sit between the ISA segment terminator and the GS
 
 One or more carriage-return or line-feed bytes sit between the ISA segment terminator and the GS header. X12 joins segments with the terminator alone; the sender has appended a newline. Common and harmless, but non-conformant -- stripped on reconstruction.
 
+### `isa.usage-indicator-invalid`
+
+*error* — ISA15 is not a recognized usage indicator
+
+ISA15 (Usage Indicator) must be 'T' (Test), 'P' (Production), or 'I' (Information) -- all three are legitimate values, so this only fires when it is none of them. Which of the three is present is not itself a defect and is reported separately as an informational fact, not a diagnostic.
+
 ### `isa.version-unrecognized`
 
 *warning* — ISA12 is not a recognised version code
 
 ISA12 -- the Interchange Control Version Number -- is not a 5-digit code. Whether ISA11 is a repetition separator depends on this value, so ISA11 is left opaque and not treated as a delimiter.
+
+## `gs`
+
+| code | severity | title |
+| --- | --- | --- |
+| `gs.control-number-duplicate` | fatal | GS06 is reused by another functional group in this interchange |
+| `gs.control-number-mismatch` | fatal | GS06 does not match GE02 |
+| `gs.control-number-not-numeric` | fatal | GS06 is not all-numeric |
+| `gs.count-not-numeric` | fatal | GE01 is not all-numeric |
+| `gs.missing-ge` | fatal | No GE segment closes this functional group |
+| `gs.responsible-agency-invalid` | error | GS07 is not a recognized responsible agency code |
+| `gs.transaction-set-count-mismatch` | fatal | GE01 does not match the number of transaction sets found |
+| `gs.version-mismatch` | fatal | GS08 does not agree with the interchange's version (ISA12) |
+
+### `gs.control-number-duplicate`
+
+*fatal* — GS06 is reused by another functional group in this interchange
+
+Each functional group's Group Control Number (GS06) must be unique within the interchange, so its GE can be unambiguously matched back to it.
+
+### `gs.control-number-mismatch`
+
+*fatal* — GS06 does not match GE02
+
+The Group Control Number set in the GS segment (GS06) must equal the one echoed back in the GE segment (GE02).
+
+### `gs.control-number-not-numeric`
+
+*fatal* — GS06 is not all-numeric
+
+GS06 (Group Control Number) is defined as numeric (type N0). A non-numeric value cannot be a valid control number, regardless of whether it happens to match GE02.
+
+### `gs.count-not-numeric`
+
+*fatal* — GE01 is not all-numeric
+
+GE01 (Number of Transaction Sets Included) is defined as numeric. A non-numeric value cannot be a valid count.
+
+### `gs.missing-ge`
+
+*fatal* — No GE segment closes this functional group
+
+Every GS functional group must be closed by a matching GE segment before the next GS or the interchange trailer. None was found; the group's boundary was inferred from the next such marker so that everything inside it could still be checked.
+
+### `gs.responsible-agency-invalid`
+
+*error* — GS07 is not a recognized responsible agency code
+
+GS07 (Responsible Agency Code) must be 'X' (Accredited Standards Committee X12) or 'T' (Transportation Data Coordinating Committee) -- the complete code list for this element.
+
+### `gs.transaction-set-count-mismatch`
+
+*fatal* — GE01 does not match the number of transaction sets found
+
+GE01 (Number of Transaction Sets Included) must equal the actual count of ST segments in the functional group.
+
+### `gs.version-mismatch`
+
+*fatal* — GS08 does not agree with the interchange's version (ISA12)
+
+GS08 (Version/Release/Industry Identifier Code) must agree with ISA12 (Interchange Control Version Number) on the version and release. Compared with leading zeros stripped from both sides, since real-world senders commonly send GS08 as '4010' rather than the textbook zero-padded '004010'. Runs regardless of GS07.
+
+## `st`
+
+| code | severity | title |
+| --- | --- | --- |
+| `st.control-number-duplicate` | fatal | ST02 is reused by another transaction set in this functional group |
+| `st.control-number-mismatch` | fatal | ST02 does not match SE02 |
+| `st.count-not-numeric` | fatal | SE01 is not all-numeric |
+| `st.missing-se` | fatal | No SE segment closes this transaction set |
+| `st.segment-count-mismatch` | fatal | SE01 does not match the actual segment count |
+
+### `st.control-number-duplicate`
+
+*fatal* — ST02 is reused by another transaction set in this functional group
+
+Each transaction set's Control Number (ST02) must be unique within its functional group, so its SE can be unambiguously matched back to it. Unlike GS06/control numbers elsewhere, ST02 is alphanumeric (type AN), not numeric -- uniqueness is still required even though numeric format is not.
+
+### `st.control-number-mismatch`
+
+*fatal* — ST02 does not match SE02
+
+The Transaction Set Control Number set in the ST segment (ST02) must equal the one echoed back in the SE segment (SE02).
+
+### `st.count-not-numeric`
+
+*fatal* — SE01 is not all-numeric
+
+SE01 (Number of Included Segments) is defined as numeric. A non-numeric value cannot be a valid count.
+
+### `st.missing-se`
+
+*fatal* — No SE segment closes this transaction set
+
+Every ST transaction set must be closed by a matching SE segment before the next ST, the enclosing GE, or the interchange trailer. None was found; the transaction set's boundary was inferred from the next such marker so that everything inside it could still be checked.
+
+### `st.segment-count-mismatch`
+
+*fatal* — SE01 does not match the actual segment count
+
+SE01 (Number of Included Segments) must equal the actual count of segments in the transaction set, from ST through SE inclusive.
+
+## `structure`
+
+| code | severity | title |
+| --- | --- | --- |
+| `structure.control-number-mismatch` | fatal | ISA13 does not match IEA02 |
+| `structure.control-number-not-numeric` | fatal | ISA13 is not all-numeric |
+| `structure.count-not-numeric` | fatal | IEA01 is not all-numeric |
+| `structure.foreign-content` | fatal | A segment appears where none is structurally valid |
+| `structure.functional-group-count-mismatch` | fatal | IEA01 does not match the number of functional groups found |
+| `structure.missing-iea` | fatal | No IEA segment closes the interchange |
+| `structure.tag-shape-invalid` | error | A segment tag is not uppercase alphabetic |
+
+### `structure.control-number-mismatch`
+
+*fatal* — ISA13 does not match IEA02
+
+The Interchange Control Number set in the ISA segment (ISA13) must equal the one echoed back in the IEA segment (IEA02). A mismatch usually indicates a corrupted or hand-edited file.
+
+### `structure.control-number-not-numeric`
+
+*fatal* — ISA13 is not all-numeric
+
+ISA13 (Interchange Control Number) is defined as numeric (type N0). A non-numeric value cannot be a valid control number, regardless of whether it happens to match IEA02.
+
+### `structure.count-not-numeric`
+
+*fatal* — IEA01 is not all-numeric
+
+IEA01 (Number of Included Functional Groups) is defined as numeric. A non-numeric value cannot be a valid count.
+
+### `structure.foreign-content`
+
+*fatal* — A segment appears where none is structurally valid
+
+A segment sits outside any recognized structural context -- before the first functional group, between a functional group's close and the next one, after the interchange trailer, or a closing segment (SE, GE, IEA) with nothing open to close -- including a second IEA once the interchange is already closed. This covers every shape of 'a segment turned up in a place the envelope structure does not allow', including a body segment with no open transaction set to belong to.
+
+### `structure.functional-group-count-mismatch`
+
+*fatal* — IEA01 does not match the number of functional groups found
+
+IEA01 (Number of Included Functional Groups) must equal the actual count of GS segments in the interchange.
+
+### `structure.missing-iea`
+
+*fatal* — No IEA segment closes the interchange
+
+Every ISA interchange must be closed by a matching IEA segment. None was found before the end of the file. This is QA/QC's 'fatal' -- a display/trust signal, not a stop: the rest of the payload is still scanned and every other finding is still reported.
+
+### `structure.tag-shape-invalid`
+
+*error* — A segment tag is not uppercase alphabetic
+
+Every X12 segment tag begins with an uppercase letter (X12.6). A segment whose tag does not -- lowercase, numeric, empty -- cannot be identified as a real segment.

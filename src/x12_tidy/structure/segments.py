@@ -68,3 +68,15 @@ def drop_empty_segments(segments: list[bytes]) -> list[bytes]:
     terminators were doubled -- that is QA/QC's, after reconstruction.
     """
     return [segment for segment in segments if segment]
+
+
+def split_elements(segment: bytes, element_separator: bytes) -> list[bytes]:
+    """Split one segment into its elements on ``element_separator``.
+
+    ``segment.split(element_separator)[0]`` is the segment tag; the rest are
+    its elements, ISA-style numbering (index 1 is the first element after the
+    tag). Purely mechanical -- no diagnostic, no validation of the tag or any
+    element's content. QA/QC reads elements this way rather than re-splitting
+    inline at every call site.
+    """
+    return segment.split(element_separator)

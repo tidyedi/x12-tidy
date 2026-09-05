@@ -71,11 +71,37 @@ element overrunning its width with real data is `fatal`, not a truncation.
 
 `split_segments` / `drop_empty_segments` — purely mechanical transforms over
 `bytes`, **no diagnostics, no validation, no refusal**. They split the interchange
-on the recovered segment terminator and drop `~~` empties. The reconstruct +
-reassemble step (rejoin the cleaned segments with the reconstructed ISA line into
-one cleansed interchange) is **not built yet**; envelope/control-number QA/QC
-comes after that and is where all `structure.*`/`gs.*`/`st.*` diagnostics will
-live.
+on the recovered segment terminator and drop `~~` empties. `clean_payload` is
+the one-call pipeline built on top of them: clean ISA line + clean (empty-free)
+segments, rejoined on the sender's own terminator into one `ReconstructedPayload`.
+It refuses (propagating the ISA phase's fatal) exactly when there is no ISA line
+to build from; it does no per-segment repair and no envelope judgement — that is
+QA/QC, next.
+
+### Envelope QA/QC (`src/x12_tidy/qaqc/`)
+
+`check_payload(ReconstructedPayload) -> QaQcResult` runs once a payload exists.
+One pass over `.segments` (a small open-group/open-transaction-set stack) covers
+everything decided so far: `ISA`/`IEA`, `GS`/`GE`, `ST`/`SE` pairing and nesting;
+control-number agreement and uniqueness; segment/transaction-set/group counts
+(`SE01`/`GE01`/`IEA01`); the A5 tag-shape gate; `ISA12`/`GS08` version agreement;
+`ISA15` and `GS07` value validity; and foreign content (a segment with no
+structurally valid place to be — this is where all `structure.*`/`gs.*`/`st.*`
+diagnostics live). Deliberately not covered, no decision made: `ISA05`/`ISA07`
+qualifiers, `ISA14`, `GS01`, `ST01` shape, date/time format, `TA1`, `BIN`/`BDS`,
+and multiple interchanges in one file.
+
+**`fatal` means something different here than in the ISA-reconstruction phase.**
+A payload already exists by the time QA/QC runs, so nothing it finds can undo
+that — `fatal` is a display/trust signal ("don't use this payload"), never a
+stop signal. Every check always runs to completion regardless of what's found;
+nothing in `qaqc` aborts the walk early. Contrast the ISA phase, where `fatal`
+does stop parsing.
+
+`x12_tidy.tidy.tidy(dirty: bytes) -> TidyResult` is the whole-package entry
+point: `clean_payload` then `check_payload`, one combined diagnostic list
+(cleanse findings first). `payload`/`facts` are both `None` only when the file
+could not be cleansed at all.
 
 ### Diagnostics (`src/x12_tidy/diagnostics/`)
 
