@@ -7,7 +7,7 @@ A mechanical transform, nothing more. Given the raw bytes of an X12
 interchange:
 
 1. locate the ISA line and recover the segment terminator (via
-   :mod:`x12_tidy.isa`);
+   :mod:`x12_tidy.envelope.isa`);
 2. take everything from the ``GS`` functional-group header onward;
 3. ``strip`` whitespace **and the segment terminator** from the ends -- this
    drops any trailing whitespace after the final ``IEA`` segment and the
@@ -31,12 +31,12 @@ diagnostic, validates, or refuses.
 
 If the ISA line or the segment terminator cannot be recovered, the interchange
 cannot be split and the result is an empty list. The reason is on the ISA-phase
-diagnostics, which a caller gets from :func:`x12_tidy.isa.clean_isa_line`.
+diagnostics, which a caller gets from :func:`x12_tidy.envelope.isa.clean_isa_line`.
 """
 
 from __future__ import annotations
 
-from x12_tidy.isa import extract_isa_line, split_isa_line
+from x12_tidy.envelope.isa import extract_isa_line, split_isa_line
 
 #: Bytes trimmed from the front of every segment -- the ASCII whitespace set,
 #: matching ``bytes.strip()`` / ``bytes.lstrip()`` with no argument.

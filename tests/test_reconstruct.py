@@ -20,14 +20,14 @@ import pytest
 from _isa_helpers import ISA_ELEMENTS, build_isa
 from test_isa_line_roundtrip import _CORPUS
 from x12_tidy.diagnostics import Code
-from x12_tidy.isa import (
+from x12_tidy.envelope.isa import (
     ReconstructedIsaLine,
     clean_isa_line,
     extract_isa_line,
     reconstruct_isa_line,
     split_isa_line,
 )
-from x12_tidy.isa.reconstruct import CANONICAL_LENGTH, ISA_ELEMENT_WIDTHS
+from x12_tidy.envelope.isa.reconstruct import CANONICAL_LENGTH, ISA_ELEMENT_WIDTHS
 
 
 def _elements(**overrides: bytes) -> list[bytes]:

@@ -19,8 +19,8 @@ import sys
 from pathlib import Path
 
 from x12_tidy.diagnostics import Code, Diagnostic, all_codes, meta, resolved_severity
-from x12_tidy.qaqc import EnvelopeFacts, check_payload
-from x12_tidy.structure import clean_payload
+from x12_tidy.envelope.qaqc import EnvelopeFacts, check_payload
+from x12_tidy.envelope.structure import clean_payload
 
 
 def _report(diags: list[Diagnostic]) -> bool:

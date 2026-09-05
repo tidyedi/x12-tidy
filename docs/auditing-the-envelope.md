@@ -11,7 +11,7 @@ it meant three notes ago.*
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/figures/` in sync with
-> `src/x12_tidy/qaqc/envelope.py`.
+> `src/x12_tidy/envelope/qaqc/envelope.py`.
 
 This is the fifth act of [the x12-tidy method](the-x12-tidy-method.md), and the
 first one to reach the **values** rung of the method's ladder — shape,
@@ -197,7 +197,7 @@ teaching [the assembly step](reassembling-the-interchange.md) to find more
 than one interchange boundary, not this one to guess harder. It's tracked,
 not fixed here.
 
-`x12_tidy.tidy.tidy(dirty: bytes) -> TidyResult` is the whole-package entry
+`x12_tidy.envelope.tidy.tidy(dirty: bytes) -> TidyResult` is the whole-package entry
 point once both steps exist: [reassemble](reassembling-the-interchange.md),
 then audit, one combined diagnostic list, cleanse findings first.
 

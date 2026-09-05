@@ -10,7 +10,7 @@ that violate the standard, and naming every deviation.*
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/figures/` in sync with
-> `src/x12_tidy/isa/isa_line.py` when the locating logic changes.
+> `src/x12_tidy/envelope/isa/isa_line.py` when the locating logic changes.
 
 A 1979 standard, fixed at 106 bytes, meets senders who strip it, prepend to it,
 and re-encode it. The byte offsets don't survive that. Neither does the regex

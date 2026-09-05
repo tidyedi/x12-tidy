@@ -2,7 +2,7 @@
 # Copyright 2026 Michael Schertz
 
 r"""Assemble the cleansed payload -- the whole-file counterpart to
-:func:`x12_tidy.isa.clean_isa_line`.
+:func:`x12_tidy.envelope.isa.clean_isa_line`.
 
 Scope: **assembly only**. This cleans the ISA line, splits the rest into
 segments, drops the empty pieces, and glues everything back together on the
@@ -11,7 +11,7 @@ a segment identifier is a real identifier, or validate envelope/control-number c
 (``GS``/``ST`` nesting, counts, ``IEA02`` vs ``ISA13``) -- that is QA/QC, which
 runs after this, once there is a clean payload to run it against.
 
-:func:`clean_payload` refuses exactly when :func:`~x12_tidy.isa.clean_isa_line`
+:func:`clean_payload` refuses exactly when :func:`~x12_tidy.envelope.isa.clean_isa_line`
 does: no payload, only the propagated diagnostics that say why. A file whose
 ISA line cannot be recovered has nothing to split or rejoin.
 """
@@ -21,8 +21,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from x12_tidy.diagnostics import Diagnostic
-from x12_tidy.isa import ReconstructedIsaLine, clean_isa_line
-from x12_tidy.structure.segments import drop_empty_segments, split_segments
+from x12_tidy.envelope.isa import ReconstructedIsaLine, clean_isa_line
+from x12_tidy.envelope.structure.segments import drop_empty_segments, split_segments
 
 
 @dataclass
@@ -30,11 +30,11 @@ class ReconstructedPayload:
     """The cleansed whole-file bytes, or ``None`` when the ISA line could not
     be recovered.
 
-    ``isa_result`` is the full :class:`~x12_tidy.isa.ReconstructedIsaLine` this
+    ``isa_result`` is the full :class:`~x12_tidy.envelope.isa.ReconstructedIsaLine` this
     was built from -- delimiters, the reconstructed ISA line, and every
     ISA-phase diagnostic. ``segments`` is the cleaned body (empty pieces
     dropped), in order, byte-for-byte what
-    :func:`~x12_tidy.structure.split_segments` returned -- no per-segment
+    :func:`~x12_tidy.envelope.structure.split_segments` returned -- no per-segment
     repair happens here. Empty (``()``) on refusal.
 
     ``diagnostics`` is the ISA-phase diagnostics; ``split_segments`` and

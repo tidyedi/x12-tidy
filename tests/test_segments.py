@@ -13,7 +13,7 @@ segment's right-hand side, never drop an empty piece.
 from __future__ import annotations
 
 from _isa_helpers import build_isa
-from x12_tidy.structure import drop_empty_segments, split_segments
+from x12_tidy.envelope.structure import drop_empty_segments, split_segments
 
 # The trailer baked into ``build_isa`` -- segments joined on "~", one unused
 # element ("**") in the BEG segment. The terminator closing the final IEA is

@@ -75,7 +75,7 @@ functional-group header, plus a list of `Diagnostic`s.
 
 ### Step 1 — return the ISA line
 
-`x12_tidy.isa.extract_isa_line(dirty) -> IsaLineResult`
+`x12_tidy.envelope.isa.extract_isa_line(dirty) -> IsaLineResult`
 
 Step 1's entire job is to return that byte run. It does **not** parse or
 validate delimiters, elements, lengths, or the terminator — it only finds where
@@ -150,7 +150,7 @@ real segment.
 
 ### Step 2 — decompose the run
 
-`x12_tidy.isa.split_isa_line(run) -> IsaDecomposition` is the first slice:
+`x12_tidy.envelope.isa.split_isa_line(run) -> IsaDecomposition` is the first slice:
 recover the four X12 delimiters — element separator (`run[3]`), repetition
 separator (`ISA11`, only for version `00403`+), component separator (value of
 `ISA16`), segment terminator (one byte, by rule) — by splitting the run on the
@@ -179,7 +179,7 @@ outcome — no silent wrong answer, no partial parse, no crash.
 
 ### Step 2, slice 2 — reconstruct the canonical ISA line
 
-`x12_tidy.isa.reconstruct_isa_line(decomposition) -> ReconstructedIsaLine` (also
+`x12_tidy.envelope.isa.reconstruct_isa_line(decomposition) -> ReconstructedIsaLine` (also
 reachable as `clean_isa_line(dirty)`, which runs Step 1 → slice 1 → slice 2 in
 one call). See the module docstring in `isa/reconstruct.py` for the flow.
 `ReconstructedIsaLine` *contains* the `IsaDecomposition` it was built from rather
@@ -262,14 +262,14 @@ runs once a payload exists (below).
 **Naming, resolved.** `clean_isa_line(dirty)` stays the ISA-line-only pipeline
 entry point. The raw-bytes-in → cleansed-contents-out orchestrator, which
 overloading that name would have obscured, was given its own name instead:
-`clean_payload` (`x12_tidy.structure.clean_payload`) — chosen over
+`clean_payload` (`x12_tidy.envelope.structure.clean_payload`) — chosen over
 "interchange"/"transmission" and to avoid colliding with the internal
 cleansed-body variable it assembles from.
 
 **The whole-document cleanse — done.** Reconstruction produces a clean ISA
 *line*; the tool returns cleansed *contents*. Built in pieces:
 
-* **Segment split (`x12_tidy.structure.split_segments`) — done.** A mechanical
+* **Segment split (`x12_tidy.envelope.structure.split_segments`) — done.** A mechanical
   transform. Take everything from `GS` onward, `strip()` whitespace *and the
   terminator* from the ends (dropping trailing whitespace after the final `IEA`
   and the terminator that closes it), split on the recovered segment terminator,
@@ -280,11 +280,11 @@ cleansed-body variable it assembles from.
   a piece is never touched (a space-padded final element is real data). Empty
   pieces (two terminators in a row) are kept here. **No diagnostics, no
   validation, no refusal** — this step canonicalises nothing and judges nothing.
-* **Drop empty pieces (`x12_tidy.structure.drop_empty_segments`) — done.** The
+* **Drop empty pieces (`x12_tidy.envelope.structure.drop_empty_segments`) — done.** The
   empty pieces two terminators in a row leave behind are not segments; this
   removes them. Still mechanical — no judgement about *why* the terminators were
   doubled.
-* **Reassemble (`x12_tidy.structure.clean_payload`) — done.** Cleans the ISA
+* **Reassemble (`x12_tidy.envelope.structure.clean_payload`) — done.** Cleans the ISA
   line, splits and drops empties from the body, and rejoins everything on the
   sender's own segment terminator into one payload. Refuses exactly when the
   ISA line can't be recovered; still no per-segment repair or envelope
@@ -292,7 +292,7 @@ cleansed-body variable it assembles from.
   Interchange](reassembling-the-interchange.md) for why doing the ISA-line
   location work twice is deliberate and free.
 
-**Envelope QA/QC (`x12_tidy.qaqc.check_payload`) — done.** See [Auditing the
+**Envelope QA/QC (`x12_tidy.envelope.qaqc.check_payload`) — done.** See [Auditing the
 Envelope](auditing-the-envelope.md) for the full argument; summary follows.
 Runs once a payload
 exists, and unlike the ISA-reconstruction gate, `fatal` here never halts the
@@ -307,7 +307,7 @@ with no structurally valid place to be, including a duplicated `IEA` once the
 interchange is already closed. Deliberately not covered, no decision made yet:
 `ISA05`/`ISA07` qualifiers, `ISA14`, `GS01`, `ST01` shape, date/time format,
 `TA1`, `BIN`/`BDS`, and multiple interchanges in one file (`.segments` still
-assumes exactly one). `x12_tidy.tidy.tidy()` is the whole-package entry point:
+assumes exactly one). `x12_tidy.envelope.tidy.tidy()` is the whole-package entry point:
 cleanse, then QA/QC, one combined diagnostic list.
 
 ---

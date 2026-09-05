@@ -11,7 +11,7 @@ is free.*
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/figures/` in sync with
-> `src/x12_tidy/structure/`.
+> `src/x12_tidy/envelope/structure/`.
 
 This is the fourth act of [the x12-tidy method](the-x12-tidy-method.md). The
 first three notes stop at one clean 105-byte line. This one is about everything
