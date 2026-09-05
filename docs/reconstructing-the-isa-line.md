@@ -1,4 +1,4 @@
-<a href="https://tidyedi.com"><img src="brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
+<a href="https://tidyedi.com"><img src="images/brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
 
 # Reconstructing the ISA Line
 
@@ -9,7 +9,7 @@ the canonical 105-byte ISA line — and why that is a total function.*
 > (served by GitHub Pages from [`docs/reconstructing-the-isa-line.html`](reconstructing-the-isa-line.html);
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
-> HTML, and the figures under `docs/figures/` in sync with
+> HTML, and the figures under `docs/images/figures/` in sync with
 > `src/x12_tidy/envelope/isa/reconstruct.py`.
 
 This is the third act of [the x12-tidy method](the-x12-tidy-method.md). The

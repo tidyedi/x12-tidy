@@ -1,4 +1,4 @@
-<a href="https://tidyedi.com"><img src="brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
+<a href="https://tidyedi.com"><img src="images/brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
 
 # The x12-tidy Method
 

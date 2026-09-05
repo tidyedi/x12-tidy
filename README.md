@@ -1,6 +1,6 @@
 # x12-tidy
 
-<img src="docs/brand/tidyedi-mark.png" alt="" width="72" height="72" align="right">
+<img src="docs/images/brand/tidyedi-mark.png" alt="" width="72" height="72" align="right">
 
 [![CI](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)

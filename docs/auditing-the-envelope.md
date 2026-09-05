@@ -1,4 +1,4 @@
-<a href="https://tidyedi.com"><img src="brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
+<a href="https://tidyedi.com"><img src="images/brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
 
 # Auditing the Envelope
 
@@ -10,7 +10,7 @@ it meant three notes ago.*
 > (served by GitHub Pages from [`docs/auditing-the-envelope.html`](auditing-the-envelope.html);
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
-> HTML, and the figures under `docs/figures/` in sync with
+> HTML, and the figures under `docs/images/figures/` in sync with
 > `src/x12_tidy/envelope/qaqc/envelope.py`.
 
 This is the fifth act of [the x12-tidy method](the-x12-tidy-method.md), and the
@@ -52,7 +52,7 @@ transaction set:
 ![One walk over the segment list. A small stack tracks the currently-open
 functional group and, inside it, the currently-open transaction set. GS opens
 a group, ST opens a transaction set inside it, SE closes the transaction set,
-GE closes the group, IEA closes the interchange.](figures/envelope-walk.svg)
+GE closes the group, IEA closes the interchange.](images/figures/envelope-walk.svg)
 
 A missing closer doesn't stop the walk either — it's recovered from by
 treating the next recognizable boundary as the assumed end:

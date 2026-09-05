@@ -9,8 +9,8 @@ parser found; the three below are flush and solid — the same data, tidied.
 | `tidyedi-mark.svg` | Primary mark. Source of truth. Self-contained, does not theme. |
 | `tidyedi-mark.png` | 512×512 raster of the primary mark (transparent corners). GitHub org avatar, README, anywhere PNG is required. |
 | `tidyedi-mark-mono.svg` | Single-ink outline build for embroidery / engraving / one-colour print. Set `color` to ink it. |
-| `../favicon.svg` | Favicon build — 3 heavier bars so the idea survives at 16px. Served at the site root. |
-| `../favicon-96.png` `../favicon-32.png` `../favicon-16.png` | PNG favicon fallbacks. |
+| `../favicon.svg` | Favicon build — 3 heavier bars so the idea survives at 16px. Served from `images/`. |
+| `../favicon-96.png` `../favicon-32.png` `../favicon-16.png` | PNG favicon fallbacks (in `images/`). |
 | `../apple-touch-icon.png` | 180×180 for iOS home-screen. |
 | `social-card-1280x640.png` | Repo social preview and page `og:image`. |
 | `tidyedi-avatar-512.png` | Same bytes as `tidyedi-mark.png`, named for the GitHub org-avatar upload. |

@@ -1,4 +1,4 @@
-<a href="https://tidyedi.com"><img src="brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
+<a href="https://tidyedi.com"><img src="images/brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
 
 # Finding the Elusive ISA Line
 
@@ -9,7 +9,7 @@ that violate the standard, and naming every deviation.*
 > (served by GitHub Pages from [`docs/finding-the-elusive-isa-line.html`](finding-the-elusive-isa-line.html);
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
-> HTML, and the figures under `docs/figures/` in sync with
+> HTML, and the figures under `docs/images/figures/` in sync with
 > `src/x12_tidy/envelope/isa/isa_line.py` when the locating logic changes.
 
 A 1979 standard, fixed at 106 bytes, meets senders who strip it, prepend to it,
@@ -40,7 +40,7 @@ always, by rule.
 
 ![Anatomy of a conformant ISA line: the identifier ISA at byte 0, the element separator
 at byte 3, sixteen fixed-width elements, the component separator at byte 104, the
-terminator at byte 105, and GS beginning at byte 106.](figures/isa-anatomy.svg)
+terminator at byte 105, and GS beginning at byte 106.](images/figures/isa-anatomy.svg)
 
 So the naive reader is one line: take `data[106:109]`, check it spells `GS*`,
 slice the ISA at fixed offsets. It works on conformant files. It fails on a large
@@ -130,7 +130,7 @@ fixed-offset reader; several break a delimiter-first reader too.
 
 ![Two byte streams. In the conformant one, byte 106 lands on GS. In the received
 one, a 3-byte BOM plus a stripped element push byte 106 into the middle of an
-element.](figures/isa-fixed-offsets.svg)
+element.](images/figures/isa-fixed-offsets.svg)
 
 Three prepended bytes and one omitted element are enough to make `data[106:109]`
 land in the middle of an element. **The byte position is not an invariant. The
@@ -283,7 +283,7 @@ for isa_start in offsets:
 ![The multi-candidate flow: dirty bytes yield ISA offsets; each candidate locates
 GS and counts separators; a junk candidate fails the exactly-16 gate and the next
 is tried; the real one passes and its run is returned with a leading-bytes
-warning.](figures/isa-multi-candidate.svg)
+warning.](images/figures/isa-multi-candidate.svg)
 
 The exactly-16 gate is what makes the retry safe: a candidate anchored in junk
 almost never has 16 separators followed by a `GS`, so it fails and the search

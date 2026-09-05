@@ -1,4 +1,4 @@
-<a href="https://tidyedi.com"><img src="brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
+<a href="https://tidyedi.com"><img src="images/brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
 
 # Reassembling the Interchange
 
@@ -10,7 +10,7 @@ is free.*
 > (served by GitHub Pages from [`docs/reassembling-the-interchange.html`](reassembling-the-interchange.html);
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
-> HTML, and the figures under `docs/figures/` in sync with
+> HTML, and the figures under `docs/images/figures/` in sync with
 > `src/x12_tidy/envelope/structure/`.
 
 This is the fourth act of [the x12-tidy method](the-x12-tidy-method.md). The
@@ -143,7 +143,7 @@ regenerates. There is nothing to flag, so nothing is flagged.
 
 ![Two terminators in a row produce an empty piece between them; dropping empty
 segments removes it, and rejoining puts exactly one terminator after every
-remaining segment.](figures/reassembly-collapse.svg)
+remaining segment.](images/figures/reassembly-collapse.svg)
 
 ---
 

@@ -11,7 +11,7 @@
 | [links.md](links.md) | External EDI references — the X12 standard, code-list lookups, community resource lists. |
 
 This folder is served at **[docs.tidyedi.com](https://docs.tidyedi.com)** by
-GitHub Pages; [`index.html`](index.html) is the landing page. `figures/` holds
+GitHub Pages; [`index.html`](index.html) is the landing page. `images/figures/` holds
 the SVG figures for the engineering notes. Opening a `.html` from the repo file
 tree only shows its source — GitHub does not render HTML there; use the links
 above.

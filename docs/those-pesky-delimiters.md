@@ -1,4 +1,4 @@
-<a href="https://tidyedi.com"><img src="brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
+<a href="https://tidyedi.com"><img src="images/brand/tidyedi-mark.png" alt="TidyEDI" width="52" height="52" align="left" hspace="12"></a>
 
 # Those Pesky Delimiters
 
@@ -9,7 +9,7 @@ line that no longer sits where the standard says it should.*
 > (served by GitHub Pages from [`docs/those-pesky-delimiters.html`](those-pesky-delimiters.html);
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
-> HTML, and the figures under `docs/figures/` in sync with
+> HTML, and the figures under `docs/images/figures/` in sync with
 > `src/x12_tidy/envelope/isa/delimiters.py`.
 
 The companion note, [Finding the Elusive ISA Line](finding-the-elusive-isa-line.md),
@@ -47,7 +47,7 @@ know anything.
 ![The four X12 delimiters. The standard places the element separator at byte 3,
 ISA11 the repetition separator, the component separator at byte 104, and the
 segment terminator at byte 105. In a file whose earlier elements were stripped,
-every one of those byte positions has moved except byte 3.](figures/delimiters-four.svg)
+every one of those byte positions has moved except byte 3.](images/figures/delimiters-four.svg)
 
 That is exactly the problem [the first note](finding-the-elusive-isa-line.md)
 describes, one layer down. The senders who strip empty ISA elements — turning the
@@ -79,7 +79,7 @@ line at all — so the split always yields seventeen pieces:
 
 ![run.split(element_separator) produces seventeen pieces: the literal ISA, then
 ISA01 through ISA15, and a seventeenth piece that is ISA16 followed by the
-segment terminator and any trailing bytes before GS.](figures/delimiters-split.svg)
+segment terminator and any trailing bytes before GS.](images/figures/delimiters-split.svg)
 
 Everything after this is read from those pieces — never from byte 104, never from
 byte 105. A sender who stripped `ISA02` and `ISA04` down to nothing pulled the
@@ -119,7 +119,7 @@ it:
 For a tilde, the terminator is the tilde and there is no trailing. For tilde-CR-LF
 the terminator is the tilde and CR-LF is trailing. For a bare CR-LF the terminator
 is the CR and the LF is trailing. For tilde-space the terminator is the tilde and
-the space is trailing.](figures/delimiters-terminator.svg)
+the space is trailing.](images/figures/delimiters-terminator.svg)
 
 The terminator is that one byte. Anything after it and before `GS` is *trailing*
 — classified on its own: carriage returns and line feeds are a newline the
