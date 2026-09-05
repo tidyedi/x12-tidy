@@ -437,10 +437,26 @@
           <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/reconstructing-the-isa-line.md">Markdown</a> &nbsp;&middot;&nbsp;
           <a href="reconstructing-the-isa-line.pdf">PDF</a></div>
       </li>
+      <li>
+        <a class="doc-link" href="reassembling-the-interchange.html"><span class="doc-title">Reassembling the Interchange</span></a>
+        <div class="doc-desc">Turning a reconstructed ISA line and a pile of raw segments into
+          one cleansed payload &mdash; split into segments, empties dropped, rejoined on the
+          sender's own terminator &mdash; and why doing the location work twice is free.</div>
+        <div class="doc-meta">~1,400 words &nbsp;&middot;&nbsp;
+          <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/reassembling-the-interchange.md">Markdown</a></div>
+      </li>
+      <li>
+        <a class="doc-link" href="auditing-the-envelope.html"><span class="doc-title">Auditing the Envelope</span></a>
+        <div class="doc-desc">Once a payload exists, checking whether the interchange's own
+          bookkeeping is honest &mdash; envelope pairing, counts, control-number agreement,
+          tag shape, version agreement &mdash; and why &ldquo;fatal&rdquo; stops meaning stop.</div>
+        <div class="doc-meta">~1,400 words &nbsp;&middot;&nbsp;
+          <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/auditing-the-envelope.md">Markdown</a></div>
+      </li>
     </ul>
     <p class="soon" style="max-width: var(--measure); margin: 1.4rem auto 0;">
-      More as the build moves forward &mdash; the whole-document cleanse, the
-      recovery path, the GS and ST envelopes.</p>
+      More as the build moves forward &mdash; multiple interchanges in one
+      file, the recovery path.</p>
   </section>
 
   <section class="ref">

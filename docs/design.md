@@ -288,9 +288,13 @@ cleansed-body variable it assembles from.
   line, splits and drops empties from the body, and rejoins everything on the
   sender's own segment terminator into one payload. Refuses exactly when the
   ISA line can't be recovered; still no per-segment repair or envelope
-  judgement.
+  judgement. See [Reassembling the
+  Interchange](reassembling-the-interchange.md) for why doing the ISA-line
+  location work twice is deliberate and free.
 
-**Envelope QA/QC (`x12_tidy.qaqc.check_payload`) — done.** Runs once a payload
+**Envelope QA/QC (`x12_tidy.qaqc.check_payload`) — done.** See [Auditing the
+Envelope](auditing-the-envelope.md) for the full argument; summary follows.
+Runs once a payload
 exists, and unlike the ISA-reconstruction gate, `fatal` here never halts the
 walk — it is a display/trust signal, and every check still runs to completion.
 One pass over the segments (a small open-group/open-transaction-set stack)

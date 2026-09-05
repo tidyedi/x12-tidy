@@ -65,6 +65,15 @@ This reframes what each part of the parse is *for*:
   lands: with the delimiters trusted, element width stops being load-bearing,
   and a right-trimmed blank field — fatal to an offset parser — is just padding
   to restore.
+- **[Reassembling the interchange](reassembling-the-interchange.md)** extends
+  structure past the ISA line to the whole file: the body split into segments,
+  emptied pieces dropped, everything rejoined behind the reconstructed line
+  into one payload. Still mechanical — no judgment about what the segments say.
+- **[Auditing the envelope](auditing-the-envelope.md)** is the first phase to
+  reach *values*: does `ISA13` actually match `IEA02`, does `GS08` agree with
+  `ISA12`, does every opener have its closer. A finding here can't undo the
+  payload that already exists, so `fatal` stops meaning "halt" and starts
+  meaning "don't trust this."
 
 ## The ladder: shape → delimiters → structure → values
 
@@ -76,8 +85,8 @@ established.
 | --- | --- | --- |
 | **locate** | the run has the *shape* of an ISA line (tag, `GS` boundary, 16 separators) | a run the delimiters can be parsed from |
 | **delimiters** | the four delimiter bytes, and which are usable | ground-truth delimiters |
-| **structure** | 16 elements at fixed width, one canonical 105-byte line, the sender's delimiters kept | a conformant ISA line |
-| **values** *(later)* | `ISA05` is a real qualifier, `ISA09` a real date, `ISA13` matches `IEA02` | a validated interchange |
+| **structure** | 16 elements at fixed width, one canonical 105-byte line — then, past the ISA line, one reassembled payload | a conformant ISA line, then a whole payload |
+| **values** | pairing and nesting hold, counts and control numbers agree, `ISA13` matches `IEA02` | an audited interchange |
 
 A note that says "that is the next step's problem" is pointing down this ladder.
 

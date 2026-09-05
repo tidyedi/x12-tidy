@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditing the Envelope</title>
+<meta name="description" content="Once a payload exists, checking whether the interchange's own bookkeeping is honest — envelope pairing, counts, control-number agreement, tag shape, version agreement — and why 'fatal' stops meaning what it meant three notes ago.">
+<link rel="canonical" href="https://docs.tidyedi.com/auditing-the-envelope.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Auditing the Envelope">
+<meta property="og:description" content="Once a payload exists, checking whether the interchange's own bookkeeping is honest — and why fatal stops meaning stop.">
+<meta property="og:url" content="https://docs.tidyedi.com/auditing-the-envelope.html">
+<meta property="og:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://docs.tidyedi.com/brand/social-card-1280x640.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root {
+    --paper:   #edf0f2;
+    --surface:  #f8fafb;
+    --ink:      #17212b;
+    --ink-soft: #566470;
+    --rule:     #d2d8dc;
+    --accent:   #0e6f86;
+    --accent-soft: #dbeaee;
+    --valid:    #467a4e;
+    --deviation:#ac5230;
+    --code-bg:  #f1f4f5;
+    --code-ink: #223039;
+
+    --measure: 40rem;
+    --wide: 53rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #0f151b;
+      --surface:  #161f27;
+      --ink:      #dce4e9;
+      --ink-soft: #93a1ac;
+      --rule:     #2a343d;
+      --accent:   #45b8d0;
+      --accent-soft: #123039;
+      --valid:    #74b079;
+      --deviation:#dd8b64;
+      --code-bg:  #131b22;
+      --code-ink: #c9d5dc;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:   #0f151b;
+    --surface:  #161f27;
+    --ink:      #dce4e9;
+    --ink-soft: #93a1ac;
+    --rule:     #2a343d;
+    --accent:   #45b8d0;
+    --accent-soft: #123039;
+    --valid:    #74b079;
+    --deviation:#dd8b64;
+    --code-bg:  #131b22;
+    --code-ink: #c9d5dc;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  .sitebar {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: 1.4rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .sitebar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+  }
+  .sitebar svg { width: 26px; height: 26px; display: block; border-radius: 6px; }
+  .sitebar .edi { color: #1F6B4D; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .sitebar .edi { color: #5CBB8E; }
+  }
+  :root[data-theme="dark"] .sitebar .edi { color: #5CBB8E; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    font-size: 1.0625rem;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: var(--wide); margin: 0 auto; padding: 0 1.5rem; }
+  .prose { max-width: var(--measure); margin-inline: auto; }
+
+  h1, h2, h3, .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  .eyebrow, .fig-label, .kicker {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0.6rem 0 0;
+  }
+  .thesis {
+    font-size: clamp(1.15rem, 2.4vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--ink);
+    font-style: italic;
+    max-width: 34rem;
+    margin: 1.6rem 0 0;
+  }
+  h2 {
+    font-size: 1.7rem;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+    position: relative;
+  }
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2.4rem 0 0.4rem;
+    color: var(--ink);
+  }
+  p { margin: 1.1rem 0 0; }
+  .prose > p:first-child, section > p:first-of-type { margin-top: 1rem; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.86em;
+    background: var(--accent-soft);
+    color: var(--ink);
+    padding: 0.08em 0.34em;
+    border-radius: 3px;
+  }
+
+  section { margin-top: 4.5rem; }
+  .sec-head {
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 0.4rem;
+  }
+  .sec-head .eyebrow { display: block; margin-bottom: 0.5rem; }
+  .sec-num {
+    color: var(--accent);
+    font-family: "IBM Plex Mono", monospace;
+    font-weight: 500;
+  }
+
+  figure {
+    margin: 2.4rem auto;
+    max-width: var(--wide);
+  }
+  figure svg { display: block; width: 100%; height: auto; }
+  .fig-frame {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.6rem 1.4rem 1.1rem;
+  }
+  .fig-label { display: block; margin-bottom: 1rem; }
+  figcaption {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    margin-top: 0.9rem;
+    max-width: 44rem;
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .code-fig { margin: 2rem auto; max-width: var(--wide); }
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 1.15rem 1.3rem;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    line-height: 1.62;
+    tab-size: 4;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .c  { color: var(--ink-soft); font-style: italic; }
+  .s  { color: var(--valid); }
+  .k  { color: var(--accent); font-weight: 500; }
+  .code-cap {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 0.55rem;
+  }
+  .code-cap b { color: var(--accent); font-weight: 500; }
+
+  .table-fig { margin: 2rem auto; max-width: var(--wide); overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.9rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  thead th {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 500;
+    border-bottom: 1px solid var(--ink-soft);
+  }
+  td code, th code { font-size: 0.82em; background: var(--code-bg); }
+  .verdict { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; white-space: nowrap; }
+  .v-ok  { color: var(--valid); }
+  .v-flag{ color: var(--deviation); }
+
+  .note {
+    max-width: var(--measure);
+    margin: 1.8rem auto 0;
+    padding: 1rem 1.2rem;
+    background: var(--accent-soft);
+    border-radius: 4px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+  .note .kicker { display:block; margin-bottom: 0.35rem; color: var(--accent); }
+
+  ul.plain { max-width: var(--measure); margin: 1.2rem auto 0; padding: 0; list-style: none; }
+  ul.plain li {
+    position: relative;
+    padding: 0.75rem 0 0.75rem 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  ul.plain li:last-child { border-bottom: 1px solid var(--rule); }
+  ul.plain li::before {
+    content: "";
+    position: absolute; left: 0; top: 1.15rem;
+    width: 7px; height: 7px;
+    background: var(--deviation);
+    border-radius: 1px;
+  }
+  ul.plain li b { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; }
+
+  header.hero {
+    padding: clamp(3.5rem, 9vw, 6rem) 0 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .byline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 2rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem;
+  }
+  footer {
+    margin-top: 5rem;
+    border-top: 1px solid var(--rule);
+    padding: 2.5rem 0 4rem;
+  }
+  footer p { max-width: var(--measure); margin-inline: auto; color: var(--ink-soft); font-size: 0.95rem; }
+
+  @media (min-width: 60rem) {
+    .sec-head { position: relative; }
+    .sec-head .sec-num-rail {
+      position: absolute;
+      left: -3.5rem;
+      top: 2.1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
+    }
+  }
+  .sec-num-rail { display: none; }
+  @media (min-width: 60rem) { .sec-num-rail { display: block; } .sec-head h2 .sec-num { display: none; } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    a { transition: color 0.15s ease; }
+  }
+
+  @media print {
+    .sitebar { padding-top: 0.4rem; }
+    header.hero { padding: 1rem 0; }
+    section { margin-top: 2rem; }
+    figure, .fig-frame, pre, table, .note, .table-fig, .code-fig { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    a { color: inherit; }
+    .byline a { text-decoration: underline; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="sitebar">
+  <a href="https://tidyedi.com">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#1F6B4D"/>
+      <rect x="11" y="15" width="35" height="5.4" rx="2.7" fill="#F3F8F5" opacity="0.34"/>
+      <rect x="18" y="26" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="37" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+      <rect x="18" y="48" width="28" height="5.4" rx="2.7" fill="#F3F8F5"/>
+    </svg>
+    <span>Tidy<span class="edi">EDI</span></span>
+  </a>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="eyebrow">X12 EDI &nbsp;&middot;&nbsp; Defensive parsing</span>
+    <h1>Auditing the&nbsp;Envelope</h1>
+    <p class="thesis">Once a payload exists, checking whether the
+      interchange's own bookkeeping is honest &mdash; and why
+      &ldquo;fatal&rdquo; stops meaning what it meant three notes ago.</p>
+    <div class="byline">
+      <span>Engineering note</span>
+      <span>x12&#8209;tidy&nbsp;/&nbsp;qaqc</span>
+      <span>~1,400 words</span>
+      <span><a href="the-x12-tidy-method.html">The method</a></span>
+      <span><a href="reassembling-the-interchange.html">&#8592; Reassembling the Interchange</a></span>
+    </div>
+  </header>
+
+  <section id="fatal">
+    <div class="sec-head">
+      <span class="sec-num-rail">01</span>
+      <span class="eyebrow">A meaning shift</span>
+      <h2><span class="sec-num">01&nbsp;&nbsp;</span>Why &ldquo;fatal&rdquo; means something different now</h2>
+    </div>
+    <div class="prose">
+      <p>This is the fifth act of <a href="the-x12-tidy-method.html">the
+      x12-tidy method</a>, and the first one to reach the <strong>values</strong>
+      rung of the method's ladder &mdash; shape, delimiters, structure, values:
+      not just &ldquo;is this shaped like a segment,&rdquo; but &ldquo;does
+      what this segment claims about itself hold up.&rdquo;
+      <a href="reassembling-the-interchange.html">The previous note</a> ends
+      with one payload and a raw list of segments. This one is about walking
+      that list once and checking whether the envelope it describes is
+      actually true.</p>
+      <p>Every earlier note treats <code>fatal</code> as a stop signal: the
+      delimiters can't be trusted, so parsing halts there and reports why.
+      Envelope QA/QC inverts that, and says so in its own module docstring:</p>
+    </div>
+    <div class="note">
+      <span class="kicker">From the source</span>
+      &ldquo;A payload already exists by the time this runs &mdash; nothing
+      found here can undo that. So <code>fatal</code> is a display/trust
+      signal (&lsquo;don't use this payload&rsquo;), never a stop signal:
+      every check below always runs to completion, on every segment,
+      regardless of what's found.&rdquo;
+    </div>
+    <div class="prose">
+      <p>A missing <code>SE</code>, a control number that doesn't match its
+      trailer, a functional group closed twice &mdash; none of it stops the
+      walk. The walker keeps going, because the alternative is worse: stop at
+      the first broken envelope and every finding after it goes unreported,
+      which is exactly the &ldquo;fails on the first deviation&rdquo; failure
+      mode this whole tool exists to avoid.</p>
+    </div>
+  </section>
+
+  <section id="walk">
+    <div class="sec-head">
+      <span class="sec-num-rail">02</span>
+      <span class="eyebrow">The mechanism</span>
+      <h2><span class="sec-num">02&nbsp;&nbsp;</span>One pass, a small stack</h2>
+    </div>
+    <div class="prose">
+      <p>A single walk over <code>.segments</code> drives every check. It
+      tracks, at any moment, at most one open functional group and &mdash;
+      inside it &mdash; at most one open transaction set.</p>
+    </div>
+    <figure>
+      <div class="fig-frame">
+        <span class="fig-label">Fig. 1 &mdash; The walk, one pass</span>
+        <img src="figures/envelope-walk.svg" alt="A sequence of segment tags: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
+      </div>
+      <figcaption><b>A small stack, not a parser</b> &mdash; one open group,
+        one open transaction set, tracked as the walker crosses each opener
+        and closer in order.</figcaption>
+    </figure>
+    <div class="prose">
+      <p>A missing closer doesn't stop the walk either &mdash; it's recovered
+      from by treating the next recognizable boundary as the assumed end:</p>
+    </div>
+    <ul class="plain">
+      <li>a second <b>GS</b> while one is still open closes the first
+        (missing <code>GE</code>), then opens the new one</li>
+      <li>a second <b>ST</b> while one is still open closes the first
+        (missing <code>SE</code>), then opens the new one</li>
+      <li>reaching the <b>end of the segment list</b> with a group or
+        transaction set still open closes it the same way</li>
+    </ul>
+    <div class="prose">
+      <p>So a broken envelope doesn't hide the segments inside it &mdash;
+      everything nested inside a group or transaction set that never got
+      closed is still walked and still checked, just against a boundary the
+      walker inferred instead of one the sender wrote.</p>
+    </div>
+  </section>
+
+  <section id="checklist">
+    <div class="sec-head">
+      <span class="sec-num-rail">03</span>
+      <span class="eyebrow">The scope</span>
+      <h2><span class="sec-num">03&nbsp;&nbsp;</span>What gets checked</h2>
+    </div>
+    <div class="table-fig">
+      <table>
+        <thead><tr><th>what</th><th>example codes</th></tr></thead>
+        <tbody>
+          <tr><td>ISA/IEA, GS/GE, ST/SE pairing and nesting</td>
+              <td><code>structure.missing-iea</code>, <code>gs.missing-ge</code>, <code>st.missing-se</code></td></tr>
+          <tr><td>stated counts match the real count</td>
+              <td><code>structure.functional-group-count-mismatch</code>, <code>gs.transaction-set-count-mismatch</code>, <code>st.segment-count-mismatch</code></td></tr>
+          <tr><td>control numbers agree front-to-back, and are unique in scope</td>
+              <td><code>structure.control-number-mismatch</code>, <code>gs.control-number-duplicate</code>, <code>st.control-number-duplicate</code></td></tr>
+          <tr><td>a segment tag begins with an uppercase letter (the A5 gate)</td>
+              <td><code>structure.tag-shape-invalid</code></td></tr>
+          <tr><td><code>GS08</code> agrees with <code>ISA12</code></td>
+              <td><code>gs.version-mismatch</code></td></tr>
+          <tr><td><code>ISA15</code> is T, P, or I</td>
+              <td><code>isa.usage-indicator-invalid</code></td></tr>
+          <tr><td><code>GS07</code> is X or T &mdash; the complete list</td>
+              <td><code>gs.responsible-agency-invalid</code></td></tr>
+          <tr><td>a segment with no structurally valid place to be</td>
+              <td class="verdict v-flag"><code>structure.foreign-content</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">
+      <p><code>structure.foreign-content</code> is the catch-all for
+      &ldquo;this segment is outside any recognized context&rdquo; &mdash;
+      before a group has opened, between one group's close and the next
+      group's open, a closer with nothing open to close, or a second
+      <code>IEA</code> once the interchange is already closed. It is one code
+      because it is one shape of problem, no matter which of those forms it
+      takes.</p>
+      <p>Deliberately <strong>not</strong> checked, because no decision has
+      been made yet: <code>ISA05</code>/<code>ISA07</code> qualifier codes,
+      <code>ISA14</code>, <code>GS01</code>, <code>ST01</code> shape,
+      date/time format, <code>TA1</code>, <code>BIN</code>/<code>BDS</code>,
+      and more than one interchange in a single file. Silence on these is not
+      an oversight &mdash; see
+      <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/design.md">design.md</a>
+      for what's decided and what's parked.</p>
+    </div>
+  </section>
+
+  <section id="facts">
+    <div class="sec-head">
+      <span class="sec-num-rail">04</span>
+      <span class="eyebrow">Not a finding</span>
+      <h2><span class="sec-num">04&nbsp;&nbsp;</span>Facts are not diagnostics</h2>
+    </div>
+    <div class="prose">
+      <p>Sender and receiver ID, the usage indicator, how many groups and
+      transaction sets and segments were found &mdash; none of that is a
+      finding. It's reported either way, the same instinct behind
+      <a href="the-x12-tidy-method.html">the method</a>'s treatment of
+      <code>ISA11</code>: which value is present is information, reported,
+      not a defect &mdash; only an <em>unusable</em> value is.</p>
+    </div>
+    <div class="code-fig">
+      <p class="code-cap"><b>EnvelopeFacts</b> &mdash; src/x12_tidy/qaqc/envelope.py</p>
+<pre><code><span class="k">@dataclass</span>
+<span class="k">class</span> EnvelopeFacts:
+    sender_qualifier: bytes
+    sender_id: bytes
+    receiver_qualifier: bytes
+    receiver_id: bytes
+    interchange_date: bytes
+    interchange_time: bytes
+    interchange_version: bytes
+    usage_indicator: bytes
+    group_versions: tuple[bytes, ...]
+    functional_group_count: int
+    transaction_set_count: int
+    segment_count: int
+</code></pre>
+    </div>
+    <div class="prose">
+      <p><code>Diagnostic</code> stays severity-free &mdash; code, message,
+      offset, nothing more, per
+      <a href="https://github.com/tidyedi/x12-tidy/blob/main/docs/design.md">the
+      diagnostic model</a>. <code>EnvelopeFacts</code> is a second, plain
+      dataclass for exactly the things that are true about an interchange
+      regardless of whether anything is wrong with it. <code>QaQcResult</code>
+      carries both: a payload that fails every check in &sect;3 still gets its
+      facts extracted, because knowing who sent a broken file is not
+      conditional on the file being clean.</p>
+    </div>
+  </section>
+
+  <section id="heuristic">
+    <div class="sec-head">
+      <span class="sec-num-rail">05</span>
+      <span class="eyebrow">Named as a heuristic</span>
+      <h2><span class="sec-num">05&nbsp;&nbsp;</span>Never guess: the version-match heuristic's honest edge</h2>
+    </div>
+    <div class="prose">
+      <p><code>GS08</code> (Version/Release/Industry Identifier Code) is
+      supposed to agree with <code>ISA12</code> (Interchange Control Version
+      Number), but real senders don't write them the same way: <code>ISA12</code>
+      is <code>00401</code>; a conformant <code>GS08</code> is
+      <code>004010</code>; a common real-world <code>GS08</code> is
+      <code>4010</code> with the leading zeros dropped; a HIPAA <code>GS08</code>
+      might be <code>005010X222A1</code> with an industry suffix
+      <code>ISA12</code> never carries. The check strips leading zeros from
+      both sides and checks one starts with the other:</p>
+    </div>
+    <div class="code-fig">
+      <p class="code-cap">the version check</p>
+<pre><code>isa12_stripped = self._isa12.strip().lstrip(b<span class="s">"0"</span>)
+gs08_stripped = gs08.strip().lstrip(b<span class="s">"0"</span>)
+<span class="k">if</span> <span class="k">not</span> gs08_stripped.startswith(isa12_stripped):
+    <span class="c"># gs.version-mismatch</span>
+</code></pre>
+    </div>
+    <div class="prose">
+      <p>This is a heuristic, named as one. It tolerates the real-world
+      conventions it was written for &mdash; dropped leading zeros, an
+      appended industry suffix &mdash; and nothing more. It is not a lookup
+      table of every legal <code>ISA12</code>/<code>GS08</code> pairing, and a
+      value that strips down to something very short could in principle match
+      more than it should. No such case has turned up in the corpus this
+      ships with; if one does, it belongs here, named, the same way every
+      other tolerance in this tool is.</p>
+    </div>
+  </section>
+
+  <section id="proof">
+    <div class="sec-head">
+      <span class="sec-num-rail">06</span>
+      <span class="eyebrow">Proving it</span>
+      <h2><span class="sec-num">06&nbsp;&nbsp;</span>Proving it: the check that wasn't there</h2>
+    </div>
+    <div class="prose">
+      <p>The per-case tests mirror
+      <a href="reassembling-the-interchange.html">the earlier notes</a>: one
+      deviation, one expected code, run against a fully-assembled payload
+      instead of a bare ISA line &mdash; a missing <code>SE</code>, a
+      duplicated <code>GS06</code>, a lowercase tag, a version mismatch, and
+      so on, one test each.</p>
+      <p>Writing them surfaced a real gap the way
+      <a href="those-pesky-delimiters.html#proof">the delimiter sweep</a> once did. Every closer the walker can see reopened
+      out of turn &mdash; a second <code>GS</code> before <code>GE</code>, a
+      second <code>ST</code> before <code>SE</code> &mdash; was already
+      guarded and diagnosed. <code>IEA</code> was not: the code simply
+      overwrote <code>self._iea_elements</code> on a second sighting, so</p>
+    </div>
+    <div class="code-fig">
+      <p class="code-cap">the case that slipped through</p>
+<pre><code>...GE*1*1~IEA*1*000000001~IEA*1*000000001~
+</code></pre>
+    </div>
+    <div class="prose">
+      <p>came back <code>was_clean == True</code>. Two interchange trailers,
+      byte-identical, passed silently &mdash; not because the numbers happened
+      to match, but because nothing was checking for a <em>second</em>
+      <code>IEA</code> at all. The fix treats a repeat sighting the same way
+      every other repeat closer is treated: <em>foreign content, the
+      interchange is already closed</em>, filed under the same
+      <code>structure.foreign-content</code> code as every other
+      &ldquo;nothing here should be structurally valid&rdquo; finding.</p>
+    </div>
+  </section>
+
+  <section id="scope">
+    <div class="sec-head">
+      <span class="sec-num-rail">07</span>
+      <span class="eyebrow">Scope boundary</span>
+      <h2><span class="sec-num">07&nbsp;&nbsp;</span>Where this doesn't reach yet</h2>
+    </div>
+    <div class="prose">
+      <p><code>.segments</code> still assumes exactly one interchange per file
+      &mdash; a file that is really two interchanges concatenated has its
+      second <code>ISA</code>/<code>GS</code>/<code>IEA</code> read as
+      ordinary body content of the first, which this walker correctly flags
+      as foreign content without knowing <em>why</em> it's foreign. Fixing
+      that means teaching
+      <a href="reassembling-the-interchange.html">the assembly step</a> to
+      find more than one interchange boundary, not this one to guess harder.
+      It's tracked, not fixed here.</p>
+      <p><code>x12_tidy.tidy.tidy(dirty: bytes) -&gt; TidyResult</code> is the
+      whole-package entry point once both steps exist:
+      <a href="reassembling-the-interchange.html">reassemble</a>, then audit,
+      one combined diagnostic list, cleanse findings first.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><span class="eyebrow" style="display:block;margin-bottom:0.6rem">The pattern</span>
+      Once irreversible action has already happened &mdash; a payload exists,
+      a decision has been made &mdash; a later <code>fatal</code> can only
+      ever mean &ldquo;don't trust this,&rdquo; never &ldquo;stop.&rdquo;
+      Recover from a missing closer by inferring the next real boundary, so a
+      broken envelope never hides what's inside it. Separate what is true
+      about an input from what is wrong with it &mdash; a fact is not a
+      finding, even when the input is broken. Name a heuristic as a heuristic
+      instead of dressing it up as a rule. And when a review turns up a case
+      nothing was checking for, fix it the same way every other case in this
+      corpus was: one deviation, one expected finding, filed under the code
+      that already owns that shape of problem.</p>
+  </footer>
+
+</div>
+</body>
+</html>
