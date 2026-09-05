@@ -131,4 +131,4 @@ Also to confirm: whether X12.6 sanctions a CR/LF **segment-terminator suffix**.
 | research-gated wording (3 codes) + `trailing-*` decision | not started — needs the X12.6 delimiter rule |
 | `isa.identifier-utf16` transcode | not started — explicit later-discussion TODO |
 | ST/SE cardinality | not started — undecided |
-| 4 note **PDFs** still contain "tag" | gated — re-print from the live site with a go-ahead |
+| 4 note **PDFs** re-printed | ✅ this PR — regenerated from the fixed HTML (headless Chrome) |
