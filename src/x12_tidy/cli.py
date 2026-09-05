@@ -19,7 +19,8 @@ import sys
 from pathlib import Path
 
 from x12_tidy.diagnostics import Code, Diagnostic, all_codes, meta, resolved_severity
-from x12_tidy.isa import clean_isa_line
+from x12_tidy.qaqc import EnvelopeFacts, check_payload
+from x12_tidy.structure import clean_payload
 
 
 def _report(diags: list[Diagnostic]) -> bool:
@@ -34,6 +35,18 @@ def _report(diags: list[Diagnostic]) -> bool:
     return saw_problem
 
 
+def _print_facts(facts: EnvelopeFacts) -> None:
+    print(
+        "envelope: "
+        f"sender={facts.sender_qualifier!r}/{facts.sender_id!r} "
+        f"receiver={facts.receiver_qualifier!r}/{facts.receiver_id!r} "
+        f"usage={facts.usage_indicator!r} "
+        f"groups={facts.functional_group_count} "
+        f"transaction_sets={facts.transaction_set_count} "
+        f"segments={facts.segment_count}"
+    )
+
+
 def _cmd_check(path: Path) -> int:
     try:
         data = path.read_bytes()
@@ -41,10 +54,15 @@ def _cmd_check(path: Path) -> int:
         print(f"cannot read {path}: {exc}", file=sys.stderr)
         return 2
 
-    result = clean_isa_line(data)
-    worst_problem = _report(result.diagnostics)
+    cleaned = clean_payload(data)
+    qaqc = check_payload(cleaned) if cleaned.payload is not None else None
 
-    decomposition = result.decomposition
+    diagnostics = list(cleaned.diagnostics)
+    if qaqc is not None:
+        diagnostics.extend(qaqc.diagnostics)
+    worst_problem = _report(diagnostics)
+
+    decomposition = cleaned.isa_result.decomposition
     if decomposition is not None:
         print(
             "delimiters: "
@@ -54,11 +72,16 @@ def _cmd_check(path: Path) -> int:
             f"terminator={decomposition.segment_terminator!r}"
         )
 
-    if result.isa_line is None:
+    if cleaned.payload is None:
         return 1 if worst_problem else 0
 
-    print(f"isa_line ({len(result.isa_line)} bytes): {result.isa_line!r}")
-    if result.was_clean:
+    print(
+        f"isa_line ({len(cleaned.isa_result.isa_line)} bytes): "
+        f"{cleaned.isa_result.isa_line!r}"
+    )
+    if qaqc is not None and qaqc.facts is not None:
+        _print_facts(qaqc.facts)
+    if not diagnostics:
         print("was_clean: yes")
     return 1 if worst_problem else 0
 

@@ -42,8 +42,9 @@ the [`docs/`](docs/) folder holds the Markdown sources and PDFs.
 | **ISA envelope — locate the ISA line** (`x12_tidy.isa.extract_isa_line`) | done |
 | **ISA envelope — recover the four delimiters** (`x12_tidy.isa.split_isa_line`) | done |
 | **ISA envelope — reconstruct the canonical line** (`x12_tidy.isa.reconstruct_isa_line`) | done |
-| ISA envelope — whole-document cleanse (strip inter-segment junk, return cleansed contents) | not started |
-| GS / ST / structure — envelope and control-number validation | not started |
+| **Whole-document cleanse** (`x12_tidy.structure.clean_payload`) | done |
+| **GS / ST / structure — envelope and control-number QA/QC** (`x12_tidy.qaqc.check_payload`) | done |
+| Multiple interchanges in one file | not started |
 
 ## Usage
 

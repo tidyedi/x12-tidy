@@ -21,11 +21,16 @@ build from. Envelope QA/QC runs later, after reconstruction.
 from __future__ import annotations
 
 from x12_tidy.structure.payload import ReconstructedPayload, clean_payload
-from x12_tidy.structure.segments import drop_empty_segments, split_segments
+from x12_tidy.structure.segments import (
+    drop_empty_segments,
+    split_elements,
+    split_segments,
+)
 
 __all__ = [
     "split_segments",
     "drop_empty_segments",
+    "split_elements",
     "ReconstructedPayload",
     "clean_payload",
 ]
