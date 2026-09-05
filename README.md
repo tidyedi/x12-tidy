@@ -35,6 +35,10 @@ searched for, yes, that too.)
 - [Auditing the Envelope](https://docs.tidyedi.com/auditing-the-envelope.html)
   — checking whether the interchange's own bookkeeping (pairing, counts, control numbers) is honest
 
+**Using it** — [`docs/using-x12-tidy.md`](docs/using-x12-tidy.md): the CLI, the
+`tidy()` one-call API, the lower-level building blocks, and formatting your own
+report.
+
 **Reference** — [`design.md`](docs/design.md) (architecture, the diagnostic-code
 scheme) · [`docs/diagnostics.md`](docs/diagnostics.md) (every code, generated) ·
 the [`docs/`](docs/) folder holds the Markdown sources and PDFs.

@@ -511,7 +511,7 @@
         boundary; the trailing <code>GS\1</code> then anchors early, or the match
         fails, with no signal either way. x12-tidy does the opposite: it counts
         the separators, sees seventeen, and reports it
-        (<code>isa.no-functional-group</code>), naming both possible causes. And
+        (<code>isa.separator-count-high</code>), naming both possible causes. And
         <code>GS\1</code> matches a <code>GS</code> + separator <em>anywhere</em> —
         inside ISA06 or ISA08 data as readily as in a transaction set. A match
         gives you a boundary; it never gives you "this boundary is suspect, and
@@ -751,7 +751,7 @@ gs_identifier     = GS_IDENTIFIER + element_separator
           run short → fewer than 16 separators → <code>isa.separator-count-low</code>;</li>
         <li>a <code>GS*</code> matched <b>past</b> the real header (downstream, or a
           decoy <code>ISA*</code> prefix) overshoots → more than 16 separators →
-          <code>isa.no-functional-group</code>.</li>
+          <code>isa.separator-count-high</code>.</li>
       </ul>
     </div>
     <div class="code-fig">
@@ -916,7 +916,7 @@ separator_count = isa_line.count(element_separator)
     <div class="prose">
       <p>Nothing above is a silent repair. Each tolerance emits a stable diagnostic
       code — <code>isa.leading-bytes</code>, <code>isa.identifier-lowercase</code>,
-      <code>isa.identifier-utf16</code>, <code>isa.no-functional-group</code>,
+      <code>isa.identifier-utf16</code>, <code>isa.separator-count-high</code>,
       <code>isa.gs-not-found</code>, and the rest — so the developer holding the
       bad file gets the exact list of what their partner did wrong, not a single
       exception at the first surprise.</p>
@@ -972,7 +972,7 @@ separator_count = isa_line.count(element_separator)
           <tr>
             <td>No <code>GS</code> envelope; a <code>REF*GS*</code> deep in the data</td>
             <td class="verdict v-flag">fatal</td>
-            <td><code>isa.no-functional-group</code></td>
+            <td><code>isa.separator-count-high</code></td>
           </tr>
           <tr>
             <td>Two interchanges concatenated, first <code>GS</code> missing</td>
@@ -987,7 +987,7 @@ separator_count = isa_line.count(element_separator)
           <tr>
             <td>Element separator <code>*</code> occurs inside the sender's ID</td>
             <td class="verdict v-flag">fatal</td>
-            <td><code>isa.no-functional-group</code></td>
+            <td><code>isa.separator-count-high</code></td>
           </tr>
           <tr>
             <td>2&nbsp;MB of leading junk, then <code>ISA</code></td>

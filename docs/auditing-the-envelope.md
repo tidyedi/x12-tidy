@@ -11,7 +11,7 @@ it meant three notes ago.*
 > clicking the `.html` file in the repo tree only shows its source — GitHub never
 > renders HTML there). This Markdown file is the version of record — keep it, the
 > HTML, and the figures under `docs/images/figures/` in sync with
-> `src/x12_tidy/envelope/qaqc/envelope.py`.
+> `src/x12_tidy/envelope/qaqc/checks.py`.
 
 This is the fifth act of [the x12-tidy method](the-x12-tidy-method.md), and the
 first one to reach the **values** rung of the method's ladder — shape,
