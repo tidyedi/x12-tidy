@@ -92,6 +92,7 @@ class Code(Enum):
     STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC = "structure.control-number-not-numeric"
     STRUCTURE_COUNT_NOT_NUMERIC = "structure.count-not-numeric"
     STRUCTURE_IDENTIFIER_INVALID = "structure.identifier-invalid"
+    STRUCTURE_SEGMENT_ELEMENT_COUNT = "structure.segment-element-count"
     STRUCTURE_FOREIGN_CONTENT = "structure.foreign-content"
 
     # -- gs: functional-group-level envelope QA/QC (GS/GE) --
@@ -471,6 +472,20 @@ META: dict[Code, CodeMeta] = {
             "characters (so 'N1', 'PO1', 'G62' are valid). A piece whose "
             "identifier does not begin with an uppercase letter -- lowercase, "
             "a digit, or empty -- cannot be a real segment."
+        ),
+    ),
+    Code.STRUCTURE_SEGMENT_ELEMENT_COUNT: CodeMeta(
+        default_severity="error",
+        title="An envelope segment has the wrong number of elements",
+        explanation=(
+            "An envelope segment carries a number of data elements the standard "
+            "does not define for it: GS has 8, GE / SE / IEA have 2, and ST has "
+            "2 or 3 (ST03, the optional Implementation Convention Reference, was "
+            "added in release 004020). An extra element is usually a stray "
+            "delimiter or appended data; too few means a required element is "
+            "missing. Reported as an error, not a refusal -- the envelope is "
+            "still walkable. (ISA is always 16 elements; a wrong count there is "
+            "fatal and is caught earlier, in the ISA-line phase.)"
         ),
     ),
     Code.STRUCTURE_FOREIGN_CONTENT: CodeMeta(

@@ -303,7 +303,9 @@ One pass over the segments (a small open-group/open-transaction-set stack)
 covers: `ISA`/`IEA`, `GS`/`GE`, and `ST`/`SE` pairing and nesting; control-number
 agreement and uniqueness (`ISA13`/`IEA02`, `GS06`/`GE02`, `ST02`/`SE02`);
 segment/transaction-set/group counts (`SE01`, `GE01`, `IEA01`); the A5
-identifier-shape gate; `ISA12`/`GS08` version agreement; `ISA15` usage-indicator
+identifier-shape gate; the envelope-segment element-count gate (`GS` 8,
+`GE`/`SE`/`IEA` 2, `ST` 2–3 — an error; `ISA`'s 16 is the fatal one, upstream);
+`ISA12`/`GS08` version agreement; `ISA15` usage-indicator
 validity; `GS07` responsible-agency validity; and foreign content — a segment
 with no structurally valid place to be, including a duplicated `IEA` once the
 interchange is already closed. Deliberately not covered, no decision made yet:

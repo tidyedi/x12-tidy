@@ -79,6 +79,7 @@ sender wrote.
 | stated counts match the real count | `structure.functional-group-count-mismatch`, `gs.transaction-set-count-mismatch`, `st.segment-count-mismatch` |
 | control numbers agree front-to-back, and are unique in scope | `structure.control-number-mismatch`, `gs.control-number-duplicate`, `st.control-number-duplicate` |
 | a segment identifier begins with an uppercase letter (the A5 gate) | `structure.identifier-invalid` |
+| an envelope segment has the element count the standard defines (`GS` 8, `GE`/`SE`/`IEA` 2, `ST` 2 or 3) | `structure.segment-element-count` |
 | `GS08` agrees with `ISA12` | `gs.version-mismatch` |
 | `ISA15` is `T`, `P`, or `I` | `isa.usage-indicator-invalid` |
 | `GS07` is `X` or `T` — the complete list | `gs.responsible-agency-invalid` |
