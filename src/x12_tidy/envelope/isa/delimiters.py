@@ -196,10 +196,10 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
     if component_alnum and terminator_alnum:
         diags.append(Diagnostic(
             Code.ISA_DELIMITER_MISALIGNED,
-            "the bytes where the component separator and segment terminator "
-            f"belong ({last_piece[:2]!r}) are both alphanumeric; the ISA line cannot "
-            "be decomposed (an element separator most likely occurs inside "
-            "ISA06 or ISA08 data).",
+            f"the component separator (ISA16) and the segment terminator after "
+            f"it ({last_piece[:2]!r}) are both letters or digits; the ISA line "
+            "cannot be decomposed (most likely a byte equal to the element "
+            "separator occurs inside ISA06 or ISA08 data).",
             offset=last_piece_offset,
         ))
     else:
@@ -222,9 +222,9 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
         if terminator_alnum:
             diags.append(Diagnostic(
                 Code.ISA_SEGMENT_TERMINATOR_INVALID,
-                f"the segment terminator is {segment_terminator!r}, an "
-                "alphanumeric byte -- it is data, not a delimiter. Segments "
-                "cannot be split.",
+                f"the segment terminator is {segment_terminator!r}, a letter or "
+                "digit -- it cannot be told apart from segment data, so every "
+                "segment boundary is ambiguous.",
                 offset=last_piece_offset + 1,
             ))
 
@@ -309,22 +309,17 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
             ))
 
     # --- trailing bytes between the terminator and GS ---
-    if trailing:
-        trailing_offset = last_piece_offset + 2
-        if all(byte in b"\r\n" for byte in trailing):
-            diags.append(Diagnostic(
-                Code.ISA_TRAILING_NEWLINE,
-                f"{len(trailing)} line-break byte(s) sit between the segment "
-                "terminator and GS; the sender appended a newline.",
-                offset=trailing_offset,
-            ))
-        else:
-            diags.append(Diagnostic(
-                Code.ISA_TRAILING_JUNK,
-                f"{len(trailing)} byte(s) sit between the segment terminator "
-                f"and GS ({trailing!r}); they are not part of the interchange.",
-                offset=trailing_offset,
-            ))
+    # A bare CR / LF / CRLF suffix after the segment terminator is the sender's
+    # lawful choice (X12.5 s4.3; assumption A7) -- it is kept in `trailing`,
+    # stays out of the canonical line, and is not flagged. Anything else -- a
+    # comment, transport framing, stray spaces -- is foreign to the interchange.
+    if trailing and not all(byte in b"\r\n" for byte in trailing):
+        diags.append(Diagnostic(
+            Code.ISA_TRAILING_JUNK,
+            f"{len(trailing)} byte(s) sit between the segment terminator "
+            f"and GS ({trailing!r}); they are not part of the interchange.",
+            offset=last_piece_offset + 2,
+        ))
 
     return IsaDecomposition(
         element_separator,

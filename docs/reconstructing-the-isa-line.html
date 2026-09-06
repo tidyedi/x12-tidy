@@ -768,10 +768,12 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
               <td>line breaks &rarr; spaces &mdash; <code>isa.element-embedded-newline</code>, then re-measured</td></tr>
           <tr><td>non-<code>~</code> terminator (<code>\n</code>, bare <code>\r</code>)</td>
               <td><strong>kept as&#8209;is, no finding</strong> &mdash; which byte ends a segment is the sender's choice, not a deviation</td></tr>
-          <tr><td>trailing bytes after the terminator (<code>~\r\n</code>, <code>~&nbsp;</code>)</td>
-              <td>the real terminator kept; the trailing <code>\r\n</code>&#8202;/&#8202;spaces stripped (<code>isa.trailing-newline</code>&#8202;/&#8202;<code>isa.trailing-junk</code>)</td></tr>
+          <tr><td>CR/LF after the terminator (<code>~\r\n</code>)</td>
+              <td><strong>kept in the tail, no finding</strong> &mdash; a newline suffix is lawful (X12.5 &sect;4.3)</td></tr>
+          <tr><td>other trailing bytes after the terminator (<code>~&nbsp;</code>, a comment)</td>
+              <td>the real terminator kept; the foreign bytes stripped &mdash; <code>isa.trailing-junk</code></td></tr>
           <tr><td>terminator omitted entirely (GS follows ISA16)</td>
-              <td><code>~</code> supplied &mdash; nothing to preserve &mdash; <code>isa.segment-terminator-stripped</code></td></tr>
+              <td><strong>fatal</strong> <code>isa.segment-terminator-stripped</code> &mdash; refused rather than guess <code>~</code></td></tr>
           <tr><td>pipe / caret / any valid delimiters</td>
               <td>kept as&#8209;is; the delimiters are the sender's choice</td></tr>
           <tr><td>conformant ISA line</td>

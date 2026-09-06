@@ -66,16 +66,17 @@ kept here only to show the downstream findings the fatal currently masks:
 [ERROR   isa.element-width]                 ISA04 is 1 byte; padded to 10.
 [ERROR   isa.element-width]                 ISA06 is 11 bytes; padded to 15.
 [ERROR   isa.element-width]                 ISA08 is 11 bytes; padded to 15.
-[WARNING isa.trailing-newline]              newline between the terminator and GS.
 [WARNING isa.element-embedded-newline]      ISA08 contains a line-feed byte; replaced with a space.
 ```
 
-**Ties to the diagnostic-code review** (`DIAGNOSTICS-REVIEW.md`): this file is the
-concrete artifact for two items under review —
+The newline between the terminator and `GS` is **not** flagged — a CR/LF suffix
+after the terminator is lawful (assumption A7;
+`docs/research/x12-delimiter-and-terminator-legality.md`). It is kept out of the
+canonical line silently. (Before the 2026-09 review this raised
+`isa.trailing-newline`, since removed.)
 
-- `isa.trailing-newline` — the newline after `~` here is now known to be
-  conformant (assumption A7; `docs/research/x12-delimiter-and-terminator-legality.md`),
-  so this finding should go away.
+**Ties to the diagnostic-code review** (`DIAGNOSTICS-REVIEW.md`):
+
 - `isa.separator-count-high` — whether a single stray `*` immediately before the
   terminator should be recoverable rather than fatal is an open question this
   sample raises but the review has not decided.

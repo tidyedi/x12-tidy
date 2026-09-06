@@ -20,19 +20,19 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 
 ## Summary
 
-- **47 codes** reviewed. **2 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`), **1 severity change** (`isa.segment-terminator-stripped` → fatal), **4 renamed**, **10 more reworded**, **29 accepted unchanged** — all ✅ done and on `main` except the research-gated wording (3 codes) and the `isa.identifier-utf16` transcode.
-- **1 research blocker** gates the wording of `isa.element-separator-invalid`, `isa.segment-terminator-invalid`, `isa.delimiter-misaligned` and the `trailing-junk`/`trailing-newline` decision.
-- **1 gap** → possible new code (ST/SE cardinality).
-- **`isa.identifier-utf16` transcode = an explicit TODO for a later discussion** (user) — do not implement without a go-ahead.
+- **47 codes** reviewed. **3 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`, `isa.trailing-newline`), **1 severity change** (`isa.segment-terminator-stripped` → fatal), **4 renamed**, **13 more reworded**, **~26 accepted unchanged**.
+- Research blocker **RESOLVED** (2026-09-06, A6/A7). The dependent wording — `isa.element-separator-invalid`, `isa.segment-terminator-invalid`, `isa.delimiter-misaligned` — and the `trailing-newline` removal are **✅ done** (branch `refactor/isa-delimiter-terminator-rewording`).
+- **Still open:** item D (`split_segments` newline-strip consistency), item E (`\r\n` 2-byte terminator), item F (`isa.identifier-utf16` transcode — needs an explicit go-ahead), envelope segment cardinality.
 
 ### Severity / existence changes
 
 | code | change | status |
 |---|---|---|
 | `isa.line-length` | **removed** — unreachable guard | ✅ on `main` (#67) |
-| `isa.segment-terminator-noncanonical` | **removed** — non-`~` terminator is the sender's lawful choice, not a deviation | ✅ done (this PR) |
-| `isa.segment-terminator-stripped` | error → **fatal** — refuse, stop fabricating `~` | ✅ done (this PR) |
-| `isa.identifier-utf16` | fatal → **warning** — transcode UTF-16→single-byte + warn | 🔬 TODO for a later discussion; gated on the delimiter research + an explicit go-ahead |
+| `isa.segment-terminator-noncanonical` | **removed** — non-`~` terminator is the sender's lawful choice, not a deviation | ✅ on `main` (#71) |
+| `isa.trailing-newline` | **removed** — CR/LF suffix after the terminator is conformant (A7) | ✅ done (branch `refactor/isa-delimiter-terminator-rewording`) |
+| `isa.segment-terminator-stripped` | error → **fatal** — refuse, stop fabricating `~` | ✅ on `main` (#71) |
+| `isa.identifier-utf16` | fatal → **warning** — transcode UTF-16→single-byte + warn | ⬜ item F — needs an explicit owner go-ahead |
 
 ---
 
@@ -44,10 +44,10 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 |---|---|---|---|
 | `isa.component-separator-invalid` | error | ✔️ | — |
 | `isa.delimiter-collision` | fatal | ✔️ | — |
-| `isa.delimiter-misaligned` | fatal | 🔬 | reword pending the delimiter research (name ISA16, name the "separator inside ISA06/ISA08" cause, drop "delimiter-shaped bytes") |
+| `isa.delimiter-misaligned` | fatal | ✅ done | reworded: names ISA16 + "a byte equal to the element separator inside ISA06/ISA08"; "delimiter-shaped bytes" gone (branch `refactor/isa-delimiter-terminator-rewording`) |
 | `isa.element-embedded-newline` | warning | ✔️ | — |
 | `isa.element-overflow` | fatal | ✔️ | — |
-| `isa.element-separator-invalid` | fatal | 🔬 | reword pending research (rests on "delimiters are non-alphanumeric" — unconfirmed) |
+| `isa.element-separator-invalid` | fatal | ✅ done | reworded — "X12 does not restrict which byte a sender may use as a delimiter, but a letter or digit cannot be told apart from data"; refuses on recoverability, not prohibition. Title → "letter or digit" |
 | `isa.element-width` | error | ✔️ | — |
 | `isa.gs-not-found` | fatal | ✅ done | reworded to contrast with `isa.separator-count-high` (this one = no `GS`+separator anywhere after ISA) |
 | `isa.interchange-too-short` | fatal | ✔️ | — |
@@ -59,14 +59,14 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 | `isa.no-identifier` (was `isa.no-tag`) | fatal | ✅ done | renamed (#67); title simplified to "No ISA segment in the file" (this PR) |
 | `isa.repetition-separator-invalid` | error | ✔️ | — |
 | `isa.repetition-separator-missing` | error | ✔️ | — |
-| `isa.segment-terminator-invalid` | fatal | 🔶 done / 🔬 | speculation line dropped (this PR); gate kept. Retitle still pending the delimiter research. Co-fire with `isa.trailing-junk` left for later |
+| `isa.segment-terminator-invalid` | fatal | ✅ done | reworded — "X12 does not restrict delimiter bytes, but a letter or digit cannot be told apart from segment data". Title → "letter or digit". Gate kept |
 | `isa.segment-terminator-noncanonical` | — | ✅ removed | this PR — code, emit site, and `_RECONSTRUCTION_OWNS` entry all gone; a non-`~` terminator is now preserved silently |
 | `isa.segment-terminator-stripped` | error → **fatal** | ✅ done | this PR — `split_isa_line` now refuses (returns not-usable) instead of fabricating `~`; reworded; removed from `_RECONSTRUCTION_OWNS`; `CANONICAL_TERMINATOR` constant deleted |
 | `isa.separator-count-low` | fatal | ✔️ | — (pairs with `isa.separator-count-high`) |
 | `isa.identifier-lowercase` (was `isa.tag-lowercase`) | error | ✅ renamed | branch `refactor/tag-to-identifier` (`f08294b`). "tag" → "segment identifier" done (slug, enum, title, explanation, `isa_line.py` message) |
 | `isa.identifier-utf16` (was `isa.tag-utf16`) | fatal | ✅ renamed / 🔬 severity | Rename done (`f08294b`). **STILL A TODO FOR LATER DISCUSSION** (user, do not implement yet): fatal → warning via transcode UTF-16→single-byte + warn — endianness is already detected (`I\x00S\x00A` LE vs `\x00I\x00S\x00A` BE), valid X12 is all-ASCII so lossless. "How to ingest" guidance → future `intake` package. Gated on the delimiter research + an explicit go-ahead |
-| `isa.trailing-junk` | warning | 🔬 | Keep for genuine foreign bytes (comment, transport framing). Resolve the consistency gap: identical junk after `GS~`/`ST~`/etc. is stripped silently by `split_segments` — flag uniformly (likely `structure.*`) or strip silently everywhere |
-| `isa.trailing-newline` | warning | 🔬 | Decision tree: **if a CR/LF segment-terminator suffix is conformant** → drop it. **If not** → merge with `isa.trailing-junk` into one `isa.content-after-terminator`. Separate bug regardless: a `\r\n`-terminated file with no `~` → the 1-byte terminator rule takes `\r` as terminator, `\n` as trailing → spurious finding about half a line ending |
+| `isa.trailing-junk` | warning | ✅ done | now fires only for non-newline trailing bytes (spaces, comment, transport framing); a CR/LF suffix is unflagged. Body-level `split_segments` consistency gap left as item D |
+| `isa.trailing-newline` | — | ✅ removed | CR/LF suffix after the terminator is conformant (A7, X12.5 §4.3 / RFI 2207). Enum, `CodeMeta`, emit site, `_RECONSTRUCTION_OWNS` all gone. `\r\n`-no-`~` 2-byte-terminator handling is item E |
 | `isa.usage-indicator-invalid` | error | ✔️ | — |
 | `isa.version-unrecognized` | warning | ✔️ | — |
 | `gs.control-number-duplicate` | fatal | ✔️ | — |
@@ -105,27 +105,33 @@ recommended choice (TR3 §B.1.1.2.2–B.1.1.2.3). Recorded as assumption **A6**.
 **CR/LF around the segment terminator** — valid at the sender's discretion,
 X12.5 §4.3 / §A.3.1, RFI #2207. Recorded as assumption **A7**.
 
-Alignment (dispositions — pending owner sign-off):
+Alignment (dispositions):
 
-- `isa.element-separator-invalid`, `isa.segment-terminator-invalid` — keep the
-  `fatal` gate (an alphanumeric delimiter is structurally unrecoverable), but
-  reword: drop "X12 element separators are non-alphanumeric"; say the byte can't
-  be told apart from element data so no segment splits reliably. The trigger is a
-  recoverability heuristic, not a standards rule.
-- `isa.delimiter-misaligned` — reword per the full-table note (name ISA16, name
-  the "separator byte inside ISA06/ISA08" cause, drop "delimiter-shaped bytes").
-- `isa.trailing-newline` — **remove.** A bare CR/LF/CRLF after the ISA segment
-  terminator is conformant (A7); preserve/normalise it silently like a non-`~`
-  terminator.
-- `isa.trailing-junk` — **keep**, for genuine foreign bytes only (comment,
-  transport framing, stray spaces). Resolve the consistency gap by stripping
-  newlines silently everywhere (`split_segments` already does).
-- Separate bug (independent of the above): `\r\n`-terminated file with no `~` →
-  1-byte-terminator rule takes `\r` as terminator, `\n` as trailing → spurious
-  finding. Fix: treat a lone `\n` right after a `\r` terminator as part of the
-  terminator.
-- `isa.identifier-utf16` transcode — research no longer blocks it; still gated on
-  an explicit owner go-ahead (separate later-discussion item).
+- ✅ `isa.element-separator-invalid`, `isa.segment-terminator-invalid` — kept the
+  `fatal` gate (an alphanumeric delimiter is structurally unrecoverable),
+  reworded: dropped "X12 element separators are non-alphanumeric"; now says the
+  byte can't be told apart from data so x12-tidy refuses "on that ground, not
+  because the byte is forbidden". Titles changed "alphanumeric byte" → "letter or
+  digit". Runtime messages aligned.
+- ✅ `isa.delimiter-misaligned` — reworded: names ISA16 and "a byte equal to the
+  element separator occurring inside ISA06 or ISA08 data"; dropped
+  "delimiter-shaped bytes".
+- ✅ `isa.trailing-newline` — **removed** (enum, `CodeMeta`, emit site,
+  `_RECONSTRUCTION_OWNS`). A bare CR/LF/CRLF after the terminator is conformant
+  (A7): kept in `IsaDecomposition.trailing`, out of the canonical line, not
+  flagged.
+- ✅ `isa.trailing-junk` — **kept**, now fires only for non-newline trailing
+  bytes (spaces, comment, transport framing). Explanation note about
+  `isa.trailing-newline` removed.
+- ⬜ Separate bug (item E, not started): `\r\n`-terminated file with no `~` →
+  1-byte-terminator rule takes `\r` as terminator, `\n` as trailing. Now
+  unflagged (was `isa.trailing-newline`); still not treated as a 2-byte
+  terminator. Fix: treat a lone `\n` right after a `\r` terminator as part of
+  the terminator.
+- ⬜ `isa.identifier-utf16` transcode (item F) — research no longer blocks it;
+  still gated on an explicit owner go-ahead.
+
+Shipped in branch `refactor/isa-delimiter-terminator-rewording` (items A–C).
 
 ---
 
@@ -194,9 +200,11 @@ case added to `tests/test_isa_line.py` `CASES`.
 | top-level `from x12_tidy import tidy` re-export | ✅ this PR |
 | `qaqc/envelope.py` → `qaqc/checks.py` | ✅ this PR |
 | README / docs/README link to `using-x12-tidy.md` | ✅ this PR |
-| research-gated wording (3 codes) + `trailing-*` decision | not started — needs the X12.6 delimiter rule |
-| `isa.identifier-utf16` transcode | not started — explicit later-discussion TODO |
-| ST/SE cardinality | not started — undecided |
+| research-gated wording — `isa.element-separator-invalid` / `isa.segment-terminator-invalid` / `isa.delimiter-misaligned` reword + remove `isa.trailing-newline` | ✅ branch `refactor/isa-delimiter-terminator-rewording` (items A–C) |
+| item D — `split_segments` newline-strip consistency | not started |
+| item E — `\r\n` as a 2-byte terminator | not started |
+| `isa.identifier-utf16` transcode (item F) | not started — explicit later-discussion TODO |
+| envelope segment cardinality | not started — undecided (counts validated, A8) |
 | 4 note **PDFs** re-printed | ✅ this PR — regenerated from the fixed HTML (headless Chrome) |
 | delimiter/terminator legality research (A6, A7) + `docs/research/` note | ✅ branch `docs/delimiter-research-and-dlms-sample` |
 | `isa.gs-not-found` → `isa.element-separator-invalid` when byte 4 is alnum | ✅ branch `docs/delimiter-research-and-dlms-sample` |
