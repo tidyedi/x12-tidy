@@ -170,6 +170,38 @@ def test_tag_shape_invalid() -> None:
     assert Code.STRUCTURE_IDENTIFIER_INVALID in _codes(result.diagnostics)
 
 
+def test_extra_element_on_se_is_flagged() -> None:
+    trailer = _CLEAN_TRAILER.replace(b"SE*3*0001~", b"SE*3*0001*JUNK~")
+    result = check_payload(clean_payload(build_isa(trailer=trailer)))
+    assert Code.STRUCTURE_SEGMENT_ELEMENT_COUNT in _codes(result.diagnostics)
+    # the trailer is otherwise correct -- SE01/SE02 still agree
+    assert Code.ST_SEGMENT_COUNT_MISMATCH not in _codes(result.diagnostics)
+
+
+def test_missing_element_on_ge_is_flagged() -> None:
+    trailer = _CLEAN_TRAILER.replace(b"GE*1*1~", b"GE*1~")
+    result = check_payload(clean_payload(build_isa(trailer=trailer)))
+    assert Code.STRUCTURE_SEGMENT_ELEMENT_COUNT in _codes(result.diagnostics)
+
+
+def test_st03_is_accepted_no_cardinality_finding() -> None:
+    # ST03 (Implementation Convention Reference) is optional from release 004020
+    trailer = _CLEAN_TRAILER.replace(
+        b"ST*850*0001~", b"ST*850*0001*004010X098~"
+    )
+    result = check_payload(clean_payload(build_isa(trailer=trailer)))
+    assert Code.STRUCTURE_SEGMENT_ELEMENT_COUNT not in _codes(result.diagnostics)
+
+
+def test_gs_with_seven_elements_is_flagged() -> None:
+    trailer = _CLEAN_TRAILER.replace(
+        b"GS*PO*SENDERGS*RECEIVERID*20240101*1200*1*X*004010~",
+        b"GS*PO*SENDERGS*RECEIVERID*20240101*1200*1*X~",  # GS08 dropped
+    )
+    result = check_payload(clean_payload(build_isa(trailer=trailer)))
+    assert Code.STRUCTURE_SEGMENT_ELEMENT_COUNT in _codes(result.diagnostics)
+
+
 def test_foreign_content_after_iea() -> None:
     # Content before the first GS can never reach QA/QC: extract_isa_line
     # defines the ISA line as ending immediately before GS, so anything

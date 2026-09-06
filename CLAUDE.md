@@ -91,10 +91,12 @@ QA/QC, next.
 One pass over `.segments` (a small open-group/open-transaction-set stack) covers
 everything decided so far: `ISA`/`IEA`, `GS`/`GE`, `ST`/`SE` pairing and nesting;
 control-number agreement and uniqueness; segment/transaction-set/group counts
-(`SE01`/`GE01`/`IEA01`); the A5 identifier-shape gate; `ISA12`/`GS08` version agreement;
-`ISA15` and `GS07` value validity; and foreign content (a segment with no
-structurally valid place to be — this is where all `structure.*`/`gs.*`/`st.*`
-diagnostics live). Deliberately not covered, no decision made: `ISA05`/`ISA07`
+(`SE01`/`GE01`/`IEA01`); the A5 identifier-shape gate; the envelope-segment
+element-count gate (`GS` 8, `GE`/`SE`/`IEA` 2, `ST` 2–3 — `structure.segment-element-count`,
+an error; `ISA`'s 16 is enforced fatally in the ISA-line phase); `ISA12`/`GS08`
+version agreement; `ISA15` and `GS07` value validity; and foreign content (a
+segment with no structurally valid place to be — this is where all
+`structure.*`/`gs.*`/`st.*` diagnostics live). Deliberately not covered, no decision made: `ISA05`/`ISA07`
 qualifiers, `ISA14`, `GS01`, `ST01` shape, date/time format, `TA1`, `BIN`/`BDS`,
 and multiple interchanges in one file.
 

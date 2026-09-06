@@ -20,9 +20,9 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 
 ## Summary
 
-- **47 codes** reviewed. **3 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`, `isa.trailing-newline`), **2 severity changes** (`isa.segment-terminator-stripped` → fatal; `isa.identifier-utf16` → warning + transcode), **4 renamed**, **13 more reworded**, **~26 accepted unchanged**.
+- **47 codes** reviewed. **3 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`, `isa.trailing-newline`), **1 added** (`structure.segment-element-count`), **2 severity changes** (`isa.segment-terminator-stripped` → fatal; `isa.identifier-utf16` → warning + transcode), **4 renamed**, **13 more reworded**, **~26 accepted unchanged**. Registry now 45 codes.
 - Research blocker **RESOLVED** (2026-09-06, A6/A7). Items A–C on `main` (#74). D closed (no change). E (`\r\n`→`\n`) and F (`isa.identifier-utf16` transcode) **✅ done**.
-- **Only open item:** envelope segment cardinality (add the code, or not).
+- Envelope segment cardinality → **`structure.segment-element-count`** added (error; `ISA`'s 16 stays the only fatal one). **The review is complete.**
 
 ### Severity / existence changes
 
@@ -146,29 +146,51 @@ Items A–C on `main` (#74); D closed (no change); E on `main` (#75); F branch
 
 ---
 
-## Possible new code (not decided)
+## New code — `structure.segment-element-count` — ✅ ADDED
 
-- **Envelope segment element cardinality** — nothing flags an unexpected extra
-  element in `ST` / `SE` (`SE*8*0001*JUNK~` passes silently). Would be a new
-  `st.*` / envelope code.
+**Decision (owner, 2026-09-06):** add **one** code for envelope-segment element
+cardinality; it is an **error**, not fatal — only `ISA` ≠ 16 is fatal, and that
+is already enforced in the ISA-line phase.
 
-  Cardinality validated across releases 003010–008010
-  (`docs/research/envelope-segment-element-cardinality.md`, 2026-09-06):
+Cardinality validated across releases 003010–008010
+(`docs/research/envelope-segment-element-cardinality.md`):
 
-  | segment | authorized elements | stable? |
-  |---|---|---|
-  | ISA | 16 | yes — already enforced |
-  | GS | 8 | yes |
-  | GE | 2 | yes |
-  | SE | 2 | yes |
-  | IEA | 2 | yes |
-  | ST | 2, or **3 from release 004020** (ST03 = Implementation Convention Reference, optional) | **changed once, at 004020** |
+| segment | authorized elements | severity |
+|---|---|---|
+| ISA | 16 | fatal — enforced in `extract_isa_line` (unchanged) |
+| GS | 8 | error — `structure.segment-element-count` |
+| GE | 2 | error |
+| SE | 2 | error |
+| IEA | 2 | error |
+| ST | 2 or 3 (ST03 optional, added release 004020) | error |
 
-  ST is the only one that moves. ST03 is *optional* in every release that has it,
-  so a 2-element ST is always valid; what changed at 004020 is the max, 2 → 3.
-  A coarse rule ("ST 2–3, all others exact") needs no version logic; gating ST03
-  on ISA12/GS08 ≥ 004020 is a refinement (same posture as the ISA11 `00403`
-  cutoff). Open: whether pre-004020 ST03 warrants its own severity.
+Implemented in `qaqc/checks.py`: `_ENVELOPE_ELEMENT_COUNTS` + `_check_envelope_cardinality`,
+called once per segment in the walk. `x12_tidy.diagnostics.Code.STRUCTURE_SEGMENT_ELEMENT_COUNT`;
+4 tests in `test_qaqc.py`; docs (`design.md`, `auditing-the-envelope.{md,html}`,
+`CLAUDE.md`, generated `diagnostics.md`) updated.
+
+### Deferred refinement — no version gate on ST03 (for a future review)
+
+**This was a deliberate choice, not an oversight.** The check accepts a
+3-element `ST` in **any** release, but ST03 (the Implementation Convention
+Reference) was only added to the standard in release **004020** — so a 3-element
+`ST` on a `00401` / `003xxx` interchange is technically non-conformant and is
+**not flagged today**.
+
+The gate was left out because:
+
+- it is a narrow edge (an old interchange that also carries a modern optional
+  element), and translators have accepted a back-ported ST03 in practice;
+- the interchange version (`ISA12` / `GS08`) is already in hand during the walk,
+  so adding the gate later is a small, self-contained change — the same shape as
+  the existing `isa.isa11-not-standards-id` cutoff at `00403` (see assumptions
+  A4);
+- a future session revisiting this should also decide the **severity** of a
+  pre-004020 ST03 — its own tier, or fold it into `structure.segment-element-count`.
+
+Revisit alongside the transaction-set content parser (the layer that will
+validate every segment's cardinality against a release-specific dictionary), or
+sooner if a real file surfaces it.
 
 ---
 
@@ -215,7 +237,7 @@ case added to `tests/test_isa_line.py` `CASES`.
 | item D — inter-segment junk consistency | ✅ no change — owner's call, works as is |
 | item E — `\r\n` terminator normalises to `\n` | ✅ branch `refactor/crlf-terminator-normalises-to-lf` |
 | item F — `isa.identifier-utf16` fatal→warning transcode | ✅ branch `refactor/utf16-transcode` |
-| envelope segment cardinality | not started — undecided (counts validated, A8) |
+| `structure.segment-element-count` (new code, error) | ✅ branch `feat/segment-element-count` |
 | 4 note **PDFs** re-printed | ✅ this PR — regenerated from the fixed HTML (headless Chrome) |
 | delimiter/terminator legality research (A6, A7) + `docs/research/` note | ✅ branch `docs/delimiter-research-and-dlms-sample` |
 | `isa.gs-not-found` → `isa.element-separator-invalid` when byte 4 is alnum | ✅ branch `docs/delimiter-research-and-dlms-sample` |

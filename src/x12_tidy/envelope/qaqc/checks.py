@@ -6,7 +6,9 @@ r"""Envelope QA/QC -- checks that run once a cleansed payload exists.
 Scope: everything decided in the QA/QC design pass -- envelope pairing
 (``GS``/``GE``, ``ST``/``SE``, and the interchange's own ``ISA``/``IEA``),
 control-number and count agreement, control-number uniqueness, segment-identifier
-shape (the A5 gate), the ``ISA12``/``GS08`` version check, ``ISA15`` usage
+shape (the A5 gate), the envelope-segment element-count gate (``GS`` 8,
+``GE``/``SE``/``IEA`` 2, ``ST`` 2 or 3 -- ``ISA``'s 16 is enforced fatally
+upstream), the ``ISA12``/``GS08`` version check, ``ISA15`` usage
 indicator validity, and ``GS07`` responsible-agency validity. Deliberately
 **not** covered here (no decision made yet, do not add without one): ``ISA05``/
 ``ISA07`` qualifiers, ``ISA14``, ``GS01``, ``ST01`` shape, or any date/time
@@ -41,6 +43,24 @@ from x12_tidy.envelope.structure.segments import split_elements
 
 _VALID_USAGE_INDICATORS = (b"T", b"P", b"I")
 _VALID_RESPONSIBLE_AGENCIES = (b"X", b"T")
+
+#: How many data elements each envelope segment is defined to carry, across every
+#: X12 release (see docs/research/envelope-segment-element-cardinality.md). ``ISA``
+#: is always 16 and is enforced earlier, in the ISA-line phase -- a wrong ISA
+#: element count is fatal there; a wrong count on any of these is an error, not a
+#: refusal.
+#:
+#: ``ST`` accepts 3 (ST03, the optional Implementation Convention Reference) in
+#: *every* release, even though ST03 was only added in 004020. Gating it on the
+#: interchange version is a deliberately deferred refinement -- see
+#: DIAGNOSTICS-REVIEW.md, "Deferred refinement -- no version gate on ST03".
+_ENVELOPE_ELEMENT_COUNTS: dict[bytes, tuple[int, ...]] = {
+    b"GS": (8,),
+    b"GE": (2,),
+    b"ST": (2, 3),
+    b"SE": (2,),
+    b"IEA": (2,),
+}
 
 
 def _is_numeric(value: bytes) -> bool:
@@ -129,6 +149,7 @@ class _Walker:
             elements = split_elements(segment, element_separator)
             identifier = elements[0] if elements else b""
             self._check_identifier_shape(identifier, segment)
+            self._check_envelope_cardinality(identifier, elements)
             self._dispatch(identifier, elements, segment)
 
         if self._current_group is not None:
@@ -144,6 +165,22 @@ class _Walker:
                 f"segment {segment!r} has a identifier that does not begin with an "
                 "uppercase letter.",
             ))
+
+    def _check_envelope_cardinality(
+        self, identifier: bytes, elements: list[bytes]
+    ) -> None:
+        allowed = _ENVELOPE_ELEMENT_COUNTS.get(identifier)
+        if allowed is None:
+            return
+        count = len(elements) - 1  # elements[0] is the identifier
+        if count in allowed:
+            return
+        want = " or ".join(str(n) for n in allowed)
+        self.diagnostics.append(Diagnostic(
+            Code.STRUCTURE_SEGMENT_ELEMENT_COUNT,
+            f"{identifier.decode()} carries {count} element(s); the standard "
+            f"defines {want}.",
+        ))
 
     def _dispatch(self, identifier: bytes, elements: list[bytes], segment: bytes) -> None:
         if identifier == b"GS":

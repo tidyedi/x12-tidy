@@ -289,6 +289,7 @@ SE01 (Number of Included Segments) must equal the actual count of segments in th
 | `structure.functional-group-count-mismatch` | fatal | IEA01 does not match the number of functional groups found |
 | `structure.identifier-invalid` | error | A segment identifier does not begin with an uppercase letter |
 | `structure.missing-iea` | fatal | No IEA segment closes the interchange |
+| `structure.segment-element-count` | error | An envelope segment has the wrong number of elements |
 
 ### `structure.control-number-mismatch`
 
@@ -331,3 +332,9 @@ Every X12 segment identifier begins with an uppercase letter (X12.6); the rest i
 *fatal* — No IEA segment closes the interchange
 
 Every ISA interchange must be closed by a matching IEA segment. None was found before the end of the file. This is QA/QC's 'fatal' -- a display/trust signal, not a stop: the rest of the payload is still scanned and every other finding is still reported.
+
+### `structure.segment-element-count`
+
+*error* — An envelope segment has the wrong number of elements
+
+An envelope segment carries a number of data elements the standard does not define for it: GS has 8, GE / SE / IEA have 2, and ST has 2 or 3 (ST03, the optional Implementation Convention Reference, was added in release 004020). An extra element is usually a stray delimiter or appended data; too few means a required element is missing. Reported as an error, not a refusal -- the envelope is still walkable. (ISA is always 16 elements; a wrong count there is fatal and is caught earlier, in the ISA-line phase.)
