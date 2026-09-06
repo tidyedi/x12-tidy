@@ -97,6 +97,13 @@ def test_non_standard_terminator_is_what_the_split_uses() -> None:
     ]
 
 
+def test_crlf_delimited_interchange_normalises_to_lf() -> None:
+    # every segment ends `\r\n`, no `~` anywhere: the terminator recovers as
+    # `\n` and each piece comes out clean -- no trailing `\r`.
+    raw = build_isa().replace(b"~", b"\r\n")
+    assert split_segments(raw) == _CLEAN_SEGMENTS
+
+
 def test_non_standard_element_separator_is_left_inside_the_segment() -> None:
     raw = build_isa(sep=b"|")
     segments = split_segments(raw)

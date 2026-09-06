@@ -9,6 +9,8 @@ interchange:
 1. locate the ISA line and recover the segment terminator (via
    :mod:`x12_tidy.envelope.isa`);
 2. take everything from the ``GS`` functional-group header onward;
+2a. if the terminator is ``\n``, collapse ``\r\n`` to ``\n`` -- a DOS line
+   ending is not part of a segment (matches ``split_isa_line``);
 3. ``strip`` whitespace **and the segment terminator** from the ends -- this
    drops any trailing whitespace after the final ``IEA`` segment and the
    terminator that closes it, so the split does not leave a trailing empty
@@ -55,6 +57,11 @@ def split_segments(dirty: bytes) -> list[bytes]:
         return []
 
     contents = dirty[located.isa_start + len(located.isa_line):]
+    if terminator == b"\n":
+        # match split_isa_line: a CR right before the LF terminator is a DOS
+        # line ending, not part of a segment -- collapse it so the split does
+        # not leave a trailing CR on every piece.
+        contents = contents.replace(b"\r\n", b"\n")
     contents = contents.strip(_WHITESPACE + terminator)
     return [piece.lstrip(_WHITESPACE) for piece in contents.split(terminator)]
 

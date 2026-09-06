@@ -114,12 +114,20 @@ def test_tilde_crlf_terminator_splits_deterministically() -> None:
     assert d.usable
 
 
-def test_bare_crlf_terminator_is_one_byte_by_rule() -> None:
+def test_bare_crlf_terminator_normalises_to_lf() -> None:
     d = split_isa_line(run_of(term=b"\r\n"))
-    # the 1-byte rule: \r is the terminator, \n falls to trailing
+    # `\r\n` is a DOS line ending: the terminator is the LF, the CR is dropped
+    assert d.segment_terminator == b"\n"
+    assert d.trailing == b""
+    assert codes(d.diagnostics) == []
+    assert d.usable
+
+
+def test_bare_cr_terminator_is_kept_as_the_senders_choice() -> None:
+    d = split_isa_line(run_of(term=b"\r"))
+    # a lone CR with no LF after it is a legitimate 1-byte terminator
     assert d.segment_terminator == b"\r"
-    assert d.trailing == b"\n"
-    # the trailing \n is a line break -- lawful, not flagged
+    assert d.trailing == b""
     assert codes(d.diagnostics) == []
     assert d.usable
 

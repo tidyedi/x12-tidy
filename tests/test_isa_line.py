@@ -43,7 +43,7 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
      b"ISA*00*x~GS*", [Code.ISA_INTERCHANGE_TOO_SHORT], False),
     ("newline appended after terminator (~\\r\\n)",
      build_isa(term=b"~\r\n"), [], True),
-    ("bare \\r\\n terminator (2 bytes)",
+    ("bare \\r\\n terminator (normalised to \\n)",
      build_isa(term=b"\r\n"), [], True),
     ("space between terminator and GS",
      build_isa(term=b"~ "), [], True),

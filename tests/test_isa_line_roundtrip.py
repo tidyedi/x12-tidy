@@ -134,7 +134,11 @@ def test_clean_refusal_or_lossless_account(dirty: bytes) -> None:
     assert run[3:4] == delimiters.element_separator
     last = parts[16]
     assert last[0:1] == delimiters.component_separator
-    tail = last[1:]
-    if tail:  # terminator present in the bytes (not reconstructed from nothing)
+    tail = last[1:]  # the bytes after ISA16: terminator + trailing
+    if tail[:2] == b"\r\n":
+        # `\r\n` is normalised -- the terminator is the LF, the leading CR dropped
+        assert delimiters.segment_terminator == b"\n"
+        assert delimiters.trailing == tail[2:]
+    elif tail:  # terminator present in the bytes (not reconstructed from nothing)
         assert tail[0:1] == delimiters.segment_terminator
         assert tail[1:] == delimiters.trailing

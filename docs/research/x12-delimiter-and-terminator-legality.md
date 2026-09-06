@@ -172,7 +172,7 @@ dispositions. In brief:
 | `isa.delimiter-misaligned` | reword: name ISA16, name the "byte equal to the element separator inside ISA06/ISA08" cause | ✅ done |
 | `isa.trailing-newline` | **removed** — a bare CR/LF/CRLF after the ISA terminator is conformant (A7); kept in the tail, out of the canonical line, not flagged | ✅ done |
 | `isa.trailing-junk` | **kept** for genuine foreign bytes only (spaces, comment, transport framing) | ✅ done |
-| `\r\n`-with-no-`~` bug | lone `\n` after a `\r` terminator should be part of the terminator | not started (item E) |
+| `\r\n` terminator | normalise to `\n`, drop the CR as a DOS line ending | ✅ done (item E) |
 | `isa.identifier-utf16` | research no longer blocks the fatal→warning transcode; still gated on a separate owner go-ahead | not started (item F) |
 
 A concrete artifact that exercises `isa.separator-count-high` (and, before its
