@@ -92,18 +92,40 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 
 ---
 
-## Research blocker
+## Research blocker — RESOLVED 2026-09-06
 
-**What bytes are legal X12 delimiters?** The model wrongly said "punctuation";
-non-alphanumeric non-punctuation bytes (control chars `0x1C`–`0x1F`, etc.) are
-legal in practice. Get the exact X12.6 statement, add it as a cited assumption
-alongside A1–A5 (see the assumptions note), then align:
+**What bytes are legal X12 delimiters?** Answer: the standard defines **no
+permitted character set**. Only two normative rules — (1) the four delimiters
+must all differ (X12.6 §3.4; RFI #2026); (2) a delimiter byte must not appear as
+data anywhere in the interchange except inside a binary element (X12.6 §3.4;
+TR3 §B.1.1.2.5; RFI #1815, #2026). Delimiters are explicitly *not* restricted to
+`* ^ : ~`, and **may be non-printable control characters** — that is the
+recommended choice (TR3 §B.1.1.2.2–B.1.1.2.3). Recorded as assumption **A6**.
 
-- `isa.element-separator-invalid`, `isa.segment-terminator-invalid`, `isa.delimiter-misaligned` — wording
-- `isa.trailing-junk` / `isa.trailing-newline` — whether a CR/LF suffix is even a deviation
-- `isa.tag-utf16` — unblocks the transcode change
+**CR/LF around the segment terminator** — valid at the sender's discretion,
+X12.5 §4.3 / §A.3.1, RFI #2207. Recorded as assumption **A7**.
 
-Also to confirm: whether X12.6 sanctions a CR/LF **segment-terminator suffix**.
+Alignment (dispositions — pending owner sign-off):
+
+- `isa.element-separator-invalid`, `isa.segment-terminator-invalid` — keep the
+  `fatal` gate (an alphanumeric delimiter is structurally unrecoverable), but
+  reword: drop "X12 element separators are non-alphanumeric"; say the byte can't
+  be told apart from element data so no segment splits reliably. The trigger is a
+  recoverability heuristic, not a standards rule.
+- `isa.delimiter-misaligned` — reword per the full-table note (name ISA16, name
+  the "separator byte inside ISA06/ISA08" cause, drop "delimiter-shaped bytes").
+- `isa.trailing-newline` — **remove.** A bare CR/LF/CRLF after the ISA segment
+  terminator is conformant (A7); preserve/normalise it silently like a non-`~`
+  terminator.
+- `isa.trailing-junk` — **keep**, for genuine foreign bytes only (comment,
+  transport framing, stray spaces). Resolve the consistency gap by stripping
+  newlines silently everywhere (`split_segments` already does).
+- Separate bug (independent of the above): `\r\n`-terminated file with no `~` →
+  1-byte-terminator rule takes `\r` as terminator, `\n` as trailing → spurious
+  finding. Fix: treat a lone `\n` right after a `\r` terminator as part of the
+  terminator.
+- `isa.identifier-utf16` transcode — research no longer blocks it; still gated on
+  an explicit owner go-ahead (separate later-discussion item).
 
 ---
 
@@ -111,6 +133,31 @@ Also to confirm: whether X12.6 sanctions a CR/LF **segment-terminator suffix**.
 
 - **ST/SE element cardinality** — nothing flags an unexpected extra element in
   `ST` or `SE` (`SE*5*0001*JUNK~` passes silently). Would be a new `st.*` code.
+
+---
+
+## Misleading `isa.gs-not-found` when byte 4 is not a delimiter — ✅ FIXED
+
+Raised 2026-09-06 (owner). When the ISA element separators are stripped so that
+byte 4 of the ISA segment is alphanumeric (e.g. an interchange pasted out of a
+PDF: `ISA00 00 01...` with no `*`), `extract_isa_line` took byte 4 as the
+separator by rule, built the boundary token `GS` + that byte (`GS0`), failed to
+find it, and refused with **`isa.gs-not-found`** — misleading, because the `GS`
+segment is present (`GSCT...`); the real defect is that **byte 4 is not a valid
+delimiter**.
+
+Root cause was ordering: `extract_isa_line` (locate) uses byte 4 as a *locating*
+token before `split_isa_line` (stage 2, where `isa.element-separator-invalid`
+lives) ever runs. When stage 1 refused, stage 2 never saw the run.
+
+**Fix (done):** in `isa_line.py::_try_candidate`, the `gs_pos == -1` branch now
+checks `element_separator.isalnum()` — if the derived separator is a letter or
+digit, it returns **`isa.element-separator-invalid`** (fatal, root cause) instead
+of `isa.gs-not-found`. Same severity, same refusal, accurate reason. The
+"alphanumeric separator, GS at 106" case is unaffected (fast path, never reaches
+this branch). "Invalid", not "missing" — a byte is present, it just cannot be a
+delimiter; no `isa.element-separator-missing` code, `invalid` covers it. One test
+case added to `tests/test_isa_line.py` `CASES`.
 
 ---
 
@@ -132,3 +179,6 @@ Also to confirm: whether X12.6 sanctions a CR/LF **segment-terminator suffix**.
 | `isa.identifier-utf16` transcode | not started — explicit later-discussion TODO |
 | ST/SE cardinality | not started — undecided |
 | 4 note **PDFs** re-printed | ✅ this PR — regenerated from the fixed HTML (headless Chrome) |
+| delimiter/terminator legality research (A6, A7) + `docs/research/` note | ✅ branch `docs/delimiter-research-and-dlms-sample` |
+| `isa.gs-not-found` → `isa.element-separator-invalid` when byte 4 is alnum | ✅ branch `docs/delimiter-research-and-dlms-sample` |
+| `samples/` — DLMS 831 interchange + README | ✅ branch `docs/delimiter-research-and-dlms-sample` |

@@ -215,8 +215,20 @@ if hay[STANDARD_GS_OFFSET:STANDARD_GS_OFFSET + 3] == needle:
 else:
     gs_pos = hay.find(needle)
     if gs_pos == -1:
+        if element_separator.isalnum():
+            # byte 3 is a letter or digit -- it is element data, not a
+            # delimiter, so `GS` + that byte was never a real search token
+            return _Attempt(None, Diagnostic(Code.ISA_ELEMENT_SEPARATOR_INVALID, ...))
         return _Attempt(None, Diagnostic(Code.ISA_GS_NOT_FOUND, ...))
 ```
+
+The `isalnum` check earns its place. A file with its element separators stripped
+out — pasted from a PDF, mangled by a mail gateway — leaves byte 3 holding the
+first digit of `ISA01` instead of a `*`. The search token becomes `GS0`, which
+is nowhere, and the honest diagnosis is "byte 3 is not a delimiter", not "there
+is no GS header" — the `GS` segment is usually sitting right there in the file.
+This is the one delimiter judgement Step 1 makes, and only because without it the
+downstream stage that would raise `isa.element-separator-invalid` never runs.
 
 ### 5.2 Require *exactly* 16 separators — not "at least"
 

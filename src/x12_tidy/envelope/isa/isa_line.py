@@ -34,7 +34,8 @@ Flow
      b. ``element_separator = cleansed[3:4]``;  ``gs = b"GS" + separator``
      c. ``cleansed[106:109] == gs`` -> ``gs_pos = 106`` (fast path)
         else ``gs_pos = cleansed.find(gs)``;  not found -> fail
-        (``isa.gs-not-found``)
+        (``isa.element-separator-invalid`` if ``cleansed[3:4]`` is a letter or
+        digit -- the search token was meaningless; otherwise ``isa.gs-not-found``)
      d. ``isa_line = cleansed[:gs_pos]``;  it must hold **exactly 16** element
         separators -- ``< 16`` -> fail (``isa.separator-count-low``),
         ``> 16`` -> fail (``isa.separator-count-high``: the GS we found is not
@@ -155,6 +156,21 @@ def _try_candidate(
     else:
         gs_pos = hay.find(needle)
         if gs_pos == -1:
+            # The GS boundary is searched for as 'GS' + the 4th ISA byte. If
+            # that byte is a letter or digit it is element data, not a
+            # delimiter -- the search token is meaningless, so the real fault
+            # is the separator, not a missing GS (which is usually present in
+            # the file, just not as 'GS' + that byte). Report the root cause;
+            # delimiters.py would otherwise never get to raise it.
+            if element_separator.isalnum():
+                return _Attempt(None, Diagnostic(
+                    Code.ISA_ELEMENT_SEPARATOR_INVALID,
+                    f"the element separator (4th byte of the ISA segment) is "
+                    f"{element_separator!r}, a letter or digit -- it cannot be "
+                    f"told apart from element data, so the ISA line can be "
+                    f"neither delimited nor bounded.",
+                    offset=isa_start + 3,
+                ))
             return _Attempt(None, Diagnostic(
                 Code.ISA_GS_NOT_FOUND,
                 f"no {gs_identifier!r} functional-group header after the ISA "

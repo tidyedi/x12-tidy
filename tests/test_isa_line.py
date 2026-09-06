@@ -66,6 +66,11 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
      [Code.ISA_GS_NOT_FOUND], False),
     ("alphanumeric element separator '7', GS at 106",
      build_isa(sep=b"7"), [], True),
+    ("element separators stripped -> 4th ISA byte is a digit, GS not locatable",
+     b"ISA00 00 011515151515 015151515151 0412011217U004030000321230P|~"
+     b"GSCT99887766551122334455200412011217128X004030~"
+     b"ST83100128001~SE800128001~GE1128~IEA1000032123~",
+     [Code.ISA_ELEMENT_SEPARATOR_INVALID], False),
     ("pipe separator, LF terminator",
      build_isa(sep=b"|", term=b"\n"), [], True),
     ("literal 'GS' text inside ISA06, real GS follows",
