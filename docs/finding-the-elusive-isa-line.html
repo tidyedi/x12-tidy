@@ -729,12 +729,30 @@ gs_identifier     = GS_IDENTIFIER + element_separator
 <span class="k">else</span>:
     gs_pos = hay.find(needle)
     <span class="k">if</span> gs_pos == -1:
+        <span class="k">if</span> element_separator.isalnum():
+            <span class="c"># byte 3 is a letter/digit -- element data, not a delimiter,</span>
+            <span class="c"># so `GS` + that byte was never a real search token</span>
+            <span class="k">return</span> _Attempt(None, Diagnostic(
+                Code.ISA_ELEMENT_SEPARATOR_INVALID, ...,
+                offset=isa_start + 3,
+            ))
         <span class="k">return</span> _Attempt(None, Diagnostic(
             Code.ISA_GS_NOT_FOUND,
             <span class="s">f"no {gs_identifier!r} functional-group header after the ISA "</span>
             <span class="s">f"segment; cannot locate the end of the ISA line."</span>,
             offset=isa_start,
         ))</code></pre>
+    </div>
+    <div class="prose">
+      <p>The <code>isalnum</code> check earns its place. A file with its element
+      separators stripped out — pasted from a PDF, mangled by a mail gateway —
+      leaves byte 3 holding the first digit of <code>ISA01</code> instead of a
+      <code>*</code>. The search token becomes <code>GS0</code>, which is
+      nowhere, and the honest diagnosis is "byte 3 is not a delimiter", not
+      "there is no GS header" — the <code>GS</code> segment is usually sitting
+      right there in the file. This is the one delimiter judgement Step&nbsp;1
+      makes, and only because without it the downstream stage that would raise
+      <code>isa.element-separator-invalid</code> never runs.</p>
     </div>
 
     <h3>5.2&nbsp;&nbsp;Require <em>exactly</em> 16 separators — not "at least"</h3>
