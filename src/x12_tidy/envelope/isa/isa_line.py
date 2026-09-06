@@ -19,9 +19,11 @@ Flow
 1. Collect every offset of the exact bytes ``ISA`` (up to
    :data:`MAX_ISA_CANDIDATES`) and try each (step 3). The first that yields a
    clean run wins.
-2. If none did: a NUL-interleaved ``I S A`` near the start -> ``isa.identifier-utf16``
-   (fatal). Otherwise take one lower-case copy of the buffer, collect the
-   ``isa`` offsets, and try those case-insensitively (``GS`` matched
+0. A NUL-interleaved ``I S A`` near the start (or a UTF-16 BOM) -> the buffer is
+   transcoded from UTF-16 to single-byte and re-parsed, carrying
+   ``isa.identifier-utf16`` (warning). Offsets then index the transcoded bytes.
+2. If no uppercase ``ISA`` yielded a run: take one lower-case copy of the
+   buffer, collect the ``isa`` offsets, and try those case-insensitively (``GS`` matched
    case-insensitively too), carrying ``isa.identifier-lowercase`` (error). This also
    rescues a lowercase segment that sits behind junk containing the literal
    uppercase word ``ISA``. If that finds nothing usable either -> ``isa.no-identifier``
@@ -87,10 +89,40 @@ ISA_ELEMENT_SEPARATORS = 16
 #: Cap on how many ``ISA`` occurrences to try before giving up -- guards against
 #: a pathological file that is mostly the bytes ``ISA``.
 MAX_ISA_CANDIDATES = 16
-#: What a UTF-16-encoded ``ISA`` identifier looks like (LE, then BE).
+#: What a UTF-16-encoded ``ISA`` identifier looks like: LE is ``I . S . A``, BE
+#: is ``. I . S . A`` (``.`` = NUL). The BE marker contains the LE marker, so a
+#: caller must test BE first.
 _UTF16_MARKERS = (b"I\x00S\x00A", b"\x00I\x00S\x00A")
 #: How far into the file to look for the UTF-16 markers.
 _UTF16_SCAN_LEN = 512
+
+
+def decode_utf16(dirty: bytes) -> bytes | None:
+    """Return ``dirty`` transcoded from UTF-16 to single-byte, or ``None`` if it
+    is not UTF-16.
+
+    A conformant X12 interchange is a single-byte stream; a UTF-16 export
+    interleaves a NUL with every character and nothing downstream can parse it.
+    Valid X12 content is ASCII, so the transcription is lossless -- a byte that
+    somehow lands outside Latin-1 becomes ``?``. Byte order comes from the BOM
+    when present, otherwise from which ``ISA`` marker is found.
+
+    Offsets into the returned bytes do **not** map to the original file; the
+    caller that surfaces this must say so.
+    """
+    head = dirty[:_UTF16_SCAN_LEN]
+    if dirty[:2] in (b"\xff\xfe", b"\xfe\xff"):
+        codec = "utf-16"                     # the BOM carries the byte order
+    elif _UTF16_MARKERS[1] in head:          # BE -- must be tested before LE
+        codec = "utf-16-be"
+    elif _UTF16_MARKERS[0] in head:          # LE
+        codec = "utf-16-le"
+    else:
+        return None
+    try:
+        return dirty.decode(codec).encode("latin-1", "replace")
+    except (UnicodeDecodeError, ValueError):
+        return None
 
 
 @dataclass
@@ -207,22 +239,29 @@ def _try_candidate(
 
 def extract_isa_line(dirty: bytes) -> IsaLineResult:
     """Return the ISA line from ``dirty`` -- see the module docstring."""
+    # UTF-16? Transcode to single-byte and parse that. The notice is a warning,
+    # not a refusal -- valid X12 content is ASCII, so the transcription is
+    # lossless. Every offset from here on indexes the transcoded bytes.
+    transcoded = decode_utf16(dirty)
+    if transcoded is not None:
+        inner = extract_isa_line(transcoded)
+        notice = Diagnostic(
+            Code.ISA_IDENTIFIER_UTF16,
+            "the file is UTF-16 encoded -- the ISA identifier appears with "
+            "interleaved NUL bytes. Transcoded to single-byte and parsed; every "
+            "offset below indexes the transcoded bytes, not the original file.",
+            offset=0,
+        )
+        return IsaLineResult(
+            inner.isa_line, inner.isa_start, [notice, *inner.diagnostics]
+        )
+
     # Fast path: exact uppercase ISA identifiers. The overwhelming common case, and it
     # never copies the buffer.
     upper = _isa_offsets(dirty, ISA_IDENTIFIER)
     result, upper_failure = _try_all(dirty, upper, case_insensitive=False)
     if result is not None:
         return result
-
-    # No uppercase identifier produced an ISA line. UTF-16 only matters when there is
-    # no uppercase identifier at all.
-    if not upper and any(m in dirty[:_UTF16_SCAN_LEN] for m in _UTF16_MARKERS):
-        return IsaLineResult(None, -1, [Diagnostic(
-            Code.ISA_IDENTIFIER_UTF16,
-            "the ISA identifier appears with interleaved NUL bytes; the file looks "
-            "UTF-16 encoded. X12 requires a single-byte encoding.",
-            offset=0,
-        )])
 
     # Case-insensitive fallback -- one full-buffer lower-case copy, only on this
     # already-failed path. Handles a lowercase/mixed-case ISA identifier, including one

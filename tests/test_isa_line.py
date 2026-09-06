@@ -24,6 +24,10 @@ def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
     if r.isa_line is None:
         return
     assert r.isa_line[:3].upper() == b"ISA"
+    if any(d.code is Code.ISA_IDENTIFIER_UTF16 for d in r.diagnostics):
+        # the file was transcoded before parsing -- offsets index the
+        # transcoded bytes, not `dirty`, so the prefix check does not apply
+        return
     cleansed = dirty[r.isa_start:]
     assert cleansed.startswith(r.isa_line)
     assert cleansed[len(r.isa_line):][:2].upper() == b"GS"
@@ -112,12 +116,18 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
     ("plain text with 'isa' only inside a word, no EDI",
      b"this reading is advisable for everyone involved. " * 4,
      [Code.ISA_NO_IDENTIFIER], False),
-    ("UTF-16LE encoded file",
+    ("UTF-16LE encoded file -> transcoded and parsed",
      build_isa().decode().encode("utf-16-le"),
-     [Code.ISA_IDENTIFIER_UTF16], False),
-    ("UTF-16BE encoded file",
+     [Code.ISA_IDENTIFIER_UTF16], True),
+    ("UTF-16BE encoded file -> transcoded and parsed",
      build_isa().decode().encode("utf-16-be"),
-     [Code.ISA_IDENTIFIER_UTF16], False),
+     [Code.ISA_IDENTIFIER_UTF16], True),
+    ("UTF-16LE with a BOM -> transcoded and parsed",
+     b"\xff\xfe" + build_isa().decode().encode("utf-16-le"),
+     [Code.ISA_IDENTIFIER_UTF16], True),
+    ("UTF-16 markers but not actually decodable (odd length) -> no identifier",
+     b"I\x00S\x00A\x00" + b"x" * 41,
+     [Code.ISA_NO_IDENTIFIER], False),
 ]
 
 

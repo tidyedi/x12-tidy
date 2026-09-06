@@ -152,17 +152,18 @@ META: dict[Code, CodeMeta] = {
         ),
     ),
     Code.ISA_IDENTIFIER_UTF16: CodeMeta(
-        default_severity="fatal",
-        title="File appears to be UTF-16 encoded",
+        default_severity="warning",
+        title="File is UTF-16 encoded",
         explanation=(
             "The bytes 'I', 'S', 'A' appear separated by NUL bytes near the "
-            "start of the file, which is what a UTF-16-encoded 'ISA' looks "
-            "like. X12 interchanges must use a single-byte encoding (ASCII, "
-            "Latin-1, or UTF-8 without a wide encoding). This is fatal rather "
-            "than transcoded: guessing the byte order and trusting or "
-            "inferring a BOM before parsing has even started is exactly the "
-            "kind of guess x12-tidy refuses to make elsewhere. Re-export the "
-            "file in a single-byte encoding and try again."
+            "start of the file -- a UTF-16-encoded 'ISA'. An X12 interchange is "
+            "a single-byte stream, so x12-tidy transcodes the file to "
+            "single-byte and parses that. Byte order is taken from the BOM if "
+            "present, otherwise from which 'ISA' marker is found; valid X12 "
+            "content is ASCII, so the transcription is lossless. Because the "
+            "file was rewritten before parsing, every offset in the report "
+            "indexes the transcoded bytes, not the original file. Re-export in "
+            "a single-byte encoding to remove this warning."
         ),
     ),
     Code.ISA_LEADING_BYTES: CodeMeta(

@@ -29,8 +29,8 @@ import pytest
 
 from _isa_helpers import ISA_ELEMENTS, build_isa
 from test_isa_line import CASES as _EXTRACT_CASES
-from x12_tidy.diagnostics import resolved_severity
-from x12_tidy.envelope.isa import extract_isa_line, split_isa_line
+from x12_tidy.diagnostics import Code, resolved_severity
+from x12_tidy.envelope.isa import decode_utf16, extract_isa_line, split_isa_line
 
 
 def _elements(**overrides: bytes) -> list[bytes]:
@@ -98,6 +98,12 @@ def test_clean_refusal_or_lossless_account(dirty: bytes) -> None:
         assert result.diagnostics, "a refusal must say why"
         assert _has_fatal(result.diagnostics), "a refusal must be fatal"
         return
+
+    # a UTF-16 file is transcoded before parsing -- `dirty` is the original,
+    # `run`/offsets are into the transcoded bytes, so `dirty` cannot be indexed
+    if any(d.code is Code.ISA_IDENTIFIER_UTF16 for d in result.diagnostics):
+        dirty = decode_utf16(dirty)
+        assert dirty is not None
 
     # Step 1 returned a run -- the locating contract must hold
     run = result.isa_line

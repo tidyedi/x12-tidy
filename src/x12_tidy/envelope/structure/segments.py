@@ -38,7 +38,7 @@ diagnostics, which a caller gets from :func:`x12_tidy.envelope.isa.clean_isa_lin
 
 from __future__ import annotations
 
-from x12_tidy.envelope.isa import extract_isa_line, split_isa_line
+from x12_tidy.envelope.isa import decode_utf16, extract_isa_line, split_isa_line
 
 #: Bytes trimmed from the front of every segment -- the ASCII whitespace set,
 #: matching ``bytes.strip()`` / ``bytes.lstrip()`` with no argument.
@@ -47,6 +47,7 @@ _WHITESPACE = b" \t\n\r\x0b\x0c"
 
 def split_segments(dirty: bytes) -> list[bytes]:
     """Return the raw segments of ``dirty`` -- see the module docstring."""
+    dirty = decode_utf16(dirty) or dirty  # parse the single-byte form of a UTF-16 file
     located = extract_isa_line(dirty)
     if located.isa_line is None:
         return []

@@ -14,7 +14,11 @@
 from __future__ import annotations
 
 from x12_tidy.envelope.isa.delimiters import IsaDecomposition, split_isa_line
-from x12_tidy.envelope.isa.isa_line import IsaLineResult, extract_isa_line
+from x12_tidy.envelope.isa.isa_line import (
+    IsaLineResult,
+    decode_utf16,
+    extract_isa_line,
+)
 from x12_tidy.envelope.isa.reconstruct import (
     ReconstructedIsaLine,
     clean_isa_line,
@@ -24,6 +28,7 @@ from x12_tidy.envelope.isa.reconstruct import (
 __all__ = [
     "IsaLineResult",
     "extract_isa_line",
+    "decode_utf16",
     "IsaDecomposition",
     "split_isa_line",
     "ReconstructedIsaLine",

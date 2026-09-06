@@ -119,10 +119,13 @@ Key points:
 
   When no candidate yields exactly 16, the **first** candidate's failure is
   reported.
-- **Lowercase and wide encodings.** The uppercase `ISA` candidates are tried
-  first (no buffer copy). Only if none parse: a NUL-interleaved `I S A` near the
-  start → `isa.identifier-utf16` (fatal, "re-export the file"); otherwise one
-  lower-case copy of the buffer, and the `isa` offsets are tried
+- **Wide encodings.** A NUL-interleaved `I S A` near the start (or a UTF-16 BOM)
+  → the buffer is transcoded from UTF-16 to single-byte and re-parsed, carrying
+  `isa.identifier-utf16` (warning); every offset from there on indexes the
+  transcoded bytes. Valid X12 content is ASCII, so the transcription is lossless.
+- **Lowercase identifiers.** The uppercase `ISA` candidates are tried first (no
+  buffer copy). Only if none parse: one lower-case copy of the buffer, and the
+  `isa` offsets are tried
   case-insensitively (`GS` matched case-insensitively too) carrying
   `isa.identifier-lowercase` (error). This also rescues a lowercase segment sitting
   behind junk that contains the literal uppercase word `ISA`. A file with a

@@ -76,6 +76,16 @@ def test_isa_line_repair_is_reflected_in_the_payload() -> None:
     assert result.payload.startswith(result.isa_result.isa_line)
 
 
+def test_utf16_input_is_transcoded_to_a_clean_single_byte_payload() -> None:
+    clean = build_isa()
+    for codec in ("utf-16-le", "utf-16-be", "utf-16"):  # last one writes a BOM
+        result = clean_payload(clean.decode().encode(codec))
+        assert result.payload is not None
+        assert 0x00 not in result.payload           # the NUL interleaving is gone
+        assert result.payload == clean              # lossless: ASCII content
+        assert Code.ISA_IDENTIFIER_UTF16 in _codes(result)
+
+
 def test_refuses_when_isa_line_cannot_be_recovered() -> None:
     result = clean_payload(b"this is not an edi file at all")
     assert result.payload is None
