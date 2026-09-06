@@ -570,7 +570,8 @@
         case&#8209;sensitive <code>find(b"ISA")</code> reports an empty file.</li>
       <li><b>Wide encodings.</b> The file is UTF&#8209;16; the identifier is
         <code>I&nbsp;00&nbsp;S&nbsp;00&nbsp;A&nbsp;00</code>. Nothing matches
-        <code>ISA</code>.</li>
+        <code>ISA</code>; the file is transcoded to single&#8209;byte and
+        re&#8209;parsed.</li>
       <li><b>The element separator inside element data.</b> A sender whose ID
         contains <code>*</code> while using <code>*</code> as the separator. The
         segment now has 17 separators and no single correct parse.</li>
@@ -634,23 +635,24 @@
     </figure>
 
     <div class="note">
-      <span class="kicker">Why UTF-16 is fatal, not transcoded</span>
-      Every other row in that table is a malformed X12 interchange — the bytes
-      are still X12, just not conformant ones, and locating the ISA line
-      tolerates that. A UTF-16-encoded file isn't a malformed interchange; it
-      isn't X12 bytes at all. The standard predates Unicode and is
-      single-byte-per-character throughout — there is no legal X12 interchange
-      that is anything else. Decoding one would mean guessing the variant (LE
-      or BE), trusting or inferring a byte-order mark, and re-encoding the
-      whole file before parsing has even started. That is exactly the kind of
-      guess this tool refuses to make everywhere else in this note — an
-      ambiguous separator count gets reported, not resolved; a truncated
-      element gets padded by rule, not inferred. The interleaved-NUL pattern
-      (<code>I\x00S\x00A</code>, or the big-endian mirror) is cheap and
-      unambiguous to detect, so x12-tidy names it and stops
-      (<code>isa.identifier-utf16</code>, &ldquo;re-export the file&rdquo;) rather
-      than attempt a conversion that could silently mis-decode and hand back a
-      diagnosis of the wrong bytes.
+      <span class="kicker">Why UTF-16 is transcoded, not fatal</span>
+      The standard predates Unicode and is single-byte-per-character throughout
+      — there is no legal X12 interchange that is anything else, so a UTF-16
+      file is not a malformed interchange, it is the right interchange in the
+      wrong wrapper. Unwrapping it is not a guess: the byte order comes from the
+      byte-order mark when present, otherwise from which of the two
+      interleaved-NUL patterns is found (<code>I\x00S\x00A</code> for
+      little-endian, <code>\x00I\x00S\x00A</code> for big-endian — the
+      big-endian marker contains the little-endian one, so it is tested first).
+      And the payload is provably ASCII — X12's own character set — so decoding
+      UTF-16 and re-encoding to single-byte loses nothing. Contrast an ambiguous
+      separator count: there, two parses are genuinely possible and picking one
+      would be a guess, so it is reported. Here there is one decoding and it is
+      determined, so x12-tidy performs it, raises
+      <code>isa.identifier-utf16</code> as a <b>warning</b>, and parses the
+      result. The one caveat — the file was rewritten before parsing, so every
+      offset in the report indexes the transcoded bytes, not the original — is
+      stated in the finding.
     </div>
   </section>
 
@@ -886,15 +888,18 @@ separator_count = isa_line.count(element_separator)
     <div class="code-fig">
       <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>extract_isa_line</b>, the two phases</p>
       <pre><code><span class="k">def</span> extract_isa_line(dirty: bytes) -&gt; IsaLineResult:
+    <span class="c"># UTF-16? Transcode to single-byte and parse that, carrying a warning.</span>
+    transcoded = decode_utf16(dirty)
+    <span class="k">if</span> transcoded <span class="k">is not</span> None:
+        inner = extract_isa_line(transcoded)
+        notice = Diagnostic(Code.ISA_IDENTIFIER_UTF16, ...)   <span class="c"># offsets index the transcoded bytes</span>
+        <span class="k">return</span> IsaLineResult(inner.isa_line, inner.isa_start, [notice, *inner.diagnostics])
+
     <span class="c"># Fast path: exact uppercase ISA identifiers. Never copies the buffer.</span>
     upper = _isa_offsets(dirty, ISA_IDENTIFIER)
     result, upper_failure = _try_all(dirty, upper, case_insensitive=False)
     <span class="k">if</span> result <span class="k">is not</span> None:
         <span class="k">return</span> result
-
-    <span class="c"># No uppercase identifier parsed. UTF-16 only matters when there is none at all.</span>
-    <span class="k">if not</span> upper <span class="k">and</span> any(m <span class="k">in</span> dirty[:_UTF16_SCAN_LEN] <span class="k">for</span> m <span class="k">in</span> _UTF16_MARKERS):
-        <span class="k">return</span> IsaLineResult(None, -1, [Diagnostic(Code.ISA_IDENTIFIER_UTF16, ...)])
 
     <span class="c"># One full-buffer lower-case copy, only on this already-failed path.</span>
     lowered = dirty.lower()
@@ -999,8 +1004,8 @@ separator_count = isa_line.count(element_separator)
           </tr>
           <tr>
             <td>UTF&#8209;16 LE encoded file</td>
-            <td class="verdict v-flag">fatal</td>
-            <td><code>isa.identifier-utf16</code></td>
+            <td class="verdict v-ok">run returned (transcoded)</td>
+            <td><code>isa.identifier-utf16</code> (warning)</td>
           </tr>
           <tr>
             <td>Element separator <code>*</code> occurs inside the sender's ID</td>

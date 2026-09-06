@@ -17,7 +17,7 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.element-width` | error | An ISA element is not its fixed width |
 | `isa.gs-not-found` | fatal | No GS header found after the ISA segment |
 | `isa.identifier-lowercase` | error | ISA segment identifier is not uppercase |
-| `isa.identifier-utf16` | fatal | File appears to be UTF-16 encoded |
+| `isa.identifier-utf16` | warning | File is UTF-16 encoded |
 | `isa.interchange-too-short` | fatal | Too short to be an X12 interchange |
 | `isa.isa11-not-standards-id` | error | ISA11 must be 'U' on versions before 00403 |
 | `isa.isa16-missing` | fatal | ISA16 is missing |
@@ -89,9 +89,9 @@ The segment identifier was found as 'isa' or mixed case (e.g. 'Isa'). X12 segmen
 
 ### `isa.identifier-utf16`
 
-*fatal* — File appears to be UTF-16 encoded
+*warning* — File is UTF-16 encoded
 
-The bytes 'I', 'S', 'A' appear separated by NUL bytes near the start of the file, which is what a UTF-16-encoded 'ISA' looks like. X12 interchanges must use a single-byte encoding (ASCII, Latin-1, or UTF-8 without a wide encoding). This is fatal rather than transcoded: guessing the byte order and trusting or inferring a BOM before parsing has even started is exactly the kind of guess x12-tidy refuses to make elsewhere. Re-export the file in a single-byte encoding and try again.
+The bytes 'I', 'S', 'A' appear separated by NUL bytes near the start of the file -- a UTF-16-encoded 'ISA'. An X12 interchange is a single-byte stream, so x12-tidy transcodes the file to single-byte and parses that. Byte order is taken from the BOM if present, otherwise from which 'ISA' marker is found; valid X12 content is ASCII, so the transcription is lossless. Because the file was rewritten before parsing, every offset in the report indexes the transcoded bytes, not the original file. Re-export in a single-byte encoding to remove this warning.
 
 ### `isa.interchange-too-short`
 

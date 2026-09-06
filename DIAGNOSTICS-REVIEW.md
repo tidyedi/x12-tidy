@@ -20,9 +20,9 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 
 ## Summary
 
-- **47 codes** reviewed. **3 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`, `isa.trailing-newline`), **1 severity change** (`isa.segment-terminator-stripped` → fatal), **4 renamed**, **13 more reworded**, **~26 accepted unchanged**.
-- Research blocker **RESOLVED** (2026-09-06, A6/A7). Dependent wording + `isa.trailing-newline` removal **✅ on `main` (#74)**. Item D closed (no change). Item E (`\r\n`→`\n`) **✅ done**.
-- **Still open:** item F (`isa.identifier-utf16` transcode — needs an explicit go-ahead), envelope segment cardinality.
+- **47 codes** reviewed. **3 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`, `isa.trailing-newline`), **2 severity changes** (`isa.segment-terminator-stripped` → fatal; `isa.identifier-utf16` → warning + transcode), **4 renamed**, **13 more reworded**, **~26 accepted unchanged**.
+- Research blocker **RESOLVED** (2026-09-06, A6/A7). Items A–C on `main` (#74). D closed (no change). E (`\r\n`→`\n`) and F (`isa.identifier-utf16` transcode) **✅ done**.
+- **Only open item:** envelope segment cardinality (add the code, or not).
 
 ### Severity / existence changes
 
@@ -30,9 +30,9 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 |---|---|---|
 | `isa.line-length` | **removed** — unreachable guard | ✅ on `main` (#67) |
 | `isa.segment-terminator-noncanonical` | **removed** — non-`~` terminator is the sender's lawful choice, not a deviation | ✅ on `main` (#71) |
-| `isa.trailing-newline` | **removed** — CR/LF suffix after the terminator is conformant (A7) | ✅ done (branch `refactor/isa-delimiter-terminator-rewording`) |
+| `isa.trailing-newline` | **removed** — CR/LF suffix after the terminator is conformant (A7) | ✅ on `main` (#74) |
 | `isa.segment-terminator-stripped` | error → **fatal** — refuse, stop fabricating `~` | ✅ on `main` (#71) |
-| `isa.identifier-utf16` | fatal → **warning** — transcode UTF-16→single-byte + warn | ⬜ item F — needs an explicit owner go-ahead |
+| `isa.identifier-utf16` | fatal → **warning** — transcode UTF-16→single-byte + warn | ✅ done (branch `refactor/utf16-transcode`) |
 
 ---
 
@@ -64,7 +64,7 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 | `isa.segment-terminator-stripped` | error → **fatal** | ✅ done | this PR — `split_isa_line` now refuses (returns not-usable) instead of fabricating `~`; reworded; removed from `_RECONSTRUCTION_OWNS`; `CANONICAL_TERMINATOR` constant deleted |
 | `isa.separator-count-low` | fatal | ✔️ | — (pairs with `isa.separator-count-high`) |
 | `isa.identifier-lowercase` (was `isa.tag-lowercase`) | error | ✅ renamed | branch `refactor/tag-to-identifier` (`f08294b`). "tag" → "segment identifier" done (slug, enum, title, explanation, `isa_line.py` message) |
-| `isa.identifier-utf16` (was `isa.tag-utf16`) | fatal | ✅ renamed / 🔬 severity | Rename done (`f08294b`). **STILL A TODO FOR LATER DISCUSSION** (user, do not implement yet): fatal → warning via transcode UTF-16→single-byte + warn — endianness is already detected (`I\x00S\x00A` LE vs `\x00I\x00S\x00A` BE), valid X12 is all-ASCII so lossless. "How to ingest" guidance → future `intake` package. Gated on the delimiter research + an explicit go-ahead |
+| `isa.identifier-utf16` (was `isa.tag-utf16`) | fatal → **warning** | ✅ done | `extract_isa_line` transcodes a UTF-16 buffer to single-byte (`decode_utf16` in `isa_line.py`; BOM or marker → byte order; Latin-1 with `replace`) and re-parses; `split_segments` does the same. Warning, not fatal. Offsets then index the transcoded bytes — stated in the finding. `finding-the-elusive-isa-line` note reversed accordingly (PDF not reprinted). Branch `refactor/utf16-transcode` |
 | `isa.trailing-junk` | warning | ✅ done | now fires only for non-newline trailing bytes (spaces, comment, transport framing); a CR/LF suffix is unflagged. Body-level `split_segments` consistency gap left as item D |
 | `isa.trailing-newline` | — | ✅ removed | CR/LF suffix after the terminator is conformant (A7, X12.5 §4.3 / RFI 2207). Enum, `CodeMeta`, emit site, `_RECONSTRUCTION_OWNS` all gone. `\r\n`-no-`~` 2-byte-terminator handling is item E |
 | `isa.usage-indicator-invalid` | error | ✔️ | — |
@@ -134,10 +134,15 @@ Alignment (dispositions):
   CRLF-delimited interchange now cleans to LF, not to a lone CR. Terminator
   stays one byte — no invariant change. A lone `\r` with no `\n` is still kept
   as the sender's choice. Docs + `delimiters-terminator.svg` updated.
-- ⬜ `isa.identifier-utf16` transcode (item F) — research no longer blocks it;
-  still gated on an explicit owner go-ahead.
+- ✅ **item F** — `isa.identifier-utf16` fatal → **warning**. `decode_utf16`
+  (`isa_line.py`) transcodes a UTF-16 buffer to single-byte; `extract_isa_line`
+  and `split_segments` both call it and re-parse. Byte order from the BOM or from
+  which marker is found. Every offset then indexes the transcoded bytes — the
+  finding says so. The "why UTF-16 is fatal" note in
+  `finding-the-elusive-isa-line` is now "why UTF-16 is transcoded" (PDF gated).
 
-Shipped in branch `refactor/isa-delimiter-terminator-rewording` (items A–C).
+Items A–C on `main` (#74); D closed (no change); E on `main` (#75); F branch
+`refactor/utf16-transcode`.
 
 ---
 
@@ -209,7 +214,7 @@ case added to `tests/test_isa_line.py` `CASES`.
 | research-gated wording — `isa.element-separator-invalid` / `isa.segment-terminator-invalid` / `isa.delimiter-misaligned` reword + remove `isa.trailing-newline` | ✅ on `main` (#74) (items A–C) |
 | item D — inter-segment junk consistency | ✅ no change — owner's call, works as is |
 | item E — `\r\n` terminator normalises to `\n` | ✅ branch `refactor/crlf-terminator-normalises-to-lf` |
-| `isa.identifier-utf16` transcode (item F) | not started — explicit later-discussion TODO |
+| item F — `isa.identifier-utf16` fatal→warning transcode | ✅ branch `refactor/utf16-transcode` |
 | envelope segment cardinality | not started — undecided (counts validated, A8) |
 | 4 note **PDFs** re-printed | ✅ this PR — regenerated from the fixed HTML (headless Chrome) |
 | delimiter/terminator legality research (A6, A7) + `docs/research/` note | ✅ branch `docs/delimiter-research-and-dlms-sample` |

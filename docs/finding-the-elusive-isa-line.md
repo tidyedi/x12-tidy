@@ -123,7 +123,7 @@ fixed-offset reader; several break a delimiter-first reader too.
 | **Appended newlines** — `CR LF` after *every* terminator | `GS` is pushed to byte 108 |
 | **Two-byte terminators** — `\r\n`, or `~\r` | The "one byte at 105" model is off-by-one for the whole file |
 | **Non-uppercase identifiers** — `isa`, `Isa` | A case-sensitive `find(b"ISA")` reports an empty file |
-| **Wide encodings** — the file is UTF-16; the identifier is `I 00 S 00 A 00` | Nothing matches `ISA` |
+| **Wide encodings** — the file is UTF-16; the identifier is `I 00 S 00 A 00` | Nothing matches `ISA`; the file is transcoded to single-byte and re-parsed |
 | **The element separator inside element data** — a sender whose ID contains `*` while using `*` as the separator | The segment has 17 separators and no single correct parse |
 | **A `GS` + separator lookalike** — a `REF*GS*…` element deep in a transaction set (when the real functional-group envelope is missing), or a sender ID ending in `GS` right inside ISA06 | `b"GS" + sep` matches before, or instead of, the real header |
 | **The bytes `ISA` in junk** — `SUBJECT: ISA FILE`, a path like `/feeds/ISA/…` | The first match is not the segment |
@@ -136,21 +136,21 @@ Three prepended bytes and one omitted element are enough to make `data[106:109]`
 land in the middle of an element. **The byte position is not an invariant. The
 `GS` header that follows the ISA line is.**
 
-**Why UTF-16 is fatal, not transcoded.** Every other row in that table is a
-malformed X12 interchange — the bytes are still X12, just not conformant ones,
-and locating the ISA line tolerates that. A UTF-16-encoded file isn't a
-malformed interchange; it isn't X12 bytes at all. The standard predates
-Unicode and is single-byte-per-character throughout — there is no legal X12
-interchange that is anything else. Decoding one would mean guessing the
-variant (LE or BE), trusting or inferring a byte-order mark, and re-encoding
-the whole file before parsing has even started. That is exactly the kind of
-guess this tool refuses to make everywhere else in this note — an ambiguous
-separator count gets reported, not resolved; a truncated element gets padded
-by rule, not inferred. The interleaved-NUL pattern (`I\x00S\x00A`, or the
-big-endian mirror) is cheap and unambiguous to detect, so x12-tidy names it
-and stops (`isa.identifier-utf16`, "re-export the file") rather than attempt a
-conversion that could silently mis-decode and hand back a diagnosis of the
-wrong bytes.
+**Why UTF-16 is transcoded, not fatal.** The standard predates Unicode and is
+single-byte-per-character throughout — there is no legal X12 interchange that is
+anything else, so a UTF-16 file is not a malformed interchange, it is the right
+interchange in the wrong wrapper. Unwrapping it is not a guess: the byte order
+comes from the byte-order mark when present, otherwise from which of the two
+interleaved-NUL patterns is found (`I\x00S\x00A` for little-endian,
+`\x00I\x00S\x00A` for big-endian — the big-endian marker contains the
+little-endian one, so it is tested first). And the payload is provably ASCII —
+X12's own character set — so decoding UTF-16 and re-encoding to single-byte
+loses nothing. Contrast an ambiguous separator count: there, two parses are
+genuinely possible and picking one would be a guess, so it is reported. Here
+there is one decoding and it is determined, so x12-tidy performs it, raises
+`isa.identifier-utf16` as a **warning**, and parses the result. The one caveat —
+the file was rewritten before parsing, so every offset in the report indexes the
+transcoded bytes, not the original — is stated in the finding.
 
 ---
 
@@ -313,15 +313,18 @@ because it only fell back when no `ISA` existed at all.
 
 ```python
 def extract_isa_line(dirty: bytes) -> IsaLineResult:
+    # UTF-16? Transcode to single-byte and parse that, carrying a warning.
+    transcoded = decode_utf16(dirty)
+    if transcoded is not None:
+        inner = extract_isa_line(transcoded)
+        notice = Diagnostic(Code.ISA_IDENTIFIER_UTF16, ...)   # offsets index the transcoded bytes
+        return IsaLineResult(inner.isa_line, inner.isa_start, [notice, *inner.diagnostics])
+
     # Fast path: exact uppercase ISA identifiers. Never copies the buffer.
     upper = _isa_offsets(dirty, ISA_IDENTIFIER)
     result, upper_failure = _try_all(dirty, upper, case_insensitive=False)
     if result is not None:
         return result
-
-    # No uppercase identifier parsed. UTF-16 only matters when there is none at all.
-    if not upper and any(m in dirty[:_UTF16_SCAN_LEN] for m in _UTF16_MARKERS):
-        return IsaLineResult(None, -1, [Diagnostic(Code.ISA_IDENTIFIER_UTF16, ...)])
 
     # One full-buffer lower-case copy, only on this already-failed path.
     lowered = dirty.lower()
@@ -389,7 +392,7 @@ def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
 | ISA02 & ISA04 stripped (86-byte segment) | 86-byte run | none — still 16 separators |
 | No `GS` envelope; a `REF*GS*` deep in the data | fatal | `isa.separator-count-high` |
 | Two interchanges concatenated, first `GS` missing | 2nd interchange | `isa.leading-bytes` |
-| UTF-16 LE encoded file | fatal | `isa.identifier-utf16` |
+| UTF-16 LE encoded file | run returned (transcoded) | `isa.identifier-utf16` (warning) |
 | Element separator `*` occurs inside the sender's ID | fatal | `isa.separator-count-high` |
 | 2 MB of leading junk, then `ISA` | 106-byte run | `isa.leading-bytes` |
 
