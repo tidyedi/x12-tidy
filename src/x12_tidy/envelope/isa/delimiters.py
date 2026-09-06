@@ -46,10 +46,6 @@ from x12_tidy.diagnostics import Code, Diagnostic, resolved_severity
 
 #: ``ISA`` + ISA01..ISA16.
 ISA_ELEMENT_SEPARATORS = 16
-#: The conventional segment terminator. The sender's own terminator is kept as
-#: chosen; this byte is only *supplied* when the sender omitted the terminator
-#: entirely and there is nothing to preserve.
-CANONICAL_TERMINATOR = b"~"
 #: ISA11's value for interchanges that predate the repetition separator.
 STANDARDS_IDENTIFIER = b"U"
 #: First ISA12 version code in which ISA11 is the repetition separator
@@ -75,9 +71,9 @@ class IsaDecomposition:
     element_separator: bytes
     repetition_separator: bytes | None
     component_separator: bytes
-    #: The byte the sender used to end each segment, kept as chosen. Only
-    #: ``CANONICAL_TERMINATOR`` when the sender omitted it (see the
-    #: ``isa.segment-terminator-stripped`` diagnostic).
+    #: The byte the sender used to end each segment, kept as chosen. Empty when
+    #: the sender omitted it -- x12-tidy refuses rather than guess a terminator
+    #: (see ``isa.segment-terminator-stripped``).
     segment_terminator: bytes
     trailing: bytes
     #: ISA01..ISA16 exactly as split -- not width-checked. ISA16 is its one-byte
@@ -166,18 +162,22 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
     after = last_piece[1:]
 
     if not after:
-        # Only the component separator is present; GS came straight after it.
-        segment_terminator = CANONICAL_TERMINATOR
-        trailing = b""
+        # ISA16 is present but nothing follows it -- GS came straight after.
+        # The sender's terminator is not in the run to recover, and guessing
+        # one would break the split of every following segment, so refuse.
         diags.append(Diagnostic(
             Code.ISA_SEGMENT_TERMINATOR_STRIPPED,
-            "no segment terminator after ISA16 -- GS followed immediately. "
-            f"Reconstructed as {CANONICAL_TERMINATOR!r}.",
+            "no segment terminator after ISA16 -- GS followed immediately. The "
+            "sender's terminator is not present to recover.",
             offset=last_piece_offset + 1,
         ))
-    else:
-        segment_terminator = after[0:1]
-        trailing = after[1:]
+        return IsaDecomposition(
+            element_separator, None, component_separator, b"", b"",
+            diagnostics=diags,
+        )
+
+    segment_terminator = after[0:1]
+    trailing = after[1:]
 
     # --- element separator: needed for every segment -> fatal if unusable ---
     if _is_alnum(element_separator):
@@ -219,7 +219,7 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
                 "element.",
                 offset=last_piece_offset,
             ))
-        if after and terminator_alnum:
+        if terminator_alnum:
             diags.append(Diagnostic(
                 Code.ISA_SEGMENT_TERMINATOR_INVALID,
                 f"the segment terminator is {segment_terminator!r}, an "
@@ -228,22 +228,9 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
                 offset=last_piece_offset + 1,
             ))
 
-    # --- non-canonical but usable terminator (\r, \n, |, ...) ---
-    if (
-        after
-        and not terminator_alnum
-        and segment_terminator not in (
-            b"", b" ", CANONICAL_TERMINATOR,
-            element_separator, component_separator,
-        )
-    ):
-        diags.append(Diagnostic(
-            Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL,
-            f"the segment terminator is {segment_terminator!r}, not the "
-            f"conventional {CANONICAL_TERMINATOR!r}; it is a legal choice and is "
-            "preserved as-is.",
-            offset=last_piece_offset + 1,
-        ))
+    # A non-alphanumeric terminator that is not '~' -- CR, LF, '|', ... -- is
+    # the sender's lawful choice, not a deviation from the standard. It is
+    # preserved as-is and NOT flagged.
 
     # --- collisions that block parsing outright ---
     if segment_terminator and segment_terminator == element_separator:

@@ -59,7 +59,7 @@ class Code(Enum):
     ISA_INTERCHANGE_TOO_SHORT = "isa.interchange-too-short"
     ISA_GS_NOT_FOUND = "isa.gs-not-found"
     ISA_SEPARATOR_COUNT_LOW = "isa.separator-count-low"
-    ISA_NO_FUNCTIONAL_GROUP = "isa.no-functional-group"
+    ISA_SEPARATOR_COUNT_HIGH = "isa.separator-count-high"
 
     # -- isa: parsing the delimiters out of the ISA line (Step 2, slice 1) --
     ISA_ISA16_MISSING = "isa.isa16-missing"
@@ -72,7 +72,6 @@ class Code(Enum):
     ISA_ISA11_NOT_STANDARDS_ID = "isa.isa11-not-standards-id"
     ISA_SEGMENT_TERMINATOR_INVALID = "isa.segment-terminator-invalid"
     ISA_SEGMENT_TERMINATOR_STRIPPED = "isa.segment-terminator-stripped"
-    ISA_SEGMENT_TERMINATOR_NONCANONICAL = "isa.segment-terminator-noncanonical"
     ISA_VERSION_UNRECOGNIZED = "isa.version-unrecognized"
     ISA_TRAILING_NEWLINE = "isa.trailing-newline"
     ISA_TRAILING_JUNK = "isa.trailing-junk"
@@ -136,9 +135,9 @@ class CodeMeta:
 META: dict[Code, CodeMeta] = {
     Code.ISA_NO_IDENTIFIER: CodeMeta(
         default_severity="fatal",
-        title="No ISA segment identifier in the file",
+        title="No ISA segment in the file",
         explanation=(
-            "The byte sequence 'ISA' does not appear anywhere in the file, so "
+            "The identifier 'ISA' does not appear anywhere in the file, so "
             "there is no X12 interchange to inspect. Nothing downstream can run."
         ),
     ),
@@ -194,8 +193,11 @@ META: dict[Code, CodeMeta] = {
         explanation=(
             "x12-tidy locates the end of the ISA line by finding the 'GS' "
             "functional-group header that follows it (matched as 'GS' plus the "
-            "element separator). No such header was found, so the ISA line "
-            "cannot be bounded."
+            "element separator). The bytes 'GS' + separator do not appear "
+            "anywhere after the ISA segment, so the ISA line cannot be "
+            "bounded. (Contrast isa.separator-count-high, where a 'GS' + "
+            "separator was found but is too far past the ISA segment to be its "
+            "header.)"
         ),
     ),
     Code.ISA_SEPARATOR_COUNT_LOW: CodeMeta(
@@ -211,30 +213,31 @@ META: dict[Code, CodeMeta] = {
             "and is not recoverable."
         ),
     ),
-    Code.ISA_NO_FUNCTIONAL_GROUP: CodeMeta(
+    Code.ISA_SEPARATOR_COUNT_HIGH: CodeMeta(
         default_severity="fatal",
-        title="ISA segment is not bounded by a GS functional-group header",
+        title="More than 16 element separators before GS",
         explanation=(
-            "Every ISA interchange opens a GS functional group, and x12-tidy "
-            "ends the ISA line at that GS header. A 'GS' + element separator "
-            "was found, but the run of bytes to it holds more than the 16 "
-            "element separators an ISA header has -- so it is not the header. "
+            "An ISA header carries exactly 16 element separators. A 'GS' + "
+            "element separator was found, but the run of bytes up to it holds "
+            "more than 16 -- so that 'GS' is not this ISA segment's header. "
             "Either there is no GS envelope and the match lies inside a later "
             "segment's data, or the element separator occurs inside ISA06 / "
             "ISA08 data (an unparseable segment). The ISA line cannot be "
-            "bounded; not recoverable."
+            "bounded; not recoverable. Pairs with isa.separator-count-low "
+            "(fewer than 16)."
         ),
     ),
 
     # -- isa: parsing the delimiters (Step 2, slice 1) --
     Code.ISA_ISA16_MISSING: CodeMeta(
         default_severity="fatal",
-        title="Nothing follows ISA15 in the ISA line",
+        title="ISA16 is missing",
         explanation=(
-            "After the 16th element separator there are no bytes at all -- no "
-            "ISA16 (which carries the component separator), no segment "
-            "terminator. The ISA line ends where ISA16 should begin, so none "
-            "of the trailing delimiters can be recovered."
+            "ISA16 -- the one-byte element whose value is the component "
+            "separator -- is absent: after the 16th element separator there "
+            "are no bytes at all, no ISA16 and no segment terminator. Without "
+            "ISA16 the component separator and the segment terminator cannot "
+            "be recovered."
         ),
     ),
     Code.ISA_DELIMITER_MISALIGNED: CodeMeta(
@@ -303,10 +306,11 @@ META: dict[Code, CodeMeta] = {
     ),
     Code.ISA_ISA11_NOT_STANDARDS_ID: CodeMeta(
         default_severity="error",
-        title="ISA11 is not the standards identifier on an older version",
+        title="ISA11 must be 'U' on versions before 00403",
         explanation=(
-            "ISA12 is a version before 00403, where ISA11 is the Interchange "
-            "Control Standards Identifier and must be 'U'. It holds something "
+            "On ISA12 versions before 00403, ISA11 is the Interchange Control "
+            "Standards Identifier and must be 'U'. (At 00403 and later, ISA11 "
+            "became the repetition separator.) This ISA11 holds something "
             "else. ISA11 is informational on these versions -- it is not used "
             "to parse anything -- so this does not block the interchange, but "
             "the value is wrong."
@@ -316,32 +320,21 @@ META: dict[Code, CodeMeta] = {
         default_severity="fatal",
         title="The segment terminator is an alphanumeric byte",
         explanation=(
-            "The byte after ISA16 -- the segment terminator -- is a letter or "
-            "digit, so it is data, not a delimiter. Every segment in the "
-            "interchange ends with this byte, so none of them can be split. "
-            "The terminator was probably stripped by the sender."
+            "The byte recovered as the segment terminator -- the byte right "
+            "after ISA16 -- is a letter or digit, so it cannot be a delimiter. "
+            "Every segment in the interchange ends with this byte, so none of "
+            "them can be split, and x12-tidy refuses."
         ),
     ),
     Code.ISA_SEGMENT_TERMINATOR_STRIPPED: CodeMeta(
-        default_severity="error",
+        default_severity="fatal",
         title="No segment terminator after ISA16",
         explanation=(
             "The GS functional-group header follows ISA16 with no segment "
-            "terminator between them. The position is structurally known, so "
-            "the terminator is reconstructed as '~', but the sender's file "
-            "does not conform."
-        ),
-    ),
-    Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL: CodeMeta(
-        default_severity="warning",
-        title="The segment terminator is not the tilde",
-        explanation=(
-            "The segment terminator is a non-alphanumeric byte -- often a "
-            "carriage return or line feed -- but not '~'. Which byte serves as "
-            "a delimiter is the sender's choice; X12 does not dictate it, so "
-            "this is a legal interchange and reconstruction preserves the "
-            "terminator as-is. Noted because '~' is the near-universal "
-            "convention and downstream tools may assume it."
+            "terminator between them. The sender chose that terminator -- X12 "
+            "does not dictate it -- and it is not present in the ISA line to "
+            "recover, so x12-tidy refuses rather than guess '~': a wrong "
+            "terminator would break the split of every following segment."
         ),
     ),
     Code.ISA_VERSION_UNRECOGNIZED: CodeMeta(
@@ -476,16 +469,18 @@ META: dict[Code, CodeMeta] = {
     ),
     Code.STRUCTURE_IDENTIFIER_INVALID: CodeMeta(
         default_severity="error",
-        title="A segment identifier is not uppercase alphabetic",
+        title="A segment identifier does not begin with an uppercase letter",
         explanation=(
-            "Every X12 segment identifier begins with an uppercase letter (X12.6). A "
-            "segment whose identifier does not -- lowercase, numeric, empty -- cannot "
-            "be identified as a real segment."
+            "Every X12 segment identifier begins with an uppercase letter "
+            "(X12.6); the rest is uppercase letters or digits, two or three "
+            "characters (so 'N1', 'PO1', 'G62' are valid). A piece whose "
+            "identifier does not begin with an uppercase letter -- lowercase, "
+            "a digit, or empty -- cannot be a real segment."
         ),
     ),
     Code.STRUCTURE_FOREIGN_CONTENT: CodeMeta(
         default_severity="fatal",
-        title="A segment appears where none is structurally valid",
+        title="Segment outside the envelope structure",
         explanation=(
             "A segment sits outside any recognized structural context -- "
             "before the first functional group, between a functional group's "
@@ -564,11 +559,14 @@ META: dict[Code, CodeMeta] = {
     ),
     Code.GS_RESPONSIBLE_AGENCY_INVALID: CodeMeta(
         default_severity="error",
-        title="GS07 is not a recognized responsible agency code",
+        title="GS07 does not name a known standards organization",
         explanation=(
-            "GS07 (Responsible Agency Code) must be 'X' (Accredited Standards "
-            "Committee X12) or 'T' (Transportation Data Coordinating "
-            "Committee) -- the complete code list for this element."
+            "GS07 (X12 data element 455, 'Responsible Agency Code') says which "
+            "standards body governs the transaction sets in this functional "
+            "group -- not a party to the interchange. The only values X12 "
+            "defines for element 455 are 'X' (Accredited Standards Committee "
+            "X12) and 'T' (Transportation Data Coordinating Committee). This "
+            "GS07 is neither."
         ),
     ),
 

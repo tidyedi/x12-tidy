@@ -37,7 +37,7 @@ Flow
         (``isa.gs-not-found``)
      d. ``isa_line = cleansed[:gs_pos]``;  it must hold **exactly 16** element
         separators -- ``< 16`` -> fail (``isa.separator-count-low``),
-        ``> 16`` -> fail (``isa.no-functional-group``: the GS we found is not
+        ``> 16`` -> fail (``isa.separator-count-high``: the GS we found is not
         this ISA line's header)
    Any bytes before the winning candidate become ``isa.leading-bytes``
    (warning). If no candidate wins, the **first** candidate's failure is
@@ -175,7 +175,7 @@ def _try_candidate(
         ))
     if separator_count > ISA_ELEMENT_SEPARATORS:
         return _Attempt(None, Diagnostic(
-            Code.ISA_NO_FUNCTIONAL_GROUP,
+            Code.ISA_SEPARATOR_COUNT_HIGH,
             f"a {gs_identifier!r} sequence sits {gs_pos} byte(s) past the ISA "
             f"identifier, but {separator_count} element separator(s) "
             f"({element_separator!r}) precede it -- an ISA header has "

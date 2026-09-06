@@ -1,6 +1,7 @@
-# x12-tidy
-
-<img src="docs/images/brand/tidyedi-mark.png" alt="" width="72" height="72" align="right">
+<h1>
+  <img src="docs/images/brand/tidyedi-mark.svg" alt="" width="48" height="48" align="left">
+  &nbsp;x12-tidy
+</h1>
 
 [![CI](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -34,6 +35,10 @@ searched for, yes, that too.)
   — splitting the body into segments and rejoining it with the ISA line into one payload
 - [Auditing the Envelope](https://docs.tidyedi.com/auditing-the-envelope.html)
   — checking whether the interchange's own bookkeeping (pairing, counts, control numbers) is honest
+
+**Using it** — [`docs/using-x12-tidy.md`](docs/using-x12-tidy.md): the CLI, the
+`tidy()` one-call API, the lower-level building blocks, and formatting your own
+report.
 
 **Reference** — [`design.md`](docs/design.md) (architecture, the diagnostic-code
 scheme) · [`docs/diagnostics.md`](docs/diagnostics.md) (every code, generated) ·

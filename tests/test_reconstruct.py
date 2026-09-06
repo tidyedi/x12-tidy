@@ -117,20 +117,21 @@ def test_real_data_past_the_fixed_width_is_fatal() -> None:
     assert _codes(result) == [Code.ISA_ELEMENT_OVERFLOW]
 
 
-def test_noncanonical_terminator_is_preserved_not_normalised() -> None:
-    # The sender chose "\n" to end segments -- a legal choice. Reconstruction
-    # keeps it; it is flagged (a warning) because "~" is the convention.
+def test_noncanonical_terminator_is_preserved_silently() -> None:
+    # The sender chose "\n" to end segments -- a legal choice, not a deviation
+    # from the standard. Reconstruction keeps it and raises no finding.
     result = clean_isa_line(build_isa(term=b"\n"))
     assert result.isa_line is not None
     assert result.segment_terminator == b"\n"
-    assert Code.ISA_SEGMENT_TERMINATOR_NONCANONICAL in _codes(result)
+    assert result.was_clean
 
 
-def test_stripped_terminator_is_supplied_as_tilde() -> None:
-    # Nothing to preserve: GS followed ISA16 directly.
+def test_stripped_terminator_is_refused() -> None:
+    # GS followed ISA16 directly. The sender's terminator is not in the ISA
+    # line to recover, and guessing "~" would break every following segment
+    # split -- so x12-tidy refuses rather than fabricate one.
     result = clean_isa_line(build_isa(comp=b":", term=b""))
-    assert result.isa_line is not None
-    assert result.segment_terminator == b"~"
+    assert result.isa_line is None
     assert Code.ISA_SEGMENT_TERMINATOR_STRIPPED in _codes(result)
 
 
@@ -192,16 +193,12 @@ def test_no_isa_tag_returns_none() -> None:
 #: Codes this phase is responsible for -- structure, delimiters, junk. Once
 #: reconstruction has run, none of these may reappear on a re-parse. Value-level
 #: findings (is ISA12 a real version code, is ISA11 the standards identifier)
-#: are out of scope and legitimately survive -- and so does
-#: ``isa.segment-terminator-noncanonical``: the sender's terminator is
-#: deliberately preserved, so re-parsing a "\n"-terminated interchange flags it
-#: again. That is correct, not a lingering repair.
+#: are out of scope and legitimately survive.
 _RECONSTRUCTION_OWNS: frozenset[Code] = frozenset({
     Code.ISA_LEADING_BYTES,
     Code.ISA_IDENTIFIER_LOWERCASE,
     Code.ISA_TRAILING_NEWLINE,
     Code.ISA_TRAILING_JUNK,
-    Code.ISA_SEGMENT_TERMINATOR_STRIPPED,
     Code.ISA_ELEMENT_EMBEDDED_NEWLINE,
     Code.ISA_ELEMENT_WIDTH,
 })

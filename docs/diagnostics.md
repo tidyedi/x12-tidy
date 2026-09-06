@@ -19,16 +19,15 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.identifier-lowercase` | error | ISA segment identifier is not uppercase |
 | `isa.identifier-utf16` | fatal | File appears to be UTF-16 encoded |
 | `isa.interchange-too-short` | fatal | Too short to be an X12 interchange |
-| `isa.isa11-not-standards-id` | error | ISA11 is not the standards identifier on an older version |
-| `isa.isa16-missing` | fatal | Nothing follows ISA15 in the ISA line |
+| `isa.isa11-not-standards-id` | error | ISA11 must be 'U' on versions before 00403 |
+| `isa.isa16-missing` | fatal | ISA16 is missing |
 | `isa.leading-bytes` | warning | Bytes precede the ISA segment |
-| `isa.no-functional-group` | fatal | ISA segment is not bounded by a GS functional-group header |
-| `isa.no-identifier` | fatal | No ISA segment identifier in the file |
+| `isa.no-identifier` | fatal | No ISA segment in the file |
 | `isa.repetition-separator-invalid` | error | The repetition separator is not a usable delimiter |
 | `isa.repetition-separator-missing` | error | No repetition separator for a version that has one |
 | `isa.segment-terminator-invalid` | fatal | The segment terminator is an alphanumeric byte |
-| `isa.segment-terminator-noncanonical` | warning | The segment terminator is not the tilde |
-| `isa.segment-terminator-stripped` | error | No segment terminator after ISA16 |
+| `isa.segment-terminator-stripped` | fatal | No segment terminator after ISA16 |
+| `isa.separator-count-high` | fatal | More than 16 element separators before GS |
 | `isa.separator-count-low` | fatal | Fewer than 16 element separators before GS |
 | `isa.trailing-junk` | warning | Unexpected bytes between the segment terminator and GS |
 | `isa.trailing-newline` | warning | Line breaks between the segment terminator and GS |
@@ -81,7 +80,7 @@ Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is 9, and so on.
 
 *fatal* — No GS header found after the ISA segment
 
-x12-tidy locates the end of the ISA line by finding the 'GS' functional-group header that follows it (matched as 'GS' plus the element separator). No such header was found, so the ISA line cannot be bounded.
+x12-tidy locates the end of the ISA line by finding the 'GS' functional-group header that follows it (matched as 'GS' plus the element separator). The bytes 'GS' + separator do not appear anywhere after the ISA segment, so the ISA line cannot be bounded. (Contrast isa.separator-count-high, where a 'GS' + separator was found but is too far past the ISA segment to be its header.)
 
 ### `isa.identifier-lowercase`
 
@@ -103,15 +102,15 @@ Fewer than 109 bytes follow the 'ISA' identifier -- not enough room for a 105-by
 
 ### `isa.isa11-not-standards-id`
 
-*error* — ISA11 is not the standards identifier on an older version
+*error* — ISA11 must be 'U' on versions before 00403
 
-ISA12 is a version before 00403, where ISA11 is the Interchange Control Standards Identifier and must be 'U'. It holds something else. ISA11 is informational on these versions -- it is not used to parse anything -- so this does not block the interchange, but the value is wrong.
+On ISA12 versions before 00403, ISA11 is the Interchange Control Standards Identifier and must be 'U'. (At 00403 and later, ISA11 became the repetition separator.) This ISA11 holds something else. ISA11 is informational on these versions -- it is not used to parse anything -- so this does not block the interchange, but the value is wrong.
 
 ### `isa.isa16-missing`
 
-*fatal* — Nothing follows ISA15 in the ISA line
+*fatal* — ISA16 is missing
 
-After the 16th element separator there are no bytes at all -- no ISA16 (which carries the component separator), no segment terminator. The ISA line ends where ISA16 should begin, so none of the trailing delimiters can be recovered.
+ISA16 -- the one-byte element whose value is the component separator -- is absent: after the 16th element separator there are no bytes at all, no ISA16 and no segment terminator. Without ISA16 the component separator and the segment terminator cannot be recovered.
 
 ### `isa.leading-bytes`
 
@@ -119,17 +118,11 @@ After the 16th element separator there are no bytes at all -- no ISA16 (which ca
 
 One or more bytes appear before the ISA segment. A conformant X12 file begins with 'ISA' as its very first byte. Common causes are a UTF-8 byte-order mark, whitespace, or transport headers left in by the sender. x12-tidy strips them and continues; the reported bytes are what was removed.
 
-### `isa.no-functional-group`
-
-*fatal* — ISA segment is not bounded by a GS functional-group header
-
-Every ISA interchange opens a GS functional group, and x12-tidy ends the ISA line at that GS header. A 'GS' + element separator was found, but the run of bytes to it holds more than the 16 element separators an ISA header has -- so it is not the header. Either there is no GS envelope and the match lies inside a later segment's data, or the element separator occurs inside ISA06 / ISA08 data (an unparseable segment). The ISA line cannot be bounded; not recoverable.
-
 ### `isa.no-identifier`
 
-*fatal* — No ISA segment identifier in the file
+*fatal* — No ISA segment in the file
 
-The byte sequence 'ISA' does not appear anywhere in the file, so there is no X12 interchange to inspect. Nothing downstream can run.
+The identifier 'ISA' does not appear anywhere in the file, so there is no X12 interchange to inspect. Nothing downstream can run.
 
 ### `isa.repetition-separator-invalid`
 
@@ -147,19 +140,19 @@ ISA12 is version 00403 or later, where ISA11 is the repetition separator, but IS
 
 *fatal* — The segment terminator is an alphanumeric byte
 
-The byte after ISA16 -- the segment terminator -- is a letter or digit, so it is data, not a delimiter. Every segment in the interchange ends with this byte, so none of them can be split. The terminator was probably stripped by the sender.
-
-### `isa.segment-terminator-noncanonical`
-
-*warning* — The segment terminator is not the tilde
-
-The segment terminator is a non-alphanumeric byte -- often a carriage return or line feed -- but not '~'. Which byte serves as a delimiter is the sender's choice; X12 does not dictate it, so this is a legal interchange and reconstruction preserves the terminator as-is. Noted because '~' is the near-universal convention and downstream tools may assume it.
+The byte recovered as the segment terminator -- the byte right after ISA16 -- is a letter or digit, so it cannot be a delimiter. Every segment in the interchange ends with this byte, so none of them can be split, and x12-tidy refuses.
 
 ### `isa.segment-terminator-stripped`
 
-*error* — No segment terminator after ISA16
+*fatal* — No segment terminator after ISA16
 
-The GS functional-group header follows ISA16 with no segment terminator between them. The position is structurally known, so the terminator is reconstructed as '~', but the sender's file does not conform.
+The GS functional-group header follows ISA16 with no segment terminator between them. The sender chose that terminator -- X12 does not dictate it -- and it is not present in the ISA line to recover, so x12-tidy refuses rather than guess '~': a wrong terminator would break the split of every following segment.
+
+### `isa.separator-count-high`
+
+*fatal* — More than 16 element separators before GS
+
+An ISA header carries exactly 16 element separators. A 'GS' + element separator was found, but the run of bytes up to it holds more than 16 -- so that 'GS' is not this ISA segment's header. Either there is no GS envelope and the match lies inside a later segment's data, or the element separator occurs inside ISA06 / ISA08 data (an unparseable segment). The ISA line cannot be bounded; not recoverable. Pairs with isa.separator-count-low (fewer than 16).
 
 ### `isa.separator-count-low`
 
@@ -200,7 +193,7 @@ ISA12 -- the Interchange Control Version Number -- is not a 5-digit code. Whethe
 | `gs.control-number-not-numeric` | fatal | GS06 is not all-numeric |
 | `gs.count-not-numeric` | fatal | GE01 is not all-numeric |
 | `gs.missing-ge` | fatal | No GE segment closes this functional group |
-| `gs.responsible-agency-invalid` | error | GS07 is not a recognized responsible agency code |
+| `gs.responsible-agency-invalid` | error | GS07 does not name a known standards organization |
 | `gs.transaction-set-count-mismatch` | fatal | GE01 does not match the number of transaction sets found |
 | `gs.version-mismatch` | fatal | GS08 does not agree with the interchange's version (ISA12) |
 
@@ -236,9 +229,9 @@ Every GS functional group must be closed by a matching GE segment before the nex
 
 ### `gs.responsible-agency-invalid`
 
-*error* — GS07 is not a recognized responsible agency code
+*error* — GS07 does not name a known standards organization
 
-GS07 (Responsible Agency Code) must be 'X' (Accredited Standards Committee X12) or 'T' (Transportation Data Coordinating Committee) -- the complete code list for this element.
+GS07 (X12 data element 455, 'Responsible Agency Code') says which standards body governs the transaction sets in this functional group -- not a party to the interchange. The only values X12 defines for element 455 are 'X' (Accredited Standards Committee X12) and 'T' (Transportation Data Coordinating Committee). This GS07 is neither.
 
 ### `gs.transaction-set-count-mismatch`
 
@@ -299,9 +292,9 @@ SE01 (Number of Included Segments) must equal the actual count of segments in th
 | `structure.control-number-mismatch` | fatal | ISA13 does not match IEA02 |
 | `structure.control-number-not-numeric` | fatal | ISA13 is not all-numeric |
 | `structure.count-not-numeric` | fatal | IEA01 is not all-numeric |
-| `structure.foreign-content` | fatal | A segment appears where none is structurally valid |
+| `structure.foreign-content` | fatal | Segment outside the envelope structure |
 | `structure.functional-group-count-mismatch` | fatal | IEA01 does not match the number of functional groups found |
-| `structure.identifier-invalid` | error | A segment identifier is not uppercase alphabetic |
+| `structure.identifier-invalid` | error | A segment identifier does not begin with an uppercase letter |
 | `structure.missing-iea` | fatal | No IEA segment closes the interchange |
 
 ### `structure.control-number-mismatch`
@@ -324,7 +317,7 @@ IEA01 (Number of Included Functional Groups) is defined as numeric. A non-numeri
 
 ### `structure.foreign-content`
 
-*fatal* — A segment appears where none is structurally valid
+*fatal* — Segment outside the envelope structure
 
 A segment sits outside any recognized structural context -- before the first functional group, between a functional group's close and the next one, after the interchange trailer, or a closing segment (SE, GE, IEA) with nothing open to close -- including a second IEA once the interchange is already closed. This covers every shape of 'a segment turned up in a place the envelope structure does not allow', including a body segment with no open transaction set to belong to.
 
@@ -336,9 +329,9 @@ IEA01 (Number of Included Functional Groups) must equal the actual count of GS s
 
 ### `structure.identifier-invalid`
 
-*error* — A segment identifier is not uppercase alphabetic
+*error* — A segment identifier does not begin with an uppercase letter
 
-Every X12 segment identifier begins with an uppercase letter (X12.6). A segment whose identifier does not -- lowercase, numeric, empty -- cannot be identified as a real segment.
+Every X12 segment identifier begins with an uppercase letter (X12.6); the rest is uppercase letters or digits, two or three characters (so 'N1', 'PO1', 'G62' are valid). A piece whose identifier does not begin with an uppercase letter -- lowercase, a digit, or empty -- cannot be a real segment.
 
 ### `structure.missing-iea`
 
