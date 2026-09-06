@@ -13,7 +13,7 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.delimiter-misaligned` | fatal | The ISA line cannot be decomposed at the element separator |
 | `isa.element-embedded-newline` | warning | A carriage return or line feed sits inside an ISA element |
 | `isa.element-overflow` | fatal | An ISA element holds non-space data past its fixed width |
-| `isa.element-separator-invalid` | fatal | The element separator is an alphanumeric byte |
+| `isa.element-separator-invalid` | fatal | The element separator is a letter or digit |
 | `isa.element-width` | error | An ISA element is not its fixed width |
 | `isa.gs-not-found` | fatal | No GS header found after the ISA segment |
 | `isa.identifier-lowercase` | error | ISA segment identifier is not uppercase |
@@ -25,12 +25,11 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.no-identifier` | fatal | No ISA segment in the file |
 | `isa.repetition-separator-invalid` | error | The repetition separator is not a usable delimiter |
 | `isa.repetition-separator-missing` | error | No repetition separator for a version that has one |
-| `isa.segment-terminator-invalid` | fatal | The segment terminator is an alphanumeric byte |
+| `isa.segment-terminator-invalid` | fatal | The segment terminator is a letter or digit |
 | `isa.segment-terminator-stripped` | fatal | No segment terminator after ISA16 |
 | `isa.separator-count-high` | fatal | More than 16 element separators before GS |
 | `isa.separator-count-low` | fatal | Fewer than 16 element separators before GS |
 | `isa.trailing-junk` | warning | Unexpected bytes between the segment terminator and GS |
-| `isa.trailing-newline` | warning | Line breaks between the segment terminator and GS |
 | `isa.usage-indicator-invalid` | error | ISA15 is not a recognized usage indicator |
 | `isa.version-unrecognized` | warning | ISA12 is not a recognised version code |
 
@@ -50,7 +49,7 @@ The segment terminator is the same byte as the element separator or the componen
 
 *fatal* — The ISA line cannot be decomposed at the element separator
 
-Splitting the ISA line on the element separator did not land the component separator and segment terminator on delimiter-shaped bytes. The usual cause is an element separator byte occurring inside ISA06 or ISA08 data, which shifts every field after it. The line holds the right number of separators but the wrong boundaries, so it cannot be trusted.
+Splitting the ISA line on the element separator left both the component separator (ISA16) and the byte after it -- the segment terminator -- as letters or digits, which cannot be told apart from data. The usual cause is a byte equal to the element separator occurring inside ISA06 or ISA08 data, which shifts every field after it: the line holds 16 separators but the wrong boundaries, so it cannot be trusted.
 
 ### `isa.element-embedded-newline`
 
@@ -66,9 +65,9 @@ This element is longer than its fixed width and the overflow is real data, not p
 
 ### `isa.element-separator-invalid`
 
-*fatal* — The element separator is an alphanumeric byte
+*fatal* — The element separator is a letter or digit
 
-The 4th byte of the ISA segment -- the element separator -- is a letter or digit. It cannot be distinguished from the data inside elements, so no segment in the interchange can be split reliably. X12 element separators are non-alphanumeric (commonly '*').
+The 4th byte of the ISA segment -- the element separator -- is a letter or digit. X12 does not restrict which byte a sender may use as a delimiter, but a letter or digit cannot be told apart from the data inside elements, so no segment in the interchange can be split reliably. x12-tidy refuses on that ground, not because the byte is forbidden.
 
 ### `isa.element-width`
 
@@ -138,9 +137,9 @@ ISA12 is version 00403 or later, where ISA11 is the repetition separator, but IS
 
 ### `isa.segment-terminator-invalid`
 
-*fatal* — The segment terminator is an alphanumeric byte
+*fatal* — The segment terminator is a letter or digit
 
-The byte recovered as the segment terminator -- the byte right after ISA16 -- is a letter or digit, so it cannot be a delimiter. Every segment in the interchange ends with this byte, so none of them can be split, and x12-tidy refuses.
+The byte recovered as the segment terminator -- the byte right after ISA16 -- is a letter or digit. X12 does not restrict delimiter bytes, but a letter or digit cannot be told apart from segment data, so every segment boundary in the interchange is ambiguous and x12-tidy refuses.
 
 ### `isa.segment-terminator-stripped`
 
@@ -164,13 +163,7 @@ An ISA header carries exactly 16 element separators (ISA*ISA01*..*ISA16); that c
 
 *warning* — Unexpected bytes between the segment terminator and GS
 
-Bytes that are not line breaks sit between the ISA segment terminator and the GS header -- stray spaces, a comment, or transport framing. Not part of the interchange under any legal delimiter choice -- non-conformant, like isa.trailing-newline -- and stripped on reconstruction.
-
-### `isa.trailing-newline`
-
-*warning* — Line breaks between the segment terminator and GS
-
-One or more carriage-return or line-feed bytes sit between the ISA segment terminator and the GS header. X12 joins segments with the terminator alone; the sender has appended a newline. Common and harmless, but non-conformant -- stripped on reconstruction.
+Bytes that are not line breaks sit between the ISA segment terminator and the GS header -- stray spaces, a comment, or transport framing. Not part of the interchange under any legal delimiter choice -- non-conformant, and stripped on reconstruction. (A bare CR/LF/CRLF suffix after the terminator is lawful and is not flagged.)
 
 ### `isa.usage-indicator-invalid`
 

@@ -384,9 +384,10 @@
     <div class="prose">
       <p>An X12 interchange is a stack of envelopes &mdash; <code>ISA</code> wraps
       <code>GS</code> wraps <code>ST</code> &mdash; and every segment, element and
-      sub&#8209;element inside them is separated by a punctuation byte the sender
-      chose. Those bytes are not fixed by the standard. They are <em>declared</em>,
-      once, by the ISA segment:</p>
+      sub&#8209;element inside them is separated by a delimiter byte the sender
+      chose. The standard does not fix those bytes, nor even restrict which byte
+      may serve (a control character is a valid, and recommended, choice). They
+      are <em>declared</em>, once, by the ISA segment:</p>
     </div>
 
     <ul class="plain">
@@ -734,10 +735,11 @@ parts = run.split(element_separator)
     <div class="note">
       <span class="kicker">The split landed on data</span>
       The last piece's first byte &mdash; where <code>ISA16</code> should be
-      &mdash; is a letter or a digit. The component separator is
-      never alphanumeric, so the decomposition is wrong &mdash; almost always
-      because an element separator byte occurs <em>inside</em> <code>ISA06</code>
-      or <code>ISA08</code> data, pulling every field after it out of alignment.
+      &mdash; is a letter or a digit. A letter or digit there cannot be told
+      apart from element data, so the decomposition is wrong &mdash; almost
+      always because a byte equal to the element separator occurs
+      <em>inside</em> <code>ISA06</code> or <code>ISA08</code> data, pulling
+      every field after it out of alignment.
       The line has the right <em>number</em> of separators but the wrong
       <em>boundaries</em>. Terminal: any repair from here is a guess.
     </div>

@@ -108,7 +108,9 @@ def test_tilde_crlf_terminator_splits_deterministically() -> None:
     d = split_isa_line(run_of(term=b"~\r\n"))
     assert d.segment_terminator == b"~"
     assert d.trailing == b"\r\n"
-    assert codes(d.diagnostics) == [Code.ISA_TRAILING_NEWLINE]
+    # a CR/LF suffix after the terminator is lawful (X12.5 s4.3; A7) -- kept in
+    # `trailing`, out of the canonical line, not flagged
+    assert codes(d.diagnostics) == []
     assert d.usable
 
 
@@ -117,7 +119,8 @@ def test_bare_crlf_terminator_is_one_byte_by_rule() -> None:
     # the 1-byte rule: \r is the terminator, \n falls to trailing
     assert d.segment_terminator == b"\r"
     assert d.trailing == b"\n"
-    assert codes(d.diagnostics) == [Code.ISA_TRAILING_NEWLINE]
+    # the trailing \n is a line break -- lawful, not flagged
+    assert codes(d.diagnostics) == []
     assert d.usable
 
 

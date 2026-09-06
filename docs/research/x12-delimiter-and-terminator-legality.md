@@ -165,18 +165,19 @@ deviation.
 See `DIAGNOSTICS-REVIEW.md` → "Research blocker — RESOLVED" for the agreed
 dispositions. In brief:
 
-| code | effect of this research |
-|---|---|
-| `isa.element-separator-invalid` | premise ("X12 element separators are non-alphanumeric") is **not a standards rule**; keep the `fatal` gate as a *structural-recoverability* heuristic, reword the message to say so |
-| `isa.segment-terminator-invalid` | same — keep the gate, drop the standards claim from the prose |
-| `isa.delimiter-misaligned` | reword per the review note; unaffected in substance |
-| `isa.trailing-newline` | **remove** — a bare CR/LF/CRLF after the ISA terminator is conformant (A7); preserve/normalise silently |
-| `isa.trailing-junk` | **keep** for genuine foreign bytes only; strip newline bytes silently everywhere for consistency with `split_segments` |
-| `isa.identifier-utf16` | research no longer blocks the fatal→warning transcode; still gated on a separate owner go-ahead |
+| code | effect of this research | status |
+|---|---|---|
+| `isa.element-separator-invalid` | premise ("X12 element separators are non-alphanumeric") is **not a standards rule**; keep the `fatal` gate as a *structural-recoverability* heuristic, reword the message to say so | ✅ done |
+| `isa.segment-terminator-invalid` | same — keep the gate, drop the standards claim from the prose | ✅ done |
+| `isa.delimiter-misaligned` | reword: name ISA16, name the "byte equal to the element separator inside ISA06/ISA08" cause | ✅ done |
+| `isa.trailing-newline` | **removed** — a bare CR/LF/CRLF after the ISA terminator is conformant (A7); kept in the tail, out of the canonical line, not flagged | ✅ done |
+| `isa.trailing-junk` | **kept** for genuine foreign bytes only (spaces, comment, transport framing) | ✅ done |
+| `\r\n`-with-no-`~` bug | lone `\n` after a `\r` terminator should be part of the terminator | not started (item E) |
+| `isa.identifier-utf16` | research no longer blocks the fatal→warning transcode; still gated on a separate owner go-ahead | not started (item F) |
 
-A concrete artifact that exercises two of these — `isa.separator-count-high` and
-`isa.trailing-newline` — is checked in at `samples/dlms-831-application-control-totals.edi`;
-see `samples/README.md`.
+A concrete artifact that exercises `isa.separator-count-high` (and, before its
+removal, `isa.trailing-newline`) is checked in at
+`samples/dlms-831-application-control-totals.edi`; see `samples/README.md`.
 
 ---
 

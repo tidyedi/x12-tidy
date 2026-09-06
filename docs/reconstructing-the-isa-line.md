@@ -155,7 +155,8 @@ permissive parsing never invents.
 | element over-padded with spaces | trimmed, `isa.element-width` |
 | ISA segment hard-wrapped (`\r`/`\n` in a text element) | line breaks → spaces, `isa.element-embedded-newline`, then re-measured |
 | non-`~` terminator (`\n`, bare `\r`) | **kept as-is, no finding** — which byte ends a segment is the sender's choice, not a deviation |
-| trailing bytes after the terminator (`~\r\n`, `~ `) | the real terminator kept; the trailing `\r\n` / spaces stripped (`isa.trailing-newline` / `isa.trailing-junk`) |
+| CR/LF after the terminator (`~\r\n`) | **kept in the tail, no finding** — a newline suffix is lawful (X12.5 §4.3) |
+| other trailing bytes after the terminator (`~ `, a comment) | the real terminator kept; the foreign bytes stripped, `isa.trailing-junk` |
 | terminator omitted entirely (GS follows ISA16) | **fatal** `isa.segment-terminator-stripped` — refused rather than guess `~` |
 | pipe / caret / any valid delimiters | kept as-is; the delimiters are the sender's choice |
 | conformant ISA line | returned unchanged, `was_clean` — the one row with nothing to repair |

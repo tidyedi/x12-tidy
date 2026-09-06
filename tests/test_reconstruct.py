@@ -197,7 +197,6 @@ def test_no_isa_tag_returns_none() -> None:
 _RECONSTRUCTION_OWNS: frozenset[Code] = frozenset({
     Code.ISA_LEADING_BYTES,
     Code.ISA_IDENTIFIER_LOWERCASE,
-    Code.ISA_TRAILING_NEWLINE,
     Code.ISA_TRAILING_JUNK,
     Code.ISA_ELEMENT_EMBEDDED_NEWLINE,
     Code.ISA_ELEMENT_WIDTH,

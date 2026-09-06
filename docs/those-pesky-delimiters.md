@@ -28,9 +28,10 @@ harder than reading three bytes at three fixed offsets.
 ## 1. The ISA line is a delimiter declaration
 
 An X12 interchange is a stack of envelopes — `ISA` wraps `GS` wraps `ST` — and
-every segment, element, and sub-element inside them is separated by a punctuation
-byte the sender chose. Those bytes are not fixed by the standard. They are
-*declared*, once, by the ISA segment:
+every segment, element, and sub-element inside them is separated by a delimiter
+byte the sender chose. The standard does not fix those bytes, nor even restrict
+which byte may serve (a control character is a valid, and recommended, choice).
+They are *declared*, once, by the ISA segment:
 
 - the **element separator** sits at byte 3 — the fourth byte of `ISA…`;
 - the **component separator** (between the parts of a composite element) is the
@@ -133,10 +134,10 @@ component separator, then `GS`. The sender dropped the terminator entirely. Its
 position is known, so it is reconstructed as `~` and flagged; this is not fatal.
 
 **The split landed on data.** The last piece's first byte — where `ISA16` should
-be — is a letter or a digit. The component
-separator is never alphanumeric, so the decomposition is wrong — almost always
-because an element separator byte occurs *inside* `ISA06` or `ISA08` data, which
-pulled every field after it out of alignment. The line has the right *number* of
+be — is a letter or a digit. A letter or digit there cannot be told apart from
+element data, so the decomposition is wrong — almost always because a byte equal
+to the element separator occurs *inside* `ISA06` or `ISA08` data, which pulled
+every field after it out of alignment. The line has the right *number* of
 separators — locating the line counted them — but the wrong *boundaries*. That is terminal:
 the diagnostic is emitted and parsing stops, because any repair from here is a
 guess.

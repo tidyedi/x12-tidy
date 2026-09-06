@@ -211,13 +211,16 @@ bar + slice 1), making no assumption about length or width. Once slice 1 returns
 
 The sender's element, component, repetition **and segment** delimiters are all
 **kept as-is** — which byte serves as a delimiter is the sender's choice, X12
-does not dictate it, so any valid non-alphanumeric byte is conformant and is
-preserved silently. A `\n` terminator stays `\n` and raises no finding. When
-the sender omitted the terminator entirely (`isa.segment-terminator-stripped`,
-fatal) x12-tidy refuses rather than guess `~` — a wrong terminator would break
-the split of every following segment. Bytes that cannot be a legal delimiter (trailing
-`\r\n` or spaces after the real terminator, an alphanumeric terminator) are a
-separate matter, stripped or refused by slice 1.
+does not dictate it. The standard does not even restrict the byte, but x12-tidy
+needs a delimiter to be non-alphanumeric so it can be told apart from data; a
+non-alphanumeric byte is preserved silently. A `\n` terminator stays `\n`, and a
+CR/LF suffix after the terminator (`~\r\n`) is lawful (X12.5 §4.3) — both raise
+no finding. When the sender omitted the terminator entirely
+(`isa.segment-terminator-stripped`, fatal) x12-tidy refuses rather than guess
+`~` — a wrong terminator would break the split of every following segment. Bytes
+that cannot be a legal delimiter (spaces or a comment after the real terminator,
+an alphanumeric terminator) are a separate matter, stripped or refused by
+slice 1.
 
 **What reconstruction repairs** (each with a `Diagnostic`):
 
