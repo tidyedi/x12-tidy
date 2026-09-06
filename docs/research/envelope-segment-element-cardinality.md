@@ -89,10 +89,14 @@ rule table is:
 | IEA | exactly 2 |
 | ST  | 2 or 3; a present ST03 is standards-valid only when the interchange version (ISA12 / GS08) ≥ 004020; **ST04 or beyond is always invalid** |
 
-The version gate on ST03 is a refinement — the coarse rule "ST has 2 or 3
-elements, everything else is exact" catches the `SE*8*0001*JUNK~` class without
-any version logic. Whether the pre-004020 ST03 case is worth its own severity
-tier is the open question.
+**Shipped (2026-09-06): the coarse rule.** `structure.segment-element-count`
+(error) uses exactly the table above *except* the ST03 version gate: a 3-element
+`ST` is accepted in every release. Rationale and the plan to revisit are in
+`DIAGNOSTICS-REVIEW.md` → "Deferred refinement — no version gate on ST03". In
+short: a pre-004020 ST03 is a narrow edge, the interchange version is already in
+hand so the gate is cheap to add later, and its severity is itself undecided.
+Natural time to revisit: the transaction-set content parser, which will validate
+every segment against a release-specific dictionary anyway.
 
 ---
 

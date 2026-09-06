@@ -45,11 +45,15 @@ _VALID_USAGE_INDICATORS = (b"T", b"P", b"I")
 _VALID_RESPONSIBLE_AGENCIES = (b"X", b"T")
 
 #: How many data elements each envelope segment is defined to carry, across every
-#: X12 release (see docs/research/envelope-segment-element-cardinality.md). ``ST``
-#: also accepts 3: ST03, the optional Implementation Convention Reference, was
-#: added in release 004020. ``ISA`` is always 16 and is enforced earlier, in the
-#: ISA-line phase -- a wrong ISA element count is fatal there; a wrong count on
-#: any of these is an error, not a refusal.
+#: X12 release (see docs/research/envelope-segment-element-cardinality.md). ``ISA``
+#: is always 16 and is enforced earlier, in the ISA-line phase -- a wrong ISA
+#: element count is fatal there; a wrong count on any of these is an error, not a
+#: refusal.
+#:
+#: ``ST`` accepts 3 (ST03, the optional Implementation Convention Reference) in
+#: *every* release, even though ST03 was only added in 004020. Gating it on the
+#: interchange version is a deliberately deferred refinement -- see
+#: DIAGNOSTICS-REVIEW.md, "Deferred refinement -- no version gate on ST03".
 _ENVELOPE_ELEMENT_COUNTS: dict[bytes, tuple[int, ...]] = {
     b"GS": (8,),
     b"GE": (2,),

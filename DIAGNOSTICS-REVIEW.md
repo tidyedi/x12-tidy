@@ -165,11 +165,32 @@ Cardinality validated across releases 003010–008010
 | ST | 2 or 3 (ST03 optional, added release 004020) | error |
 
 Implemented in `qaqc/checks.py`: `_ENVELOPE_ELEMENT_COUNTS` + `_check_envelope_cardinality`,
-called once per segment in the walk. Coarse rule — `ST` accepts 2 or 3 with no
-version gate (a pre-004020 ST03 is not separately flagged; that refinement is
-left out deliberately). `x12_tidy.diagnostics.Code.STRUCTURE_SEGMENT_ELEMENT_COUNT`;
+called once per segment in the walk. `x12_tidy.diagnostics.Code.STRUCTURE_SEGMENT_ELEMENT_COUNT`;
 4 tests in `test_qaqc.py`; docs (`design.md`, `auditing-the-envelope.{md,html}`,
 `CLAUDE.md`, generated `diagnostics.md`) updated.
+
+### Deferred refinement — no version gate on ST03 (for a future review)
+
+**This was a deliberate choice, not an oversight.** The check accepts a
+3-element `ST` in **any** release, but ST03 (the Implementation Convention
+Reference) was only added to the standard in release **004020** — so a 3-element
+`ST` on a `00401` / `003xxx` interchange is technically non-conformant and is
+**not flagged today**.
+
+The gate was left out because:
+
+- it is a narrow edge (an old interchange that also carries a modern optional
+  element), and translators have accepted a back-ported ST03 in practice;
+- the interchange version (`ISA12` / `GS08`) is already in hand during the walk,
+  so adding the gate later is a small, self-contained change — the same shape as
+  the existing `isa.isa11-not-standards-id` cutoff at `00403` (see assumptions
+  A4);
+- a future session revisiting this should also decide the **severity** of a
+  pre-004020 ST03 — its own tier, or fold it into `structure.segment-element-count`.
+
+Revisit alongside the transaction-set content parser (the layer that will
+validate every segment's cardinality against a release-specific dictionary), or
+sooner if a real file surfaces it.
 
 ---
 
