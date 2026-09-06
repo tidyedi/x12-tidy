@@ -650,15 +650,14 @@ parts = run.split(element_separator)
       or <code>~\r\n</code>, or a bare <code>\r\n</code>, or <code>~</code> then a
       stray space, or <code>\n</code> alone. If you treat &ldquo;the
       terminator&rdquo; as <em>everything between ISA16 and GS</em>, you cannot
-      tell a two&#8209;byte terminator from a one&#8209;byte terminator followed
-      by a newline the sender appended &mdash; and that ambiguity then propagates
-      to every segment in the file.</p>
+      tell a real terminator from a newline or a stray byte the sender appended
+      &mdash; and that ambiguity then propagates to every segment in the file.</p>
     </div>
 
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 3 &mdash; The one-byte rule, applied to four real terminators</span>
-        <svg viewBox="0 0 780 250" role="img" aria-label="How the one-byte rule resolves four real segment terminators. The colon is ISA16. Tilde: terminator is the tilde, nothing trailing. Tilde CR LF: terminator is the tilde, CR LF trailing. Bare CR LF: terminator is the CR, LF trailing. Tilde space: terminator is the tilde, the space trailing.">
+        <svg viewBox="0 0 780 250" role="img" aria-label="How the one-byte rule resolves four real segment terminators. The colon is ISA16. Tilde: terminator is the tilde, nothing trailing. Tilde CR LF: terminator is the tilde, CR LF is a lawful newline suffix. Bare CR LF: terminator is the LF, the CR is dropped. Tilde space: terminator is the tilde, the space is trailing junk.">
   <g font-family="'IBM Plex Mono', monospace" font-size="12.5">
     <text x="12" y="18" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">AFTER ISA16 &#8212; the segment terminator is one byte; the rest is trailing</text>
 
@@ -687,17 +686,17 @@ parts = run.split(element_separator)
       <rect x="114" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="134" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
       <text x="270" y="20" fill="currentColor">~</text>
       <text x="400" y="20" fill="currentColor">CR LF</text>
-      <text x="540" y="20" font-size="11.5" fill="currentColor">trailing newline &#183; warning</text>
+      <text x="540" y="20" font-size="11.5" fill="var(--valid)">lawful newline suffix</text>
     </g>
     <!-- row 3 -->
     <g transform="translate(0,144)">
       <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
-      <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" font-size="10.5" fill="var(--accent)">CR</text>
-      <rect x="66" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">LF</text>
+      <rect x="40" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="53" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR</text>
+      <rect x="66" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--accent)">LF</text>
       <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="270" y="20" font-size="11.5" fill="currentColor">CR</text>
-      <text x="400" y="20" font-size="11.5" fill="currentColor">LF</text>
-      <text x="540" y="20" font-size="11.5" fill="currentColor">non-canonical term + newline</text>
+      <text x="270" y="20" font-size="11.5" fill="currentColor">LF</text>
+      <text x="400" y="20" font-size="11.5" fill="var(--ink-soft)">&#8212;</text>
+      <text x="540" y="20" font-size="11.5" fill="currentColor">CR dropped (DOS line ending)</text>
     </g>
     <!-- row 4 -->
     <g transform="translate(0,186)">
@@ -707,18 +706,20 @@ parts = run.split(element_separator)
       <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
       <text x="270" y="20" fill="currentColor">~</text>
       <text x="400" y="20" fill="currentColor">SP</text>
-      <text x="540" y="20" font-size="11.5" fill="var(--deviation)">trailing junk &#183; error</text>
+      <text x="540" y="20" font-size="11.5" fill="currentColor">trailing junk &#183; warning</text>
     </g>
 
     <text x="14" y="238" fill="var(--ink-soft)" font-size="10.5">The colon is ISA16. Its position varies; the one-byte rule does not.</text>
   </g>
         </svg>
       </div>
-      <figcaption>The terminator is that one byte. Anything after it and before
-        <code>GS</code> is <b>trailing</b>, classified on its own: carriage
-        returns and line feeds are a newline the sender appended (a warning);
-        anything else is junk (an error). Both are stripped on
-        reconstruction.</figcaption>
+      <figcaption>The terminator is that one byte, with one refinement: a
+        <code>\r</code> immediately before a <code>\n</code> is a DOS line
+        ending, so the terminator is the <code>\n</code> and the <code>\r</code>
+        is dropped. Anything else after the terminator and before <code>GS</code>
+        is <b>trailing</b>: a lone <code>\r</code>/<code>\n</code> is a lawful
+        newline suffix and raises no finding; any other byte is junk (a
+        warning). Trailing bytes are stripped on reconstruction.</figcaption>
     </figure>
 
     <div class="prose">
@@ -870,8 +871,9 @@ parts = run.split(element_separator)
       byte before the first variable&#8209;width field. Recover everything else
       from the split, anchored on the guaranteed separator count and the
       <code>GS</code> boundary, never a byte number. Make the segment terminator
-      one byte by rule, so a two&#8209;byte terminator and a trailing newline stop
-      being the same thing. Let the version number decide whether the fourth
+      one byte by rule &mdash; with <code>\r\n</code> normalised to <code>\n</code>
+      &mdash; so a newline or a stray byte the sender appended stops being
+      confused with the terminator. Let the version number decide whether the fourth
       delimiter exists; do not infer intent. And hold the fatal for the delimiters
       the interchange genuinely cannot be read without &mdash; report the rest,
       and let the segment that needs a broken delimiter be the one that fails.</p>

@@ -111,21 +111,23 @@ is whatever single byte the sender put there. So this piece *begins* with `ISA16
 That second byte — one byte, by rule, not by convenience. This is the rule that
 earns its keep. Real files end segments with `~`, or `~\r\n`, or a bare `\r\n`,
 or `~` then a stray space, or `\n` alone. If you treat "the terminator" as
-*everything between ISA16 and GS*, you cannot tell a two-byte terminator from a
-one-byte terminator followed by a newline the sender appended — and that
-ambiguity then propagates to every segment in the file. The one-byte rule cuts
-it:
+*everything between ISA16 and GS*, you cannot tell a real terminator from a
+newline or a stray byte the sender appended — and that ambiguity then propagates
+to every segment in the file. The one-byte rule cuts it:
 
 ![How the one-byte rule resolves each real-world terminator. The colon is ISA16.
 For a tilde, the terminator is the tilde and there is no trailing. For tilde-CR-LF
-the terminator is the tilde and CR-LF is trailing. For a bare CR-LF the terminator
-is the CR and the LF is trailing. For tilde-space the terminator is the tilde and
-the space is trailing.](images/figures/delimiters-terminator.svg)
+the terminator is the tilde and CR-LF is a lawful newline suffix. For a bare CR-LF
+the terminator is the LF and the CR is dropped as a DOS line ending. For
+tilde-space the terminator is the tilde and the space is trailing
+junk.](images/figures/delimiters-terminator.svg)
 
-The terminator is that one byte. Anything after it and before `GS` is *trailing*
-— classified on its own: carriage returns and line feeds are a newline the
-sender appended (a warning), anything else is junk (an error). Both are stripped
-when the line is reconstructed.
+The terminator is that one byte, with one refinement: a `\r` immediately before
+a `\n` is a DOS line ending, not a delimiter — the terminator is the `\n` and
+the `\r` is dropped. Anything else after the terminator and before `GS` is
+*trailing*: a lone `\r`/`\n` is a lawful newline suffix and raises no finding
+(X12.5 §4.3); any other byte is junk (`isa.trailing-junk`, a warning). Trailing
+bytes are stripped when the line is reconstructed.
 
 Two things this last piece tells you are seriously wrong:
 
@@ -233,8 +235,9 @@ width no longer a fact it has to trust.
 Read the element separator at the one offset that cannot move — the byte before
 the first variable-width field. Recover everything else from the split, anchored
 on the guaranteed separator count and the `GS` boundary, never a byte number.
-Make the segment terminator one byte by rule, so that a two-byte terminator and a
-trailing newline stop being the same thing. Let the version number decide whether
+Make the segment terminator one byte by rule — with `\r\n` normalised to `\n` —
+so a newline or a stray byte the sender appended stops being confused with the
+terminator. Let the version number decide whether
 the fourth delimiter exists; do not infer intent. And hold the fatal for the
 delimiters the interchange genuinely cannot be read without — report the rest,
 and let the segment that needs a broken delimiter be the one that fails.

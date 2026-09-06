@@ -21,8 +21,8 @@ Rule: *if a code was not raised during the review, it is accepted as-is.*
 ## Summary
 
 - **47 codes** reviewed. **3 removed** (`isa.line-length`, `isa.segment-terminator-noncanonical`, `isa.trailing-newline`), **1 severity change** (`isa.segment-terminator-stripped` → fatal), **4 renamed**, **13 more reworded**, **~26 accepted unchanged**.
-- Research blocker **RESOLVED** (2026-09-06, A6/A7). The dependent wording — `isa.element-separator-invalid`, `isa.segment-terminator-invalid`, `isa.delimiter-misaligned` — and the `trailing-newline` removal are **✅ done** (branch `refactor/isa-delimiter-terminator-rewording`).
-- **Still open:** item D (`split_segments` newline-strip consistency), item E (`\r\n` 2-byte terminator), item F (`isa.identifier-utf16` transcode — needs an explicit go-ahead), envelope segment cardinality.
+- Research blocker **RESOLVED** (2026-09-06, A6/A7). Dependent wording + `isa.trailing-newline` removal **✅ on `main` (#74)**. Item D closed (no change). Item E (`\r\n`→`\n`) **✅ done**.
+- **Still open:** item F (`isa.identifier-utf16` transcode — needs an explicit go-ahead), envelope segment cardinality.
 
 ### Severity / existence changes
 
@@ -123,11 +123,17 @@ Alignment (dispositions):
 - ✅ `isa.trailing-junk` — **kept**, now fires only for non-newline trailing
   bytes (spaces, comment, transport framing). Explanation note about
   `isa.trailing-newline` removed.
-- ⬜ Separate bug (item E, not started): `\r\n`-terminated file with no `~` →
-  1-byte-terminator rule takes `\r` as terminator, `\n` as trailing. Now
-  unflagged (was `isa.trailing-newline`); still not treated as a 2-byte
-  terminator. Fix: treat a lone `\n` right after a `\r` terminator as part of
-  the terminator.
+- ✅ **item D** — inter-segment junk consistency: **no change.** Newlines are
+  already stripped silently at every boundary; the only asymmetry was that a
+  stray *space* after the ISA terminator is reported (`isa.trailing-junk`) while
+  spaces between body segments are stripped silently. Owner's call: works as is,
+  not an issue.
+- ✅ **item E** — `\r\n` terminator normalises to `\n`. `split_isa_line` maps a
+  `\r` immediately followed by `\n` to a `\n` terminator (CR dropped as a DOS
+  line ending); `split_segments` collapses `\r\n`→`\n` before splitting. A
+  CRLF-delimited interchange now cleans to LF, not to a lone CR. Terminator
+  stays one byte — no invariant change. A lone `\r` with no `\n` is still kept
+  as the sender's choice. Docs + `delimiters-terminator.svg` updated.
 - ⬜ `isa.identifier-utf16` transcode (item F) — research no longer blocks it;
   still gated on an explicit owner go-ahead.
 
@@ -200,9 +206,9 @@ case added to `tests/test_isa_line.py` `CASES`.
 | top-level `from x12_tidy import tidy` re-export | ✅ this PR |
 | `qaqc/envelope.py` → `qaqc/checks.py` | ✅ this PR |
 | README / docs/README link to `using-x12-tidy.md` | ✅ this PR |
-| research-gated wording — `isa.element-separator-invalid` / `isa.segment-terminator-invalid` / `isa.delimiter-misaligned` reword + remove `isa.trailing-newline` | ✅ branch `refactor/isa-delimiter-terminator-rewording` (items A–C) |
-| item D — `split_segments` newline-strip consistency | not started |
-| item E — `\r\n` as a 2-byte terminator | not started |
+| research-gated wording — `isa.element-separator-invalid` / `isa.segment-terminator-invalid` / `isa.delimiter-misaligned` reword + remove `isa.trailing-newline` | ✅ on `main` (#74) (items A–C) |
+| item D — inter-segment junk consistency | ✅ no change — owner's call, works as is |
+| item E — `\r\n` terminator normalises to `\n` | ✅ branch `refactor/crlf-terminator-normalises-to-lf` |
 | `isa.identifier-utf16` transcode (item F) | not started — explicit later-discussion TODO |
 | envelope segment cardinality | not started — undecided (counts validated, A8) |
 | 4 note **PDFs** re-printed | ✅ this PR — regenerated from the fixed HTML (headless Chrome) |

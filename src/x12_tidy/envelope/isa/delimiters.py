@@ -179,6 +179,15 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
     segment_terminator = after[0:1]
     trailing = after[1:]
 
+    # `\r\n` is a DOS line ending, not a two-byte delimiter: the terminator is
+    # the LF and the leading CR is dropped as noise (assumption A7). This keeps
+    # the terminator one byte and the reconstruction faithful -- a CRLF-delimited
+    # interchange cleans to LF, not to a lone CR. A bare CR with no LF after it
+    # is left as the sender's chosen 1-byte terminator.
+    if segment_terminator == b"\r" and trailing[:1] == b"\n":
+        segment_terminator = b"\n"
+        trailing = trailing[1:]
+
     # --- element separator: needed for every segment -> fatal if unusable ---
     if _is_alnum(element_separator):
         diags.append(Diagnostic(
