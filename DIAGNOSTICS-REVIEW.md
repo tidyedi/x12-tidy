@@ -131,8 +131,27 @@ Alignment (dispositions — pending owner sign-off):
 
 ## Possible new code (not decided)
 
-- **ST/SE element cardinality** — nothing flags an unexpected extra element in
-  `ST` or `SE` (`SE*5*0001*JUNK~` passes silently). Would be a new `st.*` code.
+- **Envelope segment element cardinality** — nothing flags an unexpected extra
+  element in `ST` / `SE` (`SE*8*0001*JUNK~` passes silently). Would be a new
+  `st.*` / envelope code.
+
+  Cardinality validated across releases 003010–008010
+  (`docs/research/envelope-segment-element-cardinality.md`, 2026-09-06):
+
+  | segment | authorized elements | stable? |
+  |---|---|---|
+  | ISA | 16 | yes — already enforced |
+  | GS | 8 | yes |
+  | GE | 2 | yes |
+  | SE | 2 | yes |
+  | IEA | 2 | yes |
+  | ST | 2, or **3 from release 004020** (ST03 = Implementation Convention Reference, optional) | **changed once, at 004020** |
+
+  ST is the only one that moves. ST03 is *optional* in every release that has it,
+  so a 2-element ST is always valid; what changed at 004020 is the max, 2 → 3.
+  A coarse rule ("ST 2–3, all others exact") needs no version logic; gating ST03
+  on ISA12/GS08 ≥ 004020 is a refinement (same posture as the ISA11 `00403`
+  cutoff). Open: whether pre-004020 ST03 warrants its own severity.
 
 ---
 
