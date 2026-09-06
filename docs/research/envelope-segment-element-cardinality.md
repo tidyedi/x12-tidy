@@ -6,13 +6,18 @@ new diagnostic (`SE*8*0001*JUNK~` passes silently today). Before designing that
 check we need the authorized element count for each envelope segment, and whether
 it is stable across X12 releases.
 
-**Method:** ASC X12 publishes an annual release; the control-segment structure
-lives in X12.5 (Interchange Control Structures) and X12.6 (Application Control
-Structure). Stedi mirrors the segment dictionary per release at
-`stedi.com/edi/x12-<release>/segment/<SEG>`. Releases spot-checked: **003010,
-003040, 003060, 004010, 004020, 004030, 005010, 007010, 008010** — i.e. both
-ends of the range x12-tidy realistically sees, plus the 004x band where a change
-was suspected.
+**Method:** the control-segment structure lives in X12.5 (Interchange Control
+Structures) and X12.6 (Application Control Structure); Stedi mirrors the segment
+dictionary per release at `stedi.com/edi/x12-<release>/segment/<SEG>`.
+
+Check the **earliest** release (003010) and the **latest** (008010) first. If
+they agree, every release in between agrees — done, no further checks. If they
+differ, bisect the release list to find where it changed.
+
+- ISA, GS, GE, SE, IEA — 003010 and 008010 identical → no bisect.
+- ST — 003010 = 2, 008010 = 3 → bisect: 005010 = 3, so the change is at or below
+  005010; 004010 = 2 and 004020 = 3, and those are consecutive releases →
+  pinned: the change is release **004020**.
 
 ---
 
@@ -93,15 +98,12 @@ tier is the open question.
 
 ## Sources
 
-Per-release segment dictionaries (Stedi), one page per `(release, segment)`:
+Per-release segment dictionaries (Stedi), `stedi.com/edi/x12-<release>/segment/<SEG>`.
+Pages that establish each row (endpoints, plus the ST bisect path):
 
-- ST: `stedi.com/edi/x12-003010/segment/ST` · `…-004010…` · `…-004020…` ·
-  `…-004030…` · `…-005010…` · `…-007010…` · `…-008010…`
-- SE: `stedi.com/edi/x12-003010/segment/SE` · `…-004010…` · `…-008010…`
-- GS: `stedi.com/edi/x12-003010/segment/GS` · `…-008010…`
-- GE: `stedi.com/edi/x12-003010/segment/GE` · `…-008010…`
-- IEA: `stedi.com/edi/x12-003040/segment/IEA` · `…-008010…`
-- ISA: `stedi.com/edi/x12-003010/segment/ISA` (not present) · `…-003040…` · `…-008010…`
+- GS / GE / SE / IEA — releases `003010` and `008010` (identical → done)
+- ISA — `003010` (not present), `003040` (16), `008010` (16)
+- ST — `003010` (2), `008010` (3); bisect `005010` (3), `004010` (2), `004020` (3)
 
 Corroborating / background:
 
