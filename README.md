@@ -58,7 +58,6 @@ the Markdown sources and PDFs.
 | **ISA envelope — reconstruct the canonical line** (`x12_tidy.envelope.isa.reconstruct_isa_line`) | done |
 | **Whole-document cleanse** (`x12_tidy.envelope.structure.clean_payload`) | done |
 | **GS / ST / structure — envelope and control-number QA/QC** (`x12_tidy.envelope.qaqc.check_payload`) | done |
-| Multiple interchanges in one file | not started |
 
 ## Usage
 
