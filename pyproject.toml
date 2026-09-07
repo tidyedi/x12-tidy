@@ -31,10 +31,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tidyedi/x12-tidy"
+Homepage = "https://docs.tidyedi.com"
 Repository = "https://github.com/tidyedi/x12-tidy"
-Documentation = "https://docs.tidyedi.com"
 Changelog = "https://github.com/tidyedi/x12-tidy/releases"
+"Web tool" = "https://repair.tidyedi.com"
 
 [project.scripts]
 x12-tidy = "x12_tidy.cli:main"

@@ -8,8 +8,10 @@
 [![CI](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/tidyedi/x12-tidy/blob/main/LICENSE)
 
+![x12-tidy — validate and repair malformed ANSI X12 EDI](https://raw.githubusercontent.com/tidyedi/x12-tidy/main/docs/images/brand/social-card-1280x640.png)
+
 Validate and repair malformed ANSI X12 EDI, built piece by piece. The free
-CLI and Python library behind [TidyEDI](https://tidyedi.com).
+CLI and Python library behind [TidyEDI](https://repair.tidyedi.com).
 
 x12-tidy parses **permissively** and reports **strictly**: it locates the
 interchange envelope even in a malformed file and emits a `Diagnostic` for every
