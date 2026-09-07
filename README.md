@@ -8,7 +8,7 @@
 [![CI](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/tidyedi/x12-tidy/blob/main/LICENSE)
 
-![x12-tidy — validate and repair malformed ANSI X12 EDI](https://raw.githubusercontent.com/tidyedi/x12-tidy/main/docs/images/brand/social-card-1280x640.png)
+![Why did your X12 file fail? x12-tidy names every departure from the standard with a byte offset, and hands back a clean, conformant copy.](https://raw.githubusercontent.com/tidyedi/x12-tidy/main/docs/images/brand/hero-repair-flow.jpg)
 
 Validate and repair malformed ANSI X12 EDI, built piece by piece. The free
 CLI and Python library behind [TidyEDI](https://repair.tidyedi.com).

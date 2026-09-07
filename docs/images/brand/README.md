@@ -12,7 +12,9 @@ parser found; the three below are flush and solid — the same data, tidied.
 | `../favicon.svg` | Favicon build — 3 heavier bars so the idea survives at 16px. Served from `images/`. |
 | `../favicon-96.png` `../favicon-32.png` `../favicon-16.png` | PNG favicon fallbacks (in `images/`). |
 | `../apple-touch-icon.png` | 180×180 for iOS home-screen. |
-| `social-card-1280x640.png` | Repo social preview and page `og:image`. |
+| `social-card-1280x640.png` | Repo social preview and page `og:image` — kept simple so it reads at unfurl-thumbnail size. |
+| `hero-repair-flow.jpg` | README hero (1600×873). Noir "assembly room" illustration with a headline overlay — *Why did your X12 file fail? x12-tidy tells you — every deviation.* Composited from `hero-repair-flow.plate.jpg` (the illustration) + `hero-repair-flow.html` (the text layer), screenshotted with headless Chrome. Re-run the recipe below to regenerate after editing the HTML. |
+| `hero-repair-flow.plate.jpg` `hero-repair-flow.html` | Hero source — the raw illustration and the HTML overlay. |
 | `tidyedi-avatar-512.png` | Same bytes as `tidyedi-mark.png`, named for the GitHub org-avatar upload. |
 
 ## Colour
@@ -53,4 +55,15 @@ chrome --headless=new --disable-gpu --hide-scrollbars \
   --default-background-color=00000000 --window-size=512,512 \
   --screenshot=tidyedi-mark.png \
   'data:text/html,<img src="tidyedi-mark.svg" style="width:512px;height:512px">'
+```
+
+The hero is `hero-repair-flow.html` (headline layer) over
+`hero-repair-flow.plate.jpg` (illustration). Screenshot it at 2×, then
+down-convert to a JPG the README can carry:
+
+```bash
+chrome --headless=new --disable-gpu --hide-scrollbars \
+  --force-device-scale-factor=2 --window-size=1408,768 \
+  --screenshot=hero.png "file://$PWD/hero-repair-flow.html"
+sips -s format jpeg -s formatOptions 82 -Z 1600 hero.png --out hero-repair-flow.jpg
 ```
