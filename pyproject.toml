@@ -8,11 +8,33 @@ license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Michael Schertz", email = "michael.schertz@gmail.com" }]
 dependencies = []
+keywords = [
+    "x12",
+    "edi",
+    "ansi-x12",
+    "edi-validation",
+    "x12-parser",
+    "isa",
+    "interchange-envelope",
+    "healthcare-edi",
+    "linter",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Text Processing :: General",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
 
 [project.urls]
-Homepage = "https://github.com/tidyedi/x12-tidy"
+Homepage = "https://docs.tidyedi.com"
 Repository = "https://github.com/tidyedi/x12-tidy"
-Documentation = "https://docs.tidyedi.com/finding-the-elusive-isa-line.html"
+Changelog = "https://github.com/tidyedi/x12-tidy/releases"
+"Try it online" = "https://repair.tidyedi.com"
 
 [project.scripts]
 x12-tidy = "x12_tidy.cli:main"
