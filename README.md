@@ -3,6 +3,8 @@
   &nbsp;x12-tidy
 </h1>
 
+[![PyPI](https://img.shields.io/pypi/v/x12-tidy)](https://pypi.org/project/x12-tidy/)
+[![Python](https://img.shields.io/pypi/pyversions/x12-tidy)](https://pypi.org/project/x12-tidy/)
 [![CI](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
@@ -58,9 +60,13 @@ the [`docs/`](docs/) folder holds the Markdown sources and PDFs.
 ## Usage
 
 ```bash
-uv run x12-tidy check path/to/file.edi     # run the checks built so far
-uv run x12-tidy codes --area isa            # list diagnostic codes
-uv run x12-tidy explain isa.leading-bytes   # detail for one code
+pip install x12-tidy       # or: uv add x12-tidy
+```
+
+```bash
+x12-tidy check path/to/file.edi      # run the checks built so far
+x12-tidy codes --area isa            # list diagnostic codes
+x12-tidy explain isa.leading-bytes   # detail for one code
 ```
 
 `check` exit codes: `0` clean (or warnings only), `1` a fatal/error finding,
