@@ -36,13 +36,14 @@ The following are deferred until the first non-placeholder version is on PyPI
 (the current `0.0.1` is a name-reservation placeholder and would misrepresent
 the code):
 
-- [ ] **Add the PyPI badges to `README.md`**, in the badge row under the
+- [x] **Add the PyPI badges to `README.md`**, in the badge row under the
       `# x12-tidy` heading, before the CI and license badges:
       ```markdown
       [![PyPI](https://img.shields.io/pypi/v/x12-tidy)](https://pypi.org/project/x12-tidy/)
       [![Python](https://img.shields.io/pypi/pyversions/x12-tidy)](https://pypi.org/project/x12-tidy/)
       ```
-- [ ] Add an install line to the README quick-start (`pip install x12-tidy` /
+- [x] Add an install line to the README quick-start (`pip install x12-tidy` /
       `uv add x12-tidy`).
 - [ ] Confirm the PyPI project description (rendered from `README.md`) looks
       right — relative links resolve against the repo, badges load.
+      (Do this after the tag publishes — the badges 404 until `0.1.0` is live.)
