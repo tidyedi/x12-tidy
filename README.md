@@ -1,12 +1,12 @@
 <h1>
-  <img src="docs/images/brand/tidyedi-mark.svg" alt="" width="48" height="48" align="left">
+  <img src="https://raw.githubusercontent.com/tidyedi/x12-tidy/main/docs/images/brand/tidyedi-mark.png" alt="" width="48" height="48" align="left">
   &nbsp;x12-tidy
 </h1>
 
 [![PyPI](https://img.shields.io/pypi/v/x12-tidy)](https://pypi.org/project/x12-tidy/)
 [![Python](https://img.shields.io/pypi/pyversions/x12-tidy)](https://pypi.org/project/x12-tidy/)
 [![CI](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml/badge.svg)](https://github.com/tidyedi/x12-tidy/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/tidyedi/x12-tidy/blob/main/LICENSE)
 
 Validate and repair malformed ANSI X12 EDI, built piece by piece. The free
 CLI and Python library behind [TidyEDI](https://tidyedi.com).
@@ -38,13 +38,16 @@ searched for, yes, that too.)
 - [Auditing the Envelope](https://docs.tidyedi.com/auditing-the-envelope.html)
   — checking whether the interchange's own bookkeeping (pairing, counts, control numbers) is honest
 
-**Using it** — [`docs/using-x12-tidy.md`](docs/using-x12-tidy.md): the CLI, the
-`tidy()` one-call API, the lower-level building blocks, and formatting your own
-report.
+**Using it** — [`docs/using-x12-tidy.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/using-x12-tidy.md):
+the CLI, the `tidy()` one-call API, the lower-level building blocks, and
+formatting your own report.
 
-**Reference** — [`design.md`](docs/design.md) (architecture, the diagnostic-code
-scheme) · [`docs/diagnostics.md`](docs/diagnostics.md) (every code, generated) ·
-the [`docs/`](docs/) folder holds the Markdown sources and PDFs.
+**Reference** — [`design.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/design.md)
+(architecture, the diagnostic-code scheme) ·
+[`docs/diagnostics.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/diagnostics.md)
+(every code, generated) ·
+the [`docs/`](https://github.com/tidyedi/x12-tidy/tree/main/docs) folder holds
+the Markdown sources and PDFs.
 
 ## Status
 
@@ -82,7 +85,8 @@ uv run python scripts/gen_diagnostics_docs.py   # after changing codes.py
 ```
 
 All work goes on a feature branch and merges via PR — the `no-commit-to-branch`
-hook blocks direct commits to `main`. Cutting a release: [`docs/RELEASING.md`](docs/RELEASING.md).
+hook blocks direct commits to `main`. Cutting a release:
+[`docs/RELEASING.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/RELEASING.md).
 
 Design conventions:
 
@@ -95,7 +99,8 @@ Design conventions:
 
 ## License
 
-[Apache License 2.0](LICENSE) — © 2026 Michael Schertz. See [`NOTICE`](NOTICE).
+[Apache License 2.0](https://github.com/tidyedi/x12-tidy/blob/main/LICENSE) — © 2026 Michael Schertz.
+See [`NOTICE`](https://github.com/tidyedi/x12-tidy/blob/main/NOTICE).
 
 "TidyEDI" and the TidyEDI logo are trademarks of Michael Schertz; the license
 covers the code, not the name or the mark.
