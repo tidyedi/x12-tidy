@@ -19,10 +19,11 @@ The methodology, and why it works where fixed-offset parsers do not:
 
 Repairs (each carries a diagnostic so a human can veto):
 
-* a ``\r`` / ``\n`` inside an element -> replaced with a space, then the element
-  is measured. The delimiters are known, so a byte that *is* a delimiter --
-  ISA16 (always the component separator) and ISA11 when it carries the
-  repetition separator -- is left untouched.
+* a ``\r`` / ``\n`` inside an element -> deleted (a newline in a fixed-width
+  element is wrap noise, never data), then the element is measured. The
+  delimiters are known, so a byte that *is* a delimiter -- ISA16 (always the
+  component separator) and ISA11 when it carries the repetition separator -- is
+  left untouched.
 * an element shorter than its fixed width -> space-padded on the right.
 * an element longer than its width by trailing spaces only -> trimmed.
 
