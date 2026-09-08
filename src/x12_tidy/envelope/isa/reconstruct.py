@@ -171,19 +171,23 @@ def _rebuild(
             index == _REPETITION_SEPARATOR_INDEX and carries_repetition_separator
         )
 
-        # A CR/LF inside a text element -- a hard-wrapped ISA segment. Safe to
-        # rewrite: the delimiters are known, and a byte that is a delimiter is
-        # excluded above.
+        # A CR/LF inside a text element -- a hard-wrapped ISA segment. Delete the
+        # bytes rather than substitute spaces: a newline here is never data (ISA
+        # is fixed-width with no sub-structure inside an element), so removing it
+        # stitches the value back to what the sender wrote. A space would be a
+        # character that was never there, and it compounds with the width pass
+        # below. Safe: the delimiters are known by now, and a byte that is a
+        # delimiter is excluded above.
         if not is_delimiter_element and any(b in value for b in _LINE_BREAKS):
-            rewritten = value.replace(b"\r", b" ").replace(b"\n", b" ")
+            stitched = value.replace(b"\r", b"").replace(b"\n", b"")
             diagnostics.append(Diagnostic(
                 Code.ISA_ELEMENT_EMBEDDED_NEWLINE,
                 f"{name} contains "
                 f"{sum(value.count(b) for b in _LINE_BREAKS)} carriage-return/"
-                f"line-feed byte(s) ({value!r}); replaced with spaces.",
+                f"line-feed byte(s) ({value!r}); line break removed.",
                 offset=base_offset,
             ))
-            value = rewritten
+            value = stitched
 
         if len(value) < width:
             diagnostics.append(Diagnostic(

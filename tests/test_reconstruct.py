@@ -99,13 +99,26 @@ def test_over_padded_field_is_trimmed() -> None:
     assert result.elements[5] == b"SENDER".ljust(15)
 
 
-def test_hard_wrapped_element_newline_becomes_space_then_trims() -> None:
+def test_hard_wrapped_element_newline_is_deleted() -> None:
+    # Newline at the end of an element -- the wrap sits between ISA06 and its
+    # trailing pad. Deleting the CR/LF leaves the value at spec.
     result = clean_isa_line(
         build_isa(elements=_elements(isa6=b"SENDER".ljust(15) + b"\r\n"))
     )
     assert result.isa_line is not None
     assert Code.ISA_ELEMENT_EMBEDDED_NEWLINE in _codes(result)
     assert result.elements[5] == b"SENDER".ljust(15)
+
+
+def test_hard_wrapped_element_newline_mid_value_is_stitched() -> None:
+    # Issue #83: a wrap in the middle of a real value. Deleting the CR/LF must
+    # rejoin "RECEIV" + "ER" -> "RECEIVER", not leave a two-space scar.
+    result = clean_isa_line(
+        build_isa(elements=_elements(isa8=b"RECEIV\r\nER".ljust(17)))
+    )
+    assert result.isa_line is not None
+    assert Code.ISA_ELEMENT_EMBEDDED_NEWLINE in _codes(result)
+    assert result.elements[7] == b"RECEIVER".ljust(15)
 
 
 def test_real_data_past_the_fixed_width_is_fatal() -> None:

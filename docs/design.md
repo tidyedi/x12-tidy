@@ -200,11 +200,13 @@ bar + slice 1), making no assumption about length or width. Once slice 1 returns
 
 1. split the run on the element separator → exactly sixteen elements (guaranteed
    by the non-fatal parse);
-2. within each *text* element, replace any `\r` / `\n` with a space — a
-   hard-wrapped ISA segment. This is safe **only here**: before the delimiters
-   are known a `\r`/`\n` could be the terminator or a delimiter, so ISA16 (its
-   value *is* the component separator) and ISA11 (when it carries the repetition
-   separator, version `00403`+) are excluded by position;
+2. within each *text* element, delete any `\r` / `\n` — a hard-wrapped ISA
+   segment, and a newline inside a fixed-width element is never data, so
+   removing it stitches the value back to what the sender wrote (a space would
+   be a character that was never there). This is safe **only here**: before the
+   delimiters are known a `\r`/`\n` could be the terminator or a delimiter, so
+   ISA16 (its value *is* the component separator) and ISA11 (when it carries the
+   repetition separator, version `00403`+) are excluded by position;
 3. normalise each element to its fixed width
    `(2,10,2,10,2,15,2,15,6,4,1,5,9,1,1,1)` — pad a short one with spaces, trim
    one that is long by trailing spaces only;
@@ -229,7 +231,7 @@ slice 1.
 
 | finding | code | severity | action |
 | --- | --- | --- | --- |
-| `\r`/`\n` inside a text element | `isa.element-embedded-newline` | warning | → space, then re-measure |
+| `\r`/`\n` inside a text element | `isa.element-embedded-newline` | warning | deleted, then re-measure |
 | element shorter than its fixed width | `isa.element-width` | **error** | space-pad on the right |
 | element longer only by trailing spaces | `isa.element-width` | **error** | trim to width |
 

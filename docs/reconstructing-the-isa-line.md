@@ -69,11 +69,14 @@ delimiters, and it kept the pieces. Reconstruction consumes
 `decomposition.elements` directly; it does not split again. One split, one
 source of truth for where the element boundaries are.
 
-### 3.2 Carriage returns inside an element → spaces — and only now
+### 3.2 Carriage returns inside an element → deleted — and only now
 
 Some senders hard-wrap the ISA segment across lines, leaving a `\r` or `\n`
-inside an element value. Turning those into spaces is correct — a wrapped field
-is really space padding a line break mangled — **but it is only safe here.**
+inside an element value. The ISA is fixed-width with no sub-structure inside an
+element, so a newline there is never data — it is wrap noise. **Delete the
+bytes**, and the value is exactly what the sender wrote: `RECEIV\r\nER` becomes
+`RECEIVER`, not `RECEIV  ER`. A space would be a character that was never there,
+and it compounds with the width pass in §3.3. **But this is only safe here.**
 
 Before the delimiters were known, a `\r` or `\n` could *be* the segment
 terminator (`\r\n`, or a bare `\r`), or in a pathological file a delimiter. Blank
@@ -89,7 +92,7 @@ either.
 ```python
 is_delimiter_element = index == 16 or (index == 11 and carries_repetition_separator)
 if not is_delimiter_element and (b"\r" in value or b"\n" in value):
-    value = value.replace(b"\r", b" ").replace(b"\n", b" ")   # isa.element-embedded-newline
+    value = value.replace(b"\r", b"").replace(b"\n", b"")   # isa.element-embedded-newline
 ```
 
 ### 3.3 Each element to its fixed width
@@ -153,7 +156,7 @@ permissive parsing never invents.
 | --- | --- |
 | blank fixed-width fields right-trimmed | padded back, `isa.element-width` per field |
 | element over-padded with spaces | trimmed, `isa.element-width` |
-| ISA segment hard-wrapped (`\r`/`\n` in a text element) | line breaks → spaces, `isa.element-embedded-newline`, then re-measured |
+| ISA segment hard-wrapped (`\r`/`\n` in a text element) | line breaks deleted, `isa.element-embedded-newline`, then re-measured |
 | non-`~` terminator (`\n`, bare `\r`) | **kept as-is, no finding** — which byte ends a segment is the sender's choice, not a deviation |
 | CR/LF after the terminator (`~\r\n`) | **kept in the tail, no finding** — a newline suffix is lawful (X12.5 §4.3) |
 | other trailing bytes after the terminator (`~ `, a comment) | the real terminator kept; the foreign bytes stripped, `isa.trailing-junk` |
