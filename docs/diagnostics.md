@@ -55,7 +55,7 @@ Splitting the ISA line on the element separator left both the component separato
 
 *warning* — A carriage return or line feed sits inside an ISA element
 
-An ISA element value contains a CR or LF byte -- almost always a sender that hard-wrapped the ISA segment across lines. The delimiters are already known at this point, so the byte cannot be a delimiter (ISA11 when it carries the repetition separator, and ISA16, are left untouched); it is replaced with a space and the element is then measured against its fixed width.
+An ISA element value contains a CR or LF byte -- almost always a sender that hard-wrapped the ISA segment across lines. The ISA is fixed-width with no sub-structure inside an element, so a newline here is never data; the byte is deleted, stitching the value back to what the sender wrote, and the element is then measured against its fixed width. The delimiters are already known at this point (ISA11 when it carries the repetition separator, and ISA16, are left untouched).
 
 ### `isa.element-overflow`
 

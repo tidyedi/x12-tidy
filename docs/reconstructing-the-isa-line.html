@@ -563,7 +563,7 @@ decomposition.elements   <span class="c"># (ISA01, ISA02, ..., ISA16) &#8212; ra
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 3 &mdash; The pipeline, and what makes each step safe</span>
-        <svg viewBox="0 0 780 236" role="img" aria-label="A five-stage pipeline. Split into sixteen, done once in the delimiter step. Then carriage returns and line feeds inside an element become spaces, safe only because the terminator and element separator have already done their work. Then each element is padded or trimmed to its fixed width. Then the line is reassembled on the sender's own element separator. Then a guard checks the length is 105. The output is the canonical line.">
+        <svg viewBox="0 0 780 236" role="img" aria-label="A five-stage pipeline. Split into sixteen, done once in the delimiter step. Then carriage returns and line feeds inside an element are deleted, safe only because the terminator and element separator have already done their work. Then each element is padded or trimmed to its fixed width. Then the line is reassembled on the sender's own element separator. Then a guard checks the length is 105. The output is the canonical line.">
   <g font-family="'IBM Plex Mono', monospace" font-size="11">
     <g>
       <rect x="10" y="20" width="130" height="46" rx="4" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="4 3"/>
@@ -571,7 +571,7 @@ decomposition.elements   <span class="c"># (ISA01, ISA02, ..., ISA16) &#8212; ra
       <text x="75" y="56" text-anchor="middle" fill="var(--ink-soft)" font-size="9">done once, upstream</text>
 
       <rect x="158" y="20" width="140" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
-      <text x="228" y="40" text-anchor="middle" fill="currentColor">CR / LF &#8594; space</text>
+      <text x="228" y="40" text-anchor="middle" fill="currentColor">delete CR / LF</text>
       <text x="228" y="56" text-anchor="middle" fill="var(--ink-soft)" font-size="9">inside text elements only</text>
 
       <rect x="316" y="20" width="140" height="46" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
@@ -637,12 +637,17 @@ decomposition.elements   <span class="c"># (ISA01, ISA02, ..., ISA16) &#8212; ra
       for where the element boundaries are.</p>
     </div>
 
-    <h3>3.2&nbsp;&nbsp;Carriage returns inside an element &rarr; spaces &mdash; and only now</h3>
+    <h3>3.2&nbsp;&nbsp;Carriage returns inside an element &rarr; deleted &mdash; and only now</h3>
     <div class="prose">
       <p>Some senders hard&#8209;wrap the ISA segment across lines, leaving a
-      <code>\r</code> or <code>\n</code> inside an element value. Turning those
-      into spaces is correct &mdash; a wrapped field is really space padding a
-      line break mangled &mdash; <strong>but it is only safe here.</strong></p>
+      <code>\r</code> or <code>\n</code> inside an element value. The ISA is
+      fixed&#8209;width with no sub&#8209;structure inside an element, so a
+      newline there is never data &mdash; it is wrap noise. <strong>Delete the
+      bytes</strong>, and the value is exactly what the sender wrote:
+      <code>RECEIV\r\nER</code> becomes <code>RECEIVER</code>, not
+      <code>RECEIV&nbsp;&nbsp;ER</code>. A space would be a character that was
+      never there, and it compounds with the width pass in &sect;3.3.
+      <strong>But this is only safe here.</strong></p>
       <p>Earlier, a <code>\r</code> or <code>\n</code> could <em>be</em> the
       segment terminator (<code>\r\n</code>, or a bare <code>\r</code>), or in a
       pathological file a delimiter. Blank those out early and you destroy a real
@@ -661,7 +666,7 @@ decomposition.elements   <span class="c"># (ISA01, ISA02, ..., ISA16) &#8212; ra
       <p class="code-cap">from <b>reconstruct.py</b></p>
 <pre><code><span class="k">is_delimiter_element</span> = index == <span class="s">16</span> <span class="k">or</span> (index == <span class="s">11</span> <span class="k">and</span> carries_repetition_separator)
 <span class="k">if</span> <span class="k">not</span> is_delimiter_element <span class="k">and</span> (<span class="s">b"\r"</span> <span class="k">in</span> value <span class="k">or</span> <span class="s">b"\n"</span> <span class="k">in</span> value):
-    value = value.replace(<span class="s">b"\r"</span>, <span class="s">b" "</span>).replace(<span class="s">b"\n"</span>, <span class="s">b" "</span>)   <span class="c"># isa.element-embedded-newline</span>
+    value = value.replace(<span class="s">b"\r"</span>, <span class="s">b""</span>).replace(<span class="s">b"\n"</span>, <span class="s">b""</span>)   <span class="c"># isa.element-embedded-newline</span>
 </code></pre>
     </div>
 
@@ -765,7 +770,7 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
           <tr><td>element over-padded with spaces</td>
               <td>trimmed &mdash; <code>isa.element-width</code></td></tr>
           <tr><td>ISA segment hard-wrapped (<code>\r</code>&#8202;/&#8202;<code>\n</code> in a text element)</td>
-              <td>line breaks &rarr; spaces &mdash; <code>isa.element-embedded-newline</code>, then re-measured</td></tr>
+              <td>line breaks deleted &mdash; <code>isa.element-embedded-newline</code>, then re-measured</td></tr>
           <tr><td>non-<code>~</code> terminator (<code>\n</code>, bare <code>\r</code>)</td>
               <td><strong>kept as&#8209;is, no finding</strong> &mdash; which byte ends a segment is the sender's choice, not a deviation</td></tr>
           <tr><td>CR/LF after the terminator (<code>~\r\n</code>)</td>

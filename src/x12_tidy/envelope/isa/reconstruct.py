@@ -19,10 +19,11 @@ The methodology, and why it works where fixed-offset parsers do not:
 
 Repairs (each carries a diagnostic so a human can veto):
 
-* a ``\r`` / ``\n`` inside an element -> replaced with a space, then the element
-  is measured. The delimiters are known, so a byte that *is* a delimiter --
-  ISA16 (always the component separator) and ISA11 when it carries the
-  repetition separator -- is left untouched.
+* a ``\r`` / ``\n`` inside an element -> deleted (a newline in a fixed-width
+  element is wrap noise, never data), then the element is measured. The
+  delimiters are known, so a byte that *is* a delimiter -- ISA16 (always the
+  component separator) and ISA11 when it carries the repetition separator -- is
+  left untouched.
 * an element shorter than its fixed width -> space-padded on the right.
 * an element longer than its width by trailing spaces only -> trimmed.
 
@@ -171,19 +172,23 @@ def _rebuild(
             index == _REPETITION_SEPARATOR_INDEX and carries_repetition_separator
         )
 
-        # A CR/LF inside a text element -- a hard-wrapped ISA segment. Safe to
-        # rewrite: the delimiters are known, and a byte that is a delimiter is
-        # excluded above.
+        # A CR/LF inside a text element -- a hard-wrapped ISA segment. Delete the
+        # bytes rather than substitute spaces: a newline here is never data (ISA
+        # is fixed-width with no sub-structure inside an element), so removing it
+        # stitches the value back to what the sender wrote. A space would be a
+        # character that was never there, and it compounds with the width pass
+        # below. Safe: the delimiters are known by now, and a byte that is a
+        # delimiter is excluded above.
         if not is_delimiter_element and any(b in value for b in _LINE_BREAKS):
-            rewritten = value.replace(b"\r", b" ").replace(b"\n", b" ")
+            stitched = value.replace(b"\r", b"").replace(b"\n", b"")
             diagnostics.append(Diagnostic(
                 Code.ISA_ELEMENT_EMBEDDED_NEWLINE,
                 f"{name} contains "
                 f"{sum(value.count(b) for b in _LINE_BREAKS)} carriage-return/"
-                f"line-feed byte(s) ({value!r}); replaced with spaces.",
+                f"line-feed byte(s) ({value!r}); line break removed.",
                 offset=base_offset,
             ))
-            value = rewritten
+            value = stitched
 
         if len(value) < width:
             diagnostics.append(Diagnostic(
