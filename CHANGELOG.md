@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- `isa.element-embedded-newline` now deletes an embedded CR/LF instead of
+  replacing it with a space — a newline inside a fixed-width ISA element is wrap
+  noise, never data, so deleting it stitches the value back to what the sender
+  wrote (`RECEIV\r\nER` → `RECEIVER`, not `RECEIV  ER`). (#83)
+
 ## [0.1.0] — 2026-09-07
 
 First release. Everything that locates and cleans the X12 interchange
