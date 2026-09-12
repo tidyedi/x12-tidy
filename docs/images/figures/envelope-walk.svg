@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 290" role="img" aria-label="ISA opens the interchange and IEA closes it, shown with the same kind of labeled brace as the other pairs, though ISA itself (dashed) is already resolved before this walk begins and is not part of the segment list it walks. Then the sequence this walk actually sees: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk -- the interchange itself may hold several functional groups in sequence, not just one.">
   <style>
-    svg { color: #17212b; }
     :root {
+      --fg: #17212b;
       --ink-soft: #566470; --rule: #d2d8dc;
       --accent: #0e6f86; --accent-soft: #dbeaee;
       --valid: #467a4e; --deviation: #ac5230;
     }
     @media (prefers-color-scheme: dark) {
-      svg { color: #dce4e9; }
       :root {
+        --fg: #dce4e9;
         --ink-soft: #93a1ac; --rule: #2a343d;
         --accent: #45b8d0; --accent-soft: #123039;
         --valid: #74b079; --deviation: #dd8b64;
@@ -31,14 +31,14 @@
     <g font-size="12.5">
       <rect x="102" y="30" width="70" height="32" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
       <text x="137" y="51" text-anchor="middle" fill="var(--accent)">GS</text>
-      <rect x="188" y="30" width="70" height="32" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
-      <text x="223" y="51" text-anchor="middle" fill="currentColor">ST</text>
-      <rect x="274" y="30" width="70" height="32" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
-      <text x="309" y="51" text-anchor="middle" fill="currentColor">SE</text>
-      <rect x="360" y="30" width="70" height="32" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
-      <text x="395" y="51" text-anchor="middle" fill="currentColor">ST</text>
-      <rect x="446" y="30" width="70" height="32" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
-      <text x="481" y="51" text-anchor="middle" fill="currentColor">SE</text>
+      <rect x="188" y="30" width="70" height="32" rx="4" fill="none" stroke="var(--fg)" stroke-width="1.3"/>
+      <text x="223" y="51" text-anchor="middle" fill="var(--fg)">ST</text>
+      <rect x="274" y="30" width="70" height="32" rx="4" fill="none" stroke="var(--fg)" stroke-width="1.3"/>
+      <text x="309" y="51" text-anchor="middle" fill="var(--fg)">SE</text>
+      <rect x="360" y="30" width="70" height="32" rx="4" fill="none" stroke="var(--fg)" stroke-width="1.3"/>
+      <text x="395" y="51" text-anchor="middle" fill="var(--fg)">ST</text>
+      <rect x="446" y="30" width="70" height="32" rx="4" fill="none" stroke="var(--fg)" stroke-width="1.3"/>
+      <text x="481" y="51" text-anchor="middle" fill="var(--fg)">SE</text>
       <rect x="532" y="30" width="70" height="32" rx="4" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
       <text x="567" y="51" text-anchor="middle" fill="var(--accent)">GE</text>
       <rect x="618" y="30" width="80" height="32" rx="4" fill="none" stroke="var(--valid)" stroke-width="1.5"/>
@@ -50,11 +50,11 @@
     <text x="370" y="106" text-anchor="middle" fill="var(--accent)" font-size="10.5">at most one open functional group at a time (GS06 tracked, GE expected)</text>
 
     <!-- tx set brace 1: ST..SE -->
-    <path d="M223 70 Q223 84 242 84 L290 84 Q309 84 309 70" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <path d="M223 70 Q223 84 242 84 L290 84 Q309 84 309 70" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
     <!-- tx set brace 2: ST..SE -->
-    <path d="M395 70 Q395 84 414 84 L462 84 Q481 84 481 70" fill="none" stroke="currentColor" stroke-width="1.2"/>
-    <text x="266" y="134" text-anchor="middle" fill="currentColor" font-size="10.5">transaction set 1</text>
-    <text x="438" y="134" text-anchor="middle" fill="currentColor" font-size="10.5">transaction set 2</text>
+    <path d="M395 70 Q395 84 414 84 L462 84 Q481 84 481 70" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+    <text x="266" y="134" text-anchor="middle" fill="var(--fg)" font-size="10.5">transaction set 1</text>
+    <text x="438" y="134" text-anchor="middle" fill="var(--fg)" font-size="10.5">transaction set 2</text>
 
     <!-- interchange brace: ISA..IEA, the outermost pair, same brace
          language as the two above, drawn lower so it visibly nests around
@@ -66,8 +66,8 @@
     <line x1="12" y1="190" x2="768" y2="190" stroke="var(--rule)" stroke-width="1"/>
 
     <text x="12" y="214" fill="var(--ink-soft)" font-size="10.5" letter-spacing="0.06em">AT MOST ONE OF EACH, AT ANY MOMENT</text>
-    <text x="12" y="236" fill="currentColor" font-size="11">a second GS before GE closes the first (reports gs.missing-ge) &#8212; then opens the new one</text>
-    <text x="12" y="254" fill="currentColor" font-size="11">a second ST before SE closes the first (reports st.missing-se) &#8212; then opens the new one</text>
-    <text x="12" y="272" fill="currentColor" font-size="11">end of the segment list with either still open closes it the same way</text>
+    <text x="12" y="236" fill="var(--fg)" font-size="11">a second GS before GE closes the first (reports gs.missing-ge) &#8212; then opens the new one</text>
+    <text x="12" y="254" fill="var(--fg)" font-size="11">a second ST before SE closes the first (reports st.missing-se) &#8212; then opens the new one</text>
+    <text x="12" y="272" fill="var(--fg)" font-size="11">end of the segment list with either still open closes it the same way</text>
   </g>
 </svg>
