@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 250" role="img" aria-label="How the one-byte rule resolves four real segment terminators. The colon is ISA16. Tilde: terminator is the tilde, nothing trailing. Tilde CR LF: terminator is the tilde, CR LF is a lawful newline suffix. Bare CR LF: terminator is the LF, the CR is dropped as a DOS line ending. Tilde space: terminator is the tilde, the space is trailing junk.">
   <style>
-    svg { color: #17212b; }
     :root {
+      --fg: #17212b;
       --ink-soft: #566470; --rule: #d2d8dc;
       --accent: #0e6f86; --accent-soft: #dbeaee;
       --valid: #467a4e; --deviation: #ac5230;
     }
     @media (prefers-color-scheme: dark) {
-      svg { color: #dce4e9; }
       :root {
+        --fg: #dce4e9;
         --ink-soft: #93a1ac; --rule: #2a343d;
         --accent: #45b8d0; --accent-soft: #123039;
         --valid: #74b079; --deviation: #dd8b64;
@@ -30,42 +30,42 @@
 
     <!-- row 1 -->
     <g transform="translate(0,60)">
-      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="var(--fg)">:</text>
       <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
       <rect x="66" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="86" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="270" y="20" fill="currentColor">~</text>
+      <text x="270" y="20" fill="var(--fg)">~</text>
       <text x="400" y="20" fill="var(--ink-soft)">&#8212;</text>
       <text x="540" y="20" fill="var(--valid)" font-size="11.5">conformant</text>
     </g>
     <!-- row 2 -->
     <g transform="translate(0,102)">
-      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="var(--fg)">:</text>
       <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
       <rect x="66" y="0" width="48" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="90" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR LF</text>
       <rect x="114" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="134" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="270" y="20" fill="currentColor">~</text>
-      <text x="400" y="20" fill="currentColor">CR LF</text>
+      <text x="270" y="20" fill="var(--fg)">~</text>
+      <text x="400" y="20" fill="var(--fg)">CR LF</text>
       <text x="540" y="20" font-size="11.5" fill="var(--valid)">lawful newline suffix</text>
     </g>
     <!-- row 3 -->
     <g transform="translate(0,144)">
-      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="var(--fg)">:</text>
       <rect x="40" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="53" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">CR</text>
       <rect x="66" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--accent)">LF</text>
       <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="270" y="20" font-size="11.5" fill="currentColor">LF</text>
+      <text x="270" y="20" font-size="11.5" fill="var(--fg)">LF</text>
       <text x="400" y="20" font-size="11.5" fill="var(--ink-soft)">&#8212;</text>
-      <text x="540" y="20" font-size="11.5" fill="currentColor">CR dropped (DOS line ending)</text>
+      <text x="540" y="20" font-size="11.5" fill="var(--fg)">CR dropped (DOS line ending)</text>
     </g>
     <!-- row 4 -->
     <g transform="translate(0,186)">
-      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="currentColor">:</text>
+      <rect x="14" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="27" y="20" text-anchor="middle" fill="var(--fg)">:</text>
       <rect x="40" y="0" width="26" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/><text x="53" y="20" text-anchor="middle" fill="var(--accent)">~</text>
       <rect x="66" y="0" width="26" height="30" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="2 2"/><text x="79" y="20" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">SP</text>
       <rect x="92" y="0" width="40" height="30" fill="none" stroke="var(--valid)" stroke-width="1.4"/><text x="112" y="20" text-anchor="middle" fill="var(--valid)">GS*</text>
-      <text x="270" y="20" fill="currentColor">~</text>
-      <text x="400" y="20" fill="currentColor">SP</text>
-      <text x="540" y="20" font-size="11.5" fill="currentColor">trailing junk &#183; warning</text>
+      <text x="270" y="20" fill="var(--fg)">~</text>
+      <text x="400" y="20" fill="var(--fg)">SP</text>
+      <text x="540" y="20" font-size="11.5" fill="var(--fg)">trailing junk &#183; warning</text>
     </g>
 
     <text x="14" y="238" fill="var(--ink-soft)" font-size="10.5">The colon is ISA16. Its position varies; the one-byte rule does not.</text>

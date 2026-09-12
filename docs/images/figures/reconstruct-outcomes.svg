@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 344" role="img" aria-label="Every input class routes to one of two outcomes. Conformant line, right-trimmed blank fields, over-padded element, hard-wrapped segment, non-canonical terminator, and alternate delimiters all route to one canonical 105-byte ISA line. An element over width with real data, and anything an earlier step made fatal, route to a named fatal with no line. There is no third arrow.">
   <style>
-    svg { color: #17212b; }
     :root {
+      --fg: #17212b;
       --ink-soft: #566470; --rule: #d2d8dc;
       --accent: #0e6f86; --accent-soft: #dbeaee;
       --valid: #467a4e; --deviation: #ac5230;
     }
     @media (prefers-color-scheme: dark) {
-      svg { color: #dce4e9; }
       :root {
+        --fg: #dce4e9;
         --ink-soft: #93a1ac; --rule: #2a343d;
         --accent: #45b8d0; --accent-soft: #123039;
         --valid: #74b079; --deviation: #dd8b64;
@@ -20,23 +20,23 @@
     <text x="12" y="16" fill="var(--ink-soft)" font-size="11" letter-spacing="0.06em">EVERY INPUT THE EARLIER STEPS DID NOT REJECT</text>
 
     <g font-size="11.5">
-      <rect x="12" y="30" width="250" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
-      <text x="24" y="47" fill="currentColor">conformant ISA line</text>
-      <rect x="12" y="62" width="250" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
-      <text x="24" y="79" fill="currentColor">blank fixed-width fields right-trimmed</text>
-      <rect x="12" y="94" width="250" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
-      <text x="24" y="111" fill="currentColor">element over-padded with spaces</text>
-      <rect x="12" y="126" width="250" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
-      <text x="24" y="143" fill="currentColor">ISA segment hard-wrapped (CR / LF)</text>
-      <rect x="12" y="158" width="250" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
-      <text x="24" y="175" fill="currentColor">non-canonical terminator</text>
-      <rect x="12" y="190" width="250" height="26" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/>
-      <text x="24" y="207" fill="currentColor">pipe / caret / any valid delimiters</text>
+      <rect x="12" y="30" width="250" height="26" rx="3" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+      <text x="24" y="47" fill="var(--fg)">conformant ISA line</text>
+      <rect x="12" y="62" width="250" height="26" rx="3" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+      <text x="24" y="79" fill="var(--fg)">blank fixed-width fields right-trimmed</text>
+      <rect x="12" y="94" width="250" height="26" rx="3" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+      <text x="24" y="111" fill="var(--fg)">element over-padded with spaces</text>
+      <rect x="12" y="126" width="250" height="26" rx="3" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+      <text x="24" y="143" fill="var(--fg)">ISA segment hard-wrapped (CR / LF)</text>
+      <rect x="12" y="158" width="250" height="26" rx="3" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+      <text x="24" y="175" fill="var(--fg)">non-canonical terminator</text>
+      <rect x="12" y="190" width="250" height="26" rx="3" fill="none" stroke="var(--fg)" stroke-width="1.2"/>
+      <text x="24" y="207" fill="var(--fg)">pipe / caret / any valid delimiters</text>
 
       <rect x="12" y="240" width="250" height="26" rx="3" fill="none" stroke="var(--deviation)" stroke-width="1.3"/>
-      <text x="24" y="257" fill="currentColor">element over width, real data past it</text>
+      <text x="24" y="257" fill="var(--fg)">element over width, real data past it</text>
       <rect x="12" y="272" width="250" height="26" rx="3" fill="none" stroke="var(--deviation)" stroke-width="1.3"/>
-      <text x="24" y="289" fill="currentColor">anything an earlier step made fatal</text>
+      <text x="24" y="289" fill="var(--fg)">anything an earlier step made fatal</text>
     </g>
 
     <path d="M262 123 L360 123" fill="none" stroke="var(--valid)" stroke-width="1.5" marker-end="url(#rc-ok)"/>
