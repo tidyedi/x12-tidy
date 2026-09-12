@@ -103,6 +103,45 @@ def test_short_isa13_is_space_padded_on_the_left() -> None:
     assert result.elements[12] == b"123".rjust(9)
 
 
+def test_empty_isa09_is_flagged_required_and_padded() -> None:
+    # ISA09 (Interchange Date) has no documented all-blank value the way
+    # ISA02/ISA04 do (RFI #2205 covers only those two) -- an empty one is
+    # missing required information, flagged in addition to isa.element-width,
+    # not instead of it. Still padded and reconstructed, not refused.
+    result = clean_isa_line(build_isa(elements=_elements(isa9=b"")))
+    assert result.isa_line is not None
+    assert _codes(result) == [
+        Code.ISA_REQUIRED_ELEMENT_BLANK, Code.ISA_ELEMENT_WIDTH,
+    ]
+    assert result.elements[8] == b" " * 6
+
+
+def test_empty_isa10_is_flagged_required_and_padded() -> None:
+    result = clean_isa_line(build_isa(elements=_elements(isa10=b"")))
+    assert result.isa_line is not None
+    assert _codes(result) == [
+        Code.ISA_REQUIRED_ELEMENT_BLANK, Code.ISA_ELEMENT_WIDTH,
+    ]
+    assert result.elements[9] == b" " * 4
+
+
+def test_short_but_nonempty_isa09_is_not_flagged_required() -> None:
+    # The new finding is about *total absence* of content, not shortness --
+    # a short-but-present ISA09 only gets the ordinary width treatment.
+    result = clean_isa_line(build_isa(elements=_elements(isa9=b"24010")))
+    assert result.isa_line is not None
+    assert _codes(result) == [Code.ISA_ELEMENT_WIDTH]
+    assert result.elements[8] == b"24010".ljust(6)
+
+
+def test_empty_isa02_is_not_flagged_required() -> None:
+    # ISA02/ISA04 have a documented all-blank value (RFI #2205) and nothing
+    # downstream reads them -- the new finding must not fire for these.
+    result = clean_isa_line(build_isa(elements=_elements(isa2=b"")))
+    assert result.isa_line is not None
+    assert _codes(result) == [Code.ISA_ELEMENT_WIDTH]
+
+
 def test_over_padded_field_is_trimmed() -> None:
     result = clean_isa_line(
         build_isa(elements=_elements(isa6=b"SENDER".ljust(25)))

@@ -36,6 +36,17 @@ Repairs (each carries a diagnostic so a human can veto):
   check, the comparison against IEA02) trims the padding at that point
   instead of reconstruction fabricating content to avoid needing to.
 * an element longer than its width by trailing spaces only -> trimmed.
+* ISA09 (Interchange Date) or ISA10 (Interchange Time) completely empty ->
+  still space-padded like any other short element (nothing here refuses on
+  it), but also flagged with its own finding, separate from
+  ``isa.element-width``. Every ISA element is "M" (Must Use), but that alone
+  does not make blank content wrong -- ISA02/ISA04 have a documented
+  all-spaces value (RFI #2205; ISA01/ISA03 as ``00`` is now the standard
+  practice, since the Authorization/Security Information mechanism they
+  qualify is obsolete, and nothing downstream reads ISA02/ISA04 either way).
+  No equivalent exists for ISA09/ISA10: a date or time has no blank form that
+  means anything, so empty there is missing required information, not a
+  recognized state.
 
 The delimiters are **not** repaired. Which byte serves as the element,
 component, repetition, and segment delimiter is the sender's choice -- X12 does
@@ -93,6 +104,11 @@ _REPETITION_SEPARATOR_INDEX = 11
 #: unlike every other element (left-justified, space-padded on the right).
 #: The fill is always a space -- never a digit; see the module docstring.
 _CONTROL_NUMBER_INDEX = 13
+#: 1-based indices of ISA09 (Interchange Date) and ISA10 (Interchange Time).
+#: Unlike ISA02/ISA04, neither has a documented all-blank value (RFI #2205
+#: covers only ISA02/ISA04), so a completely empty one is flagged on its own,
+#: in addition to -- not instead of -- isa.element-width.
+_REQUIRED_NONBLANK_INDICES = (9, 10)
 
 
 @dataclass
@@ -206,6 +222,14 @@ def _rebuild(
             value = stitched
 
         if len(value) < width:
+            if index in _REQUIRED_NONBLANK_INDICES and not value:
+                diagnostics.append(Diagnostic(
+                    Code.ISA_REQUIRED_ELEMENT_BLANK,
+                    f"{name} is completely empty; a date or time has no "
+                    "all-blank value that means anything, so this is missing "
+                    "required information, not just short.",
+                    offset=base_offset,
+                ))
             if index == _CONTROL_NUMBER_INDEX:
                 diagnostics.append(Diagnostic(
                     Code.ISA_ELEMENT_WIDTH,
