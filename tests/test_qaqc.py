@@ -82,18 +82,50 @@ def test_isa13_not_numeric() -> None:
     assert Code.STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC in _codes(result.diagnostics)
 
 
-def test_short_numeric_isa13_is_not_flagged_not_numeric() -> None:
-    # A short-but-numeric ISA13 must not be turned non-numeric by
-    # reconstruction's own padding (regression: reconstruct.py zero-pads
-    # ISA13 on the left, not space-pads on the right like every other
-    # element -- see test_reconstruct.py).
+def test_short_isa13_is_not_flagged_not_numeric() -> None:
+    # A short-but-numeric ISA13 (e.g. "123") is space-padded on the left to
+    # "      123" by reconstruction -- .strip() in _is_numeric already
+    # handles that, so this was never actually broken; kept as a guard
+    # against regressing it.
     from _isa_helpers import ISA_ELEMENTS
 
     els = list(ISA_ELEMENTS)
     els[12] = b"123"
-    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*000000123")
+    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*123")
     result = check_payload(clean_payload(build_isa(elements=els, trailer=trailer)))
     assert Code.STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC not in _codes(result.diagnostics)
+
+
+def test_short_isa13_matches_an_unpadded_iea02_once_trimmed() -> None:
+    # The real bug: ISA13 is fixed-width (space-padded on the left to
+    # "      123" by reconstruction when the sender sent it short), but IEA02
+    # is an ordinary delimited body-segment field, normally sent unpadded
+    # ("123").
+    # An exact-bytes comparison would spuriously mismatch two control
+    # numbers that actually agree -- trimmed and compared as strings at
+    # comparison time instead (never parsed as a number -- see
+    # checks.py::_same_control_number).
+    from _isa_helpers import ISA_ELEMENTS
+
+    els = list(ISA_ELEMENTS)
+    els[12] = b"123"
+    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*123")
+    result = check_payload(clean_payload(build_isa(elements=els, trailer=trailer)))
+    assert Code.STRUCTURE_CONTROL_NUMBER_MISMATCH not in _codes(result.diagnostics)
+
+
+def test_a_senders_own_leading_zero_is_not_trimmed_away() -> None:
+    # Proves the comparison is string-level, not numeric: "007" and "7" are
+    # the same number but not the same string. A numeric comparison would
+    # wrongly treat these as a match; strip() only removes the fixed-width
+    # padding reconstruction added, never a digit the sender actually sent.
+    from _isa_helpers import ISA_ELEMENTS
+
+    els = list(ISA_ELEMENTS)
+    els[12] = b"007"
+    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*7")
+    result = check_payload(clean_payload(build_isa(elements=els, trailer=trailer)))
+    assert Code.STRUCTURE_CONTROL_NUMBER_MISMATCH in _codes(result.diagnostics)
 
 
 def test_missing_ge() -> None:

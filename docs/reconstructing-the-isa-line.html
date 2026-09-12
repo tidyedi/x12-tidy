@@ -691,10 +691,14 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
     <ul class="plain">
       <li><b>shorter than its width</b> &rarr; space&#8209;pad on the right
         &mdash; except <b>ISA13</b> (Interchange Control Number, the one
-        element typed numeric, N0), which zero&#8209;pads on the left:
-        space&#8209;padding a numeric value would leave it failing the
-        &ldquo;is ISA13 numeric&rdquo; check downstream, for a defect
-        reconstruction itself introduced.
+        element typed numeric, N0), which space&#8209;pads on the
+        <b>left</b>: right&#8209;justified, matching the fixed&#8209;width
+        convention for a numeric field rather than the left&#8209;justified
+        convention for everything else in the ISA segment. The fill is
+        always a space, never a digit &mdash; padding with invented zeros
+        would assert a value beyond what the sender actually sent.
+        Downstream code trims the padding when it reads ISA13 instead of
+        reconstruction fabricating content to avoid needing to.
         <code>isa.element-width</code></li>
       <li><b>longer, but only by trailing spaces</b> &rarr; trim.
         <code>isa.element-width</code></li>

@@ -260,7 +260,7 @@ slice 1.
 | finding | code | severity | action |
 | --- | --- | --- | --- |
 | `\r`/`\n` inside a text element | `isa.element-embedded-newline` | warning | deleted, then re-measure |
-| element shorter than its fixed width | `isa.element-width` | **error** | space-pad on the right, except ISA13 (numeric, N0) which zero-pads on the left |
+| element shorter than its fixed width | `isa.element-width` | **error** | space-pad on the right, except ISA13 (numeric, right-justifies) which space-pads on the left |
 | element longer only by trailing spaces | `isa.element-width` | **error** | trim to width |
 
 `isa.element-width` is an **error, not a warning**: a non-105-byte ISA line

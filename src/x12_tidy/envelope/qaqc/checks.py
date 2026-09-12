@@ -94,6 +94,23 @@ def _is_numeric(value: bytes) -> bool:
     return bool(stripped) and stripped.isdigit()
 
 
+def _same_control_number(a: bytes, b: bytes) -> bool:
+    """Whether ``a`` and ``b`` name the same control number once padding is
+    trimmed, e.g. ``b"      123"`` (ISA13, space-padded on the left to its
+    fixed width -- it right-justifies, being numeric) and ``b"123"`` (IEA02,
+    an ordinary delimited field, not padded at all).
+
+    A string comparison, not a numeric one -- at cleansing time every EDI
+    value is a string; there are no ints, dates, or floats, only bytes.
+    Assigning a destination type (parsing ISA13 as a number to compare it) is
+    translation's job, not this tool's. ``strip()`` removes only the padding
+    framing a fixed-width element -- never digits the sender actually sent
+    (a leading zero the sender wrote, e.g. ISA13 ``"007"``, survives; only
+    the fixed-width fill on the outside comes off), so this stays a
+    trim-and-compare, not an interpretation."""
+    return a.strip() == b.strip()
+
+
 def _identifier_shape_valid(identifier: bytes) -> bool:
     first = identifier[:1]
     return bool(first) and first.isalpha() and first.isupper()
@@ -443,7 +460,7 @@ class _Walker:
                 "group(s) closed cleanly.",
             ))
 
-        if iea02 != self._isa13:
+        if iea02 != self._isa13 and not _same_control_number(iea02, self._isa13):
             self.diagnostics.append(Diagnostic(
                 Code.STRUCTURE_CONTROL_NUMBER_MISMATCH,
                 f"ISA13 {self._isa13!r} does not match IEA02 {iea02!r}.",

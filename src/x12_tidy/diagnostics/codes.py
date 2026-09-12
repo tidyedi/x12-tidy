@@ -406,11 +406,12 @@ META: dict[Code, CodeMeta] = {
         title="An ISA element is not its fixed width",
         explanation=(
             "Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is "
-            "9, and so on. This element was shorter (padded to fit -- space on "
-            "the right for every element except ISA13, which is zero-padded on "
-            "the left because it is the one ISA element typed numeric, N0) or "
-            "longer only by trailing spaces (trimmed). The value itself is "
-            "otherwise unchanged. A sender that right-trims blank fixed-width "
+            "9, and so on. This element was shorter (space-padded to fit -- "
+            "on the right for every element except ISA13, which is numeric "
+            "and right-justifies, so it pads on the left; the fill is always "
+            "a space, never an invented digit) or longer only by trailing "
+            "spaces (trimmed). The value itself is otherwise unchanged. A "
+            "sender that right-trims blank fixed-width "
             "fields is the usual cause. This is an error, not a warning: the "
             "ISA line is no longer 105 bytes, and conventional VAN services and "
             "fixed-offset parsers cannot read the interchange at all until it "
@@ -459,8 +460,15 @@ META: dict[Code, CodeMeta] = {
         title="ISA13 does not match IEA02",
         explanation=(
             "The Interchange Control Number set in the ISA segment (ISA13) "
-            "must equal the one echoed back in the IEA segment (IEA02). A "
-            "mismatch usually indicates a corrupted or hand-edited file."
+            "must equal the one echoed back in the IEA segment (IEA02). "
+            "Compared as strings with fixed-width padding trimmed off each "
+            "side, not byte-for-byte and not as numbers -- ISA13 is "
+            "fixed-width (space-padded on the left to 9 bytes if the sender "
+            "sent it short, being numeric) while IEA02 is an ordinary "
+            "delimited field and is typically not padded at all, so e.g. "
+            "'      123' and '123' agree once the padding is trimmed. A "
+            "mismatch usually indicates a corrupted or hand-edited file, not "
+            "a padding difference."
         ),
     ),
     Code.STRUCTURE_FUNCTIONAL_GROUP_COUNT_MISMATCH: CodeMeta(

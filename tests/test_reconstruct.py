@@ -90,15 +90,17 @@ def test_trimmed_blank_fields_are_padded_back() -> None:
     assert result.elements[3] == b" " * 10
 
 
-def test_short_isa13_is_zero_padded_on_the_left_not_space_padded() -> None:
-    # ISA13 is the one ISA element typed numeric (N0). Space-padding a short
-    # value on the right (like every other element) would leave it failing
-    # the downstream numeric-value check for a defect reconstruction itself
-    # introduced -- see structure.control-number-not-numeric.
+def test_short_isa13_is_space_padded_on_the_left() -> None:
+    # ISA13 is numeric (N0) and right-justifies -- space-padded on the left,
+    # unlike every other (AN/ID) element, which pads on the right. The fill
+    # is always a space, never an invented digit: reconstruction never
+    # asserts a value beyond what the sender actually sent. Trimming the
+    # padding is the reader's job downstream (see
+    # checks.py::_same_control_number), not reconstruction's.
     result = clean_isa_line(build_isa(elements=_elements(isa13=b"123")))
     assert result.isa_line is not None
     assert _codes(result) == [Code.ISA_ELEMENT_WIDTH]
-    assert result.elements[12] == b"000000123"
+    assert result.elements[12] == b"123".rjust(9)
 
 
 def test_over_padded_field_is_trimmed() -> None:

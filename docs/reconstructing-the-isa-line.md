@@ -109,11 +109,15 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
 They sum to 86; with the `ISA` identifier (3) and the sixteen element separators (16)
 that is the canonical 105 bytes. Per element:
 
-- **shorter than its width** → space-pad on the right — except **ISA13**
+- **shorter than its width** → space-pad on the right — *except* **ISA13**
   (Interchange Control Number, the one element typed numeric, N0), which
-  zero-pads on the left: space-padding a numeric value would leave it failing
-  the "is ISA13 numeric" check downstream, for a defect reconstruction itself
-  introduced. `isa.element-width`.
+  space-pads on the **left**: right-justified, matching the fixed-width
+  convention for a numeric field rather than the left-justified convention
+  for everything else in the ISA segment. The fill is always a space, never
+  a digit — padding with invented zeros would assert a value beyond what the
+  sender actually sent. Downstream code trims the padding when it reads
+  ISA13 instead of reconstruction fabricating content to avoid needing to.
+  `isa.element-width`.
 - **longer, but only by trailing spaces** → trim. `isa.element-width`.
 - **longer, with real data past the width** → refuse (§4).
 
