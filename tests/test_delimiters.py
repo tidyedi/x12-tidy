@@ -208,6 +208,20 @@ def test_version_00402_has_no_repetition_separator() -> None:
     assert d.diagnostics == []
 
 
+def test_version_before_003040_is_fatal_isa_did_not_exist_yet() -> None:
+    # Stedi: "Segment ISA is not present in X12 Release 3010" -- x12-tidy has
+    # not verified a standard for anything before 003040.
+    d = split_isa_line(run_of(elements=elements_with(isa11=b"U", isa12=b"00301")))
+    assert codes(d.diagnostics) == [Code.ISA_VERSION_TOO_OLD]
+    assert not d.usable
+
+
+def test_version_at_003040_is_not_too_old() -> None:
+    d = split_isa_line(run_of(elements=elements_with(isa11=b"U", isa12=b"00304")))
+    assert Code.ISA_VERSION_TOO_OLD not in codes(d.diagnostics)
+    assert d.usable
+
+
 # --------------------------------------------------------------------------
 # direct cases -- structural failures Step 1's gate hides from the pipeline
 # --------------------------------------------------------------------------

@@ -191,79 +191,94 @@ someone else's job (see §7).
 
 ## 5. Five techniques
 
-### 5.1 Anchor on `GS`, not on a byte number
+### 5.1 Count separators first, then verify `GS` — not the other way around
 
 The end of the ISA line is wherever the `GS` functional-group header begins. Byte
 106 is used only as a shortcut that produces the identical answer when the file
-happens to be conformant; when it doesn't, the code searches for the header by
-content.
+happens to be conformant; when it doesn't, the code needs another way to find it.
 
-`find` is not a validator, though. `GS` + the separator can occur *inside* the
-ISA line — a sender ID (ISA06) or receiver ID (ISA08) ending in `GS`, followed by
-the element separator, is enough. When the fast-path offset check has already
-failed and `find` lands on one of those, the anchor is too early. That is not
-caught here; it is caught in 5.2.
+An earlier version searched the buffer for `GS` + the element separator first,
+then checked how many separators preceded the match. That order has a real flaw:
+`GS` + the separator can occur *inside* the ISA line itself (a sender ID ending in
+`GS`) or inside a *later segment's own data* (`REF*GS*` deep in a transaction set,
+or some other segment's own field happening to end in `GS` right before its own
+next separator) — and a plain text search cannot tell a genuine header from
+either coincidence. Worse: when the ISA is itself short a couple of elements, the
+search can land past the true boundary, inside the real `GS` segment's own
+fields, and *still* count out to exactly 16 separators leading up to it —
+accepting a wrong parse with no diagnostic at all. See the worked example below.
+
+So the order is reversed. Count forward to the **16th** occurrence of the
+element separator first — the position the standard fixes as immediately before
+`ISA16` — and only *then* look at what follows:
 
 ```python
-# b. the element separator is, by rule, the 4th byte of the ISA segment
-element_separator = cleansed[3:4]
-gs_identifier     = GS_IDENTIFIER + element_separator
-
 # c. find where the ISA line ends == where the GS segment starts
 if hay[STANDARD_GS_OFFSET:STANDARD_GS_OFFSET + 3] == needle:
     gs_pos = STANDARD_GS_OFFSET          # fast path: GS at the standard offset
 else:
-    gs_pos = hay.find(needle)
+    sixteenth_sep = _nth_occurrence(hay, element_separator, ISA_ELEMENT_SEPARATORS)
+    if sixteenth_sep == -1:
+        return _Attempt(None, Diagnostic(Code.ISA_SEPARATOR_COUNT_LOW, ...))
+    gs_pos = _gs_after_boundary(hay, sixteenth_sep + 1, needle)
     if gs_pos == -1:
         if element_separator.isalnum():
-            # byte 3 is a letter or digit -- it is element data, not a
-            # delimiter, so `GS` + that byte was never a real search token
             return _Attempt(None, Diagnostic(Code.ISA_ELEMENT_SEPARATOR_INVALID, ...))
         return _Attempt(None, Diagnostic(Code.ISA_GS_NOT_FOUND, ...))
 ```
 
-The `isalnum` check earns its place. A file with its element separators stripped
-out — pasted from a PDF, mangled by a mail gateway — leaves byte 3 holding the
-first digit of `ISA01` instead of a `*`. The search token becomes `GS0`, which
-is nowhere, and the honest diagnosis is "byte 3 is not a delimiter", not "there
-is no GS header" — the `GS` segment is usually sitting right there in the file.
-This is the one delimiter judgement Step 1 makes, and only because without it the
-downstream stage that would raise `isa.element-separator-invalid` never runs.
+Counting first means the content of any element — before *or* after the 16th
+separator — is never even examined as a candidate for `GS`; the search for `GS`
+only ever starts once 16 real separators have already gone by.
 
-### 5.2 Require *exactly* 16 separators — not "at least"
+### 5.2 Everything before `GS` must be non-alphanumeric
 
-Once a candidate `GS` is found, the bytes before it are counted. An early version
-accepted `>= 16`. That let three false anchors through silently: a stray `GS*`
-deep in transaction data, leading junk that ended in `ISA*`, and a `GS*` sitting
-inside the ISA line's own ISA06/ISA08 data. Requiring the count to be *exact*
-catches all three — and the diagnostic it raises names the structural fault, not
-the count:
-
-- a `GS*` matched **inside** the ISA line (5.1) cuts the run short → fewer than
-  16 separators → `isa.separator-count-low`;
-- a `GS*` matched **past** the real header (downstream, or a decoy `ISA*` prefix)
-  overshoots → more than 16 separators → `isa.separator-count-high`.
+Counting to the 16th separator only fixes *where to start looking*; it doesn't
+yet confirm `GS` is really there. What follows must be `ISA16` (or, tolerated,
+no `ISA16` at all — Step 2's job to flag), the segment terminator, and only
+non-alphanumeric trailing junk (appended `\r\n`, a stray space) before
+`GS` + separator turns up. The moment an ordinary letter or digit is found that
+isn't itself the start of `GS` + separator, the search stops and refuses — that
+byte is proof whatever comes later is the tail of some other field's value, not
+a real token:
 
 ```python
-# d. the run must hold exactly 16 element separators
-isa_line        = cleansed[:gs_pos]
-separator_count = isa_line.count(element_separator)
-
-if separator_count < ISA_ELEMENT_SEPARATORS:
-    return _Attempt(None, Diagnostic(Code.ISA_SEPARATOR_COUNT_LOW, ...))
-if separator_count > ISA_ELEMENT_SEPARATORS:
-    return _Attempt(None, Diagnostic(Code.ISA_NO_FUNCTIONAL_GROUP, ...))
-
-return _Attempt(isa_line, None)          # a real ISA line
+def _gs_after_boundary(haystack: bytes, start: int, needle: bytes) -> int:
+    pos = start
+    while pos < len(haystack):
+        if haystack[pos:pos + len(needle)] == needle:
+            return pos
+        if haystack[pos:pos + 1].isalnum():
+            return -1
+        pos += 1
+    return -1
 ```
 
-- **`< 16` → `isa.separator-count-low`** — element separators were removed; the
-  ISA segment is deficient.
-- **`> 16` → `isa.separator-count-high`** — the `GS` that was found is not this ISA
-  line's header. Either there is no GS envelope and the match is inside a later
-  segment, or the element separator occurs inside ISA06/ISA08 data. The
-  diagnostic leads with the structural fact, not the separator count, which is
-  only the symptom.
+**Worked example — the case that motivated the reordering.** An ISA missing two
+elements (13 present instead of 15), immediately followed by a real
+`GS*PO*SENDERGS*RECEIVERID*...` segment. Counting to "the 16th separator"
+overshoots into `GS`'s own first two fields, landing partway through
+`SENDERGS`. `SENDERGS*` does contain the literal bytes `GS*` — a plain search
+from there would find it, and the separator count leading up to that match would
+still read exactly 16 (14 real ones, plus `GS`'s own first two) — silently
+passing a naive "exactly 16" check with no diagnostic at all. The alphanumeric
+check is what actually catches this: the byte immediately before the `GS*` match
+is `R`, an ordinary letter — not `ISA16`, not a terminator, not tolerated junk —
+so `_gs_after_boundary` stops there and returns `-1`. The candidate is refused
+(`isa.gs-not-found`), not silently accepted.
+
+- No 16th separator anywhere in the remaining buffer at all (it runs out first)
+  → **`isa.separator-count-low`** — there is no `GS` to be found and the segment
+  terminator cannot be determined.
+- A 16th separator is found, but nothing reaches `GS` + separator before either
+  an alphanumeric byte or the end of the buffer → **`isa.gs-not-found`**. This
+  now also covers what used to be a separate `isa.separator-count-high` case (a
+  stray `GS*` with no real envelope at all, deep in the transaction body) —
+  there simply is no real `GS` header anywhere, which `isa.gs-not-found` names
+  directly.
+
+Both are fatal and terminal, same as before: a run that fails either does not go
+to recovery.
 
 ### 5.3 Try every `ISA`, keep the first that parses
 
@@ -272,6 +287,19 @@ Because `ISA` can appear in leading junk, the code collects *every* occurrence
 candidate whose run clears the bar wins; the bytes before it become an
 `isa.leading-bytes` warning. If none clear it, the first candidate's failure is
 what gets reported.
+
+**This is single-interchange behavior, not a general "pick the right `ISA`"
+policy.** A flat file can legitimately contain more than one `ISA`...`IEA`
+interchange concatenated back to back — each self-delimited, each free to
+declare its own delimiters — and every one of them is real data, not junk to
+discard in favor of "the" interchange. Today's "first that parses" retry exists
+to skip genuine junk (a BOM, an email header, a stray `ISA` inside a filename)
+ahead of the one real interchange this function is asked to locate; it is not
+yet the right model for a file that holds several real interchanges in a row —
+that requires calling this same logic again on whatever bytes remain after each
+interchange concludes, keeping *every* one that's found, not just the first.
+That loop is tracked separately (see `auditing-the-envelope.md` §7) and not yet
+built.
 
 ```python
 def _isa_offsets(haystack: bytes, identifier: bytes = ISA_IDENTIFIER) -> list[int]:
@@ -390,7 +418,7 @@ def _assert_contract(dirty: bytes, r: IsaLineResult) -> None:
 | UTF-8 BOM, then a clean interchange | 106-byte run | `isa.leading-bytes` |
 | `SUBJECT: ISA FILE\n` + lowercase interchange | run returned | `isa.identifier-lowercase`, `isa.leading-bytes` |
 | ISA02 & ISA04 stripped (86-byte segment) | 86-byte run | none — still 16 separators |
-| No `GS` envelope; a `REF*GS*` deep in the data | fatal | `isa.separator-count-high` |
+| No `GS` envelope; a `REF*GS*` deep in the data | fatal | `isa.gs-not-found` |
 | Two interchanges concatenated, first `GS` missing | 2nd interchange | `isa.leading-bytes` |
 | UTF-16 LE encoded file | run returned (transcoded) | `isa.identifier-utf16` (warning) |
 | Element separator `*` occurs inside the sender's ID | fatal | `isa.separator-count-high` |

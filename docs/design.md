@@ -52,7 +52,7 @@ possible later move for speed).
 | term | meaning |
 | --- | --- |
 | `dirty` | the raw file bytes, exactly as received |
-| `cleansed` | `dirty` with everything before the first `ISA` identifier removed |
+| `cleansed` | `dirty` after every repair step the pipeline applies — the ISA line reconstructed, segments split and the empty ones dropped, rejoined on the sender's terminator. The whole repaired payload, not just the leading junk stripped off the front. |
 | *identify* | emit a diagnostic and continue |
 | *identify and exit* | emit a diagnostic and stop (a `fatal`) |
 
@@ -103,21 +103,45 @@ Key points:
   real segment (in an email header, a filename, junk that ends in `ISA*`). Step 1
   collects every `ISA` offset (capped at `MAX_ISA_CANDIDATES`) and tries each in
   turn; the first that yields a clean run wins, and the bytes before it become
-  `isa.leading-bytes`.
-- **Exactly 16 element separators, not `>= 16`.** Accepting `>= 16` let a stray
-  `GS` deep in the transaction body, or a junk `ISA*` prefix, produce a
-  plausible-looking but wrong run with no diagnostic. Both directions are fatal
-  and **terminal** — a run with the wrong count is not an ISA line and does not
-  go to recovery:
-  - `< 16` → `isa.separator-count-low` — element separators were removed, or the
-    `GS` anchored on is a false match inside earlier data.
-  - `> 16` → `isa.separator-count-high` — the `GS` that was found is not this ISA
-    line's header (more than 16 separators precede it). Either there is no GS
-    envelope and the match is inside a later segment, or the element separator
-    occurs inside ISA06/ISA08 data (an unparseable segment). Pairs with
-    `isa.separator-count-low`.
+  `isa.leading-bytes`. This is single-interchange behavior: it exists to skip
+  real junk ahead of the one interchange this call is locating, not to choose
+  among several real interchanges concatenated in one flat file — each of those
+  is its own complete, independent unit, and none should be discarded. Handling
+  that is a separate loop (call this logic again on whatever remains after each
+  interchange concludes), not yet built — see `auditing-the-envelope.md` §7.
+- **Locate by counting separators, not by searching for `GS` text.** Once the
+  fast-path offset check fails, Step 1 does not scan the buffer for the bytes
+  `GS` + separator — searching for `GS` first risks anchoring on a lookalike (a
+  sender ID that happens to end in `GS`, or `GS` embedded in a later segment's
+  data, e.g. `REF*GS*`). Instead it counts forward to the **16th** occurrence of
+  the element separator — the position the standard says must sit right before
+  `ISA16` — and only then looks at what follows.
+- **What follows must be ISA16, the terminator, and nothing but
+  non-alphanumeric bytes, before `GS`.** ISA16 (present, or — tolerated —
+  stripped entirely), the segment terminator, and any trailing junk (appended
+  `\r\n`, a stray space) are all non-alphanumeric. The moment an ordinary
+  letter or digit turns up before `GS` + separator is found, that byte is
+  proof `GS` isn't a real token there — it's the tail of some other field's
+  value — and Step 1 refuses rather than keep searching past it:
 
-  When no candidate yields exactly 16, the **first** candidate's failure is
+  - Example: an ISA missing two elements (13 present instead of 15),
+    immediately followed by a real `GS*PO*SENDERGS*...` segment. Counting to
+    "the 16th separator" overshoots into `GS`'s own fields, landing partway
+    through `SENDERGS`. A plain text search for `GS*` from there would match —
+    wrongly — the tail of `SENDERGS*`. The alphanumeric check catches it: the
+    byte right before that match is `R`, an ordinary letter, so the candidate
+    is refused (`isa.gs-not-found`) rather than silently accepted.
+  - Fewer than 16 separators anywhere in the remaining buffer at all (it runs
+    out before a 16th is found) → `isa.separator-count-low`: there is no `GS`
+    to be found and the segment terminator cannot be determined.
+  - No `GS` + separator ever turns up before either an alphanumeric byte or
+    the end of the buffer → `isa.gs-not-found`. This also covers what used to
+    be `isa.separator-count-high` (a stray `GS*` deep in the transaction
+    body, with no real functional-group envelope at all) — there is no real
+    `GS` header anywhere, which `isa.gs-not-found` names directly.
+
+  Both are fatal and **terminal** — a run that fails either does not go to
+  recovery. When no candidate succeeds, the **first** candidate's failure is
   reported.
 - **Wide encodings.** A NUL-interleaved `I S A` near the start (or a UTF-16 BOM)
   → the buffer is transcoded from UTF-16 to single-byte and re-parsed, carrying
@@ -137,8 +161,12 @@ Key points:
   step.
 
 Not caught here (Step 2's job): the element separator being alphanumeric or a
-control byte, the separator colliding with the terminator, element widths, a
-duplicated `ISA` identifier inside an otherwise-16-separator run.
+control byte, the separator colliding with the terminator, element widths.
+
+A literal `ISA` occurring *inside* one of the 16 elements (e.g. as part of a
+sender ID) is not a deviation at all and needs no check: nothing past Step 1
+searches for the bytes `ISA`, so those bytes are just ordinary element content,
+indistinguishable from any other data the sender chose to put there.
 
 **Residual limitation.** If leading junk is itself shaped *exactly* like an ISA
 line — the bytes `ISA`, then 16 element separators, then `GS` + that separator,
@@ -232,7 +260,7 @@ slice 1.
 | finding | code | severity | action |
 | --- | --- | --- | --- |
 | `\r`/`\n` inside a text element | `isa.element-embedded-newline` | warning | deleted, then re-measure |
-| element shorter than its fixed width | `isa.element-width` | **error** | space-pad on the right |
+| element shorter than its fixed width | `isa.element-width` | **error** | space-pad on the right, except ISA13 (numeric, right-justifies) which space-pads on the left |
 | element longer only by trailing spaces | `isa.element-width` | **error** | trim to width |
 
 `isa.element-width` is an **error, not a warning**: a non-105-byte ISA line

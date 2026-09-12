@@ -51,6 +51,12 @@ STANDARDS_IDENTIFIER = b"U"
 #: First ISA12 version code in which ISA11 is the repetition separator
 #: (version 004030). Codes are 5-digit zero-padded, so a bytes comparison works.
 REPETITION_SEPARATOR_MIN_VERSION = b"00403"
+#: Earliest ISA12 version code for which the ISA segment itself is documented
+#: to exist (version 003040). Stedi's per-release segment dictionaries report
+#: ISA as "not present" in release 3010; x12-tidy has not verified a standard
+#: for 003010-003030 or earlier, so a version below this is refused rather
+#: than parsed against an unverified ISA shape.
+ISA_MIN_VERSION = b"00304"
 
 
 @dataclass
@@ -257,6 +263,17 @@ def split_isa_line(run: bytes, *, base_offset: int = 0) -> IsaDecomposition:
             f"byte ({segment_terminator!r}); segment and composite boundaries "
             "are indistinguishable.",
             offset=last_piece_offset + 1,
+        ))
+
+    # --- version predates the ISA segment's own documented existence ---
+    if len(version) == 5 and version.isdigit() and version < ISA_MIN_VERSION:
+        diags.append(Diagnostic(
+            Code.ISA_VERSION_TOO_OLD,
+            f"ISA12 is {version!r} -- release 003040 is the earliest for "
+            "which the ISA segment is documented to exist at all; x12-tidy "
+            "has not verified a standard for anything earlier, so the "
+            "16-element ISA shape this parse assumed cannot be trusted here.",
+            offset=base_offset,
         ))
 
     # --- repetition separator (ISA11), gated on the ISA12 version code ---

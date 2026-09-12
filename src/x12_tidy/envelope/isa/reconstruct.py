@@ -24,7 +24,17 @@ Repairs (each carries a diagnostic so a human can veto):
   delimiters are known, so a byte that *is* a delimiter -- ISA16 (always the
   component separator) and ISA11 when it carries the repetition separator -- is
   left untouched.
-* an element shorter than its fixed width -> space-padded on the right.
+* an element shorter than its fixed width -> space-padded on the right,
+  *except* ISA13 (Interchange Control Number, the one ISA element typed
+  numeric, N0), which is space-padded on the **left** -- right-justified,
+  matching the fixed-width convention for a numeric field, as opposed to the
+  left-justified/pad-right convention for the AN/ID elements that make up
+  the rest of the ISA segment. The fill character is always a space, never a
+  digit: inventing zeros to fill it out would assert a value beyond what the
+  sender actually sent -- nothing here may turn a known short value into an
+  assumed full-width one. Downstream code that reads ISA13 (the numeric
+  check, the comparison against IEA02) trims the padding at that point
+  instead of reconstruction fabricating content to avoid needing to.
 * an element longer than its width by trailing spaces only -> trimmed.
 
 The delimiters are **not** repaired. Which byte serves as the element,
@@ -78,6 +88,11 @@ _LINE_BREAKS = (b"\r", b"\n")
 #: are never rewritten.
 _COMPONENT_SEPARATOR_INDEX = 16
 _REPETITION_SEPARATOR_INDEX = 11
+#: 1-based index of ISA13 (Interchange Control Number) -- the one ISA element
+#: typed numeric (N0). Right-justified (space-padded on the left) when short,
+#: unlike every other element (left-justified, space-padded on the right).
+#: The fill is always a space -- never a digit; see the module docstring.
+_CONTROL_NUMBER_INDEX = 13
 
 
 @dataclass
@@ -191,13 +206,24 @@ def _rebuild(
             value = stitched
 
         if len(value) < width:
-            diagnostics.append(Diagnostic(
-                Code.ISA_ELEMENT_WIDTH,
-                f"{name} is {len(value)} byte(s); padded with spaces to its "
-                f"fixed width of {width}.",
-                offset=base_offset,
-            ))
-            value = value.ljust(width)
+            if index == _CONTROL_NUMBER_INDEX:
+                diagnostics.append(Diagnostic(
+                    Code.ISA_ELEMENT_WIDTH,
+                    f"{name} is {len(value)} byte(s); space-padded on the "
+                    f"left to its fixed width of {width} (ISA13 is numeric, "
+                    "type N0, and right-justifies -- the fill is a space, "
+                    "never a digit).",
+                    offset=base_offset,
+                ))
+                value = value.rjust(width)
+            else:
+                diagnostics.append(Diagnostic(
+                    Code.ISA_ELEMENT_WIDTH,
+                    f"{name} is {len(value)} byte(s); padded with spaces to its "
+                    f"fixed width of {width}.",
+                    offset=base_offset,
+                ))
+                value = value.ljust(width)
         elif len(value) > width:
             overflow = value[width:]
             if overflow.strip(b" ") == b"":

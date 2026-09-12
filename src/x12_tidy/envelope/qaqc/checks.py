@@ -31,6 +31,32 @@ count/control-number mismatches all fall out of that one walk. A missing
 closer (``GE``/``SE``/``IEA``) is recovered from by treating the next
 recognizable boundary as the assumed end, so everything nested inside a broken
 envelope is still checked rather than skipped.
+
+**A bad envelope cannot be counted, and that is contagious upward.** An
+envelope is only "good" if it closed (its own closer was found), its stated
+count matches the real count of *good* children, and its closer's control
+number matches its opener's -- count alone is not enough: two envelopes whose
+segments got interleaved can still show a numerically correct count while
+being the wrong segments entirely, which the control-number check is what
+catches. A bad ``ST``/``SE`` is excluded from its ``GS``'s good count outright
+-- not counted as a broken transaction set, simply not counted -- which is
+also why a ``GS`` containing even one bad ``ST`` is itself never good even if
+``GE01`` happens to numerically match what's left (a coincidence, not
+evidence). The same pattern repeats one level up: a bad ``GS`` is excluded
+from the interchange's good functional-group count. This is deliberately
+**not** implemented as inferring badness from a downstream number mismatch --
+each level tracks its own children's good/bad status explicitly, since relying
+on a mismatch to eventually surface a problem would miss the rare case where
+the numbers coincidentally still add up.
+
+This "good count" is strictly internal, feeding only the parent's own
+count-agreement check (``IEA01`` vs. good functional groups, ``GE01`` vs. good
+transaction sets) -- it is never what :class:`EnvelopeFacts` reports.
+``EnvelopeFacts.functional_group_count`` and ``.transaction_set_count`` stay
+raw, unconditional tallies of what was actually seen, good or bad, consistent
+with every other fact on that dataclass: a bad envelope is still excluded from
+the mismatch check whose whole job is to say so, but the *fact* that a GS or
+ST was present in the file is still true regardless.
 """
 
 from __future__ import annotations
@@ -66,6 +92,23 @@ _ENVELOPE_ELEMENT_COUNTS: dict[bytes, tuple[int, ...]] = {
 def _is_numeric(value: bytes) -> bool:
     stripped = value.strip()
     return bool(stripped) and stripped.isdigit()
+
+
+def _same_control_number(a: bytes, b: bytes) -> bool:
+    """Whether ``a`` and ``b`` name the same control number once padding is
+    trimmed, e.g. ``b"      123"`` (ISA13, space-padded on the left to its
+    fixed width -- it right-justifies, being numeric) and ``b"123"`` (IEA02,
+    an ordinary delimited field, not padded at all).
+
+    A string comparison, not a numeric one -- at cleansing time every EDI
+    value is a string; there are no ints, dates, or floats, only bytes.
+    Assigning a destination type (parsing ISA13 as a number to compare it) is
+    translation's job, not this tool's. ``strip()`` removes only the padding
+    framing a fixed-width element -- never digits the sender actually sent
+    (a leading zero the sender wrote, e.g. ISA13 ``"007"``, survives; only
+    the fixed-width fill on the outside comes off), so this stays a
+    trim-and-compare, not an interpretation."""
+    return a.strip() == b.strip()
 
 
 def _identifier_shape_valid(identifier: bytes) -> bool:
@@ -127,7 +170,14 @@ class _TransactionSetContext:
 @dataclass
 class _GroupContext:
     gs06: bytes
-    transaction_set_count: int = 0
+    #: Only ST/SE pairs that closed cleanly -- found, count-correct,
+    #: control-number-correct -- count here. A bad one is excluded, not
+    #: counted as a broken '1'; see the module docstring on why.
+    good_transaction_set_count: int = 0
+    #: False the moment any contained ST/SE closes uncleanly. Gates whether
+    #: this group itself can ever be "good", independent of whether GE01
+    #: happens to numerically match the (already-reduced) good count.
+    all_children_good: bool = True
     st02_seen: set[bytes] = field(default_factory=set)
     current_st: _TransactionSetContext | None = None
 
@@ -137,7 +187,13 @@ class _Walker:
         self._isa12 = _element(list(isa_elements), 11)
         self._isa13 = _element(list(isa_elements), 12)
         self.diagnostics: list[Diagnostic] = []
+        #: Raw count of GS segments closed, good or bad -- a fact, feeds
+        #: EnvelopeFacts.functional_group_count, reported unconditionally
+        #: like every other fact (see the module docstring on Facts).
         self._gs_count = 0
+        #: Only GS/GE pairs that are fully good count here -- feeds the
+        #: IEA01 cascade check, never a fact.
+        self._good_gs_count = 0
         self._gs06_seen: set[bytes] = set()
         self._group_versions: list[bytes] = []
         self._total_transaction_sets = 0
@@ -266,7 +322,6 @@ class _Walker:
     ) -> None:
         st_ctx = group.current_st
         assert st_ctx is not None
-        group.transaction_set_count += 1
         self._total_transaction_sets += 1
 
         if st_ctx.st02 in group.st02_seen:
@@ -282,29 +337,43 @@ class _Walker:
                 Code.ST_MISSING_SE,
                 f"ST {st_ctx.st02!r} has no matching SE.",
             ))
+            group.all_children_good = False
             group.current_st = None
             return
 
         se01 = _element(se_elements, 1)
         se02 = _element(se_elements, 2)
+        is_good = True
 
         if not _is_numeric(se01):
             self.diagnostics.append(Diagnostic(
                 Code.ST_COUNT_NOT_NUMERIC,
                 f"SE01 is {se01!r}; must be numeric.",
             ))
+            is_good = False
         elif int(se01.strip()) != st_ctx.segment_count:
             self.diagnostics.append(Diagnostic(
                 Code.ST_SEGMENT_COUNT_MISMATCH,
                 f"SE01 is {se01!r} but {st_ctx.segment_count} segment(s) "
                 "were found (ST through SE inclusive).",
             ))
+            is_good = False
 
         if se02 != st_ctx.st02:
             self.diagnostics.append(Diagnostic(
                 Code.ST_CONTROL_NUMBER_MISMATCH,
                 f"ST02 {st_ctx.st02!r} does not match SE02 {se02!r}.",
             ))
+            is_good = False
+
+        # A bad ST/SE is excluded from the group's good count outright -- not
+        # counted as a broken transaction set, simply not counted. See the
+        # module docstring on why this cascades rather than relying on GE01
+        # to eventually reveal it.
+        if is_good:
+            group.good_transaction_set_count += 1
+        else:
+            group.all_children_good = False
 
         group.current_st = None
 
@@ -314,7 +383,7 @@ class _Walker:
         if group.current_st is not None:
             self._close_st(group, None)  # never found SE
 
-        self._gs_count += 1
+        self._gs_count += 1  # a fact: this GS was seen, good or bad
         if group.gs06 in self._gs06_seen:
             self.diagnostics.append(Diagnostic(
                 Code.GS_CONTROL_NUMBER_DUPLICATE,
@@ -334,28 +403,39 @@ class _Walker:
                 Code.GS_MISSING_GE,
                 f"GS {group.gs06!r} has no matching GE.",
             ))
-            return
+            return  # not good -- no GE, so nothing to certify
 
         ge01 = _element(ge_elements, 1)
         ge02 = _element(ge_elements, 2)
+        is_good = group.all_children_good
 
         if not _is_numeric(ge01):
             self.diagnostics.append(Diagnostic(
                 Code.GS_COUNT_NOT_NUMERIC,
                 f"GE01 is {ge01!r}; must be numeric.",
             ))
-        elif int(ge01.strip()) != group.transaction_set_count:
+            is_good = False
+        elif int(ge01.strip()) != group.good_transaction_set_count:
             self.diagnostics.append(Diagnostic(
                 Code.GS_TRANSACTION_SET_COUNT_MISMATCH,
-                f"GE01 is {ge01!r} but {group.transaction_set_count} "
-                "transaction set(s) were found.",
+                f"GE01 is {ge01!r} but {group.good_transaction_set_count} "
+                "transaction set(s) closed cleanly.",
             ))
+            is_good = False
 
         if ge02 != group.gs06:
             self.diagnostics.append(Diagnostic(
                 Code.GS_CONTROL_NUMBER_MISMATCH,
                 f"GS06 {group.gs06!r} does not match GE02 {ge02!r}.",
             ))
+            is_good = False
+
+        # A GS containing even one bad ST is never good, even if GE01
+        # happens to numerically match what's left after excluding it --
+        # that would be a coincidence, not evidence the group is sound. Only
+        # a fully good group counts toward the interchange's own good count.
+        if is_good:
+            self._good_gs_count += 1
 
     def _check_iea(self) -> None:
         if self._iea_elements is None:
@@ -373,14 +453,14 @@ class _Walker:
                 Code.STRUCTURE_COUNT_NOT_NUMERIC,
                 f"IEA01 is {iea01!r}; must be numeric.",
             ))
-        elif int(iea01.strip()) != self._gs_count:
+        elif int(iea01.strip()) != self._good_gs_count:
             self.diagnostics.append(Diagnostic(
                 Code.STRUCTURE_FUNCTIONAL_GROUP_COUNT_MISMATCH,
-                f"IEA01 is {iea01!r} but {self._gs_count} functional group(s) "
-                "were found.",
+                f"IEA01 is {iea01!r} but {self._good_gs_count} functional "
+                "group(s) closed cleanly.",
             ))
 
-        if iea02 != self._isa13:
+        if iea02 != self._isa13 and not _same_control_number(iea02, self._isa13):
             self.diagnostics.append(Diagnostic(
                 Code.STRUCTURE_CONTROL_NUMBER_MISMATCH,
                 f"ISA13 {self._isa13!r} does not match IEA02 {iea02!r}.",

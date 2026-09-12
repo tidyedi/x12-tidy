@@ -6,12 +6,68 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Bad envelopes no longer certify their parents.** An envelope (`ST`/`SE`,
+  `GS`/`GE`) is now only "good" if it closed, its stated count matches the
+  real count of *good* children, and its closer's control number matches its
+  opener's — not just a numeric match, since two envelopes whose segments got
+  interleaved can still show a coincidentally-correct count. A bad `ST`/`SE`
+  is excluded from its `GS`'s good count outright, so a `GS` containing even
+  one bad transaction set is itself never good — even if `GE01` happens to
+  numerically match what's left after excluding it. Same pattern one level up
+  for `GS`/`IEA`. Each level tracks its own children's good/bad status
+  explicitly rather than inferring it from a downstream mismatch, which would
+  miss the rare case where the numbers still coincidentally add up. This is
+  strictly a validation-only concept — `EnvelopeFacts.functional_group_count`
+  and `.transaction_set_count` remain raw, unconditional tallies of what was
+  actually seen, unaffected by this change.
+
+### Changed
+
+- `isa.separator-count-high` no longer fires for "no real `GS` header anywhere
+  in the file" (a stray `REF*GS*` with no functional-group envelope) or "ISA
+  missing elements, but a real `GS` follows" — both now report
+  `isa.gs-not-found`, which names the actual problem. `isa.separator-count-high`
+  still fires for a genuine delimiter collision between the 16th separator and
+  the real `GS` header.
+
 ### Fixed
 
 - `isa.element-embedded-newline` now deletes an embedded CR/LF instead of
   replacing it with a space — a newline inside a fixed-width ISA element is wrap
   noise, never data, so deleting it stitches the value back to what the sender
   wrote (`RECEIV\r\nER` → `RECEIVER`, not `RECEIV  ER`). (#83)
+- **Silent mis-parse on a truncated ISA line.** When the ISA segment was
+  missing elements and immediately followed by a real `GS` segment,
+  `extract_isa_line`'s separator-count check could land on a coincidental
+  match inside `GS`'s own field data (e.g. `SENDERGS*`) and accept it as the
+  ISA boundary with **no diagnostic at all**. Step 1 now counts forward to the
+  16th element separator first, then only accepts `GS` if everything up to it
+  is non-alphanumeric and not another element separator — the
+  ISA06/ISA08-embedded-`GS` and deep-in-transaction-body `REF*GS*` false-match
+  cases are eliminated structurally instead of being caught after the fact.
+- **A `GS` missing its `GE` was still counted toward the interchange's own
+  functional-group tally.** `_close_group` incremented the interchange-level
+  count before checking whether `GE` was even found, so a broken group could
+  silently satisfy `IEA01` instead of triggering
+  `structure.functional-group-count-mismatch`. Fixed as part of the cascade
+  above.
+
+### Documentation
+
+- `design.md`: corrected a note claiming a literal `ISA` inside an ISA06/ISA08
+  element value was an uncaught gap deferred to Step 2 — nothing past Step 1
+  ever searches for those bytes, so there was never anything to catch.
+- `finding-the-elusive-isa-line.md` (and its published `.html`) rewritten to
+  match the new Step 1 mechanism above, with a worked example of the bug it
+  fixes; §5.3 and `design.md`'s multi-candidate note now flag explicitly that
+  "keep the first ISA that parses" is single-interchange behavior, not yet a
+  policy for a flat file containing several real, independent interchanges
+  (tracked separately, see `auditing-the-envelope.md` §7).
+- `auditing-the-envelope.md` (and its `.html`) §3: documents the good/bad
+  cascade above, and that it's validation-only, never reflected in
+  `EnvelopeFacts`.
 
 ## [0.1.0] — 2026-09-07
 

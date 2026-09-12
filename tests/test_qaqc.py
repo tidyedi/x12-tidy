@@ -82,6 +82,52 @@ def test_isa13_not_numeric() -> None:
     assert Code.STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC in _codes(result.diagnostics)
 
 
+def test_short_isa13_is_not_flagged_not_numeric() -> None:
+    # A short-but-numeric ISA13 (e.g. "123") is space-padded on the left to
+    # "      123" by reconstruction -- .strip() in _is_numeric already
+    # handles that, so this was never actually broken; kept as a guard
+    # against regressing it.
+    from _isa_helpers import ISA_ELEMENTS
+
+    els = list(ISA_ELEMENTS)
+    els[12] = b"123"
+    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*123")
+    result = check_payload(clean_payload(build_isa(elements=els, trailer=trailer)))
+    assert Code.STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC not in _codes(result.diagnostics)
+
+
+def test_short_isa13_matches_an_unpadded_iea02_once_trimmed() -> None:
+    # The real bug: ISA13 is fixed-width (space-padded on the left to
+    # "      123" by reconstruction when the sender sent it short), but IEA02
+    # is an ordinary delimited body-segment field, normally sent unpadded
+    # ("123").
+    # An exact-bytes comparison would spuriously mismatch two control
+    # numbers that actually agree -- trimmed and compared as strings at
+    # comparison time instead (never parsed as a number -- see
+    # checks.py::_same_control_number).
+    from _isa_helpers import ISA_ELEMENTS
+
+    els = list(ISA_ELEMENTS)
+    els[12] = b"123"
+    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*123")
+    result = check_payload(clean_payload(build_isa(elements=els, trailer=trailer)))
+    assert Code.STRUCTURE_CONTROL_NUMBER_MISMATCH not in _codes(result.diagnostics)
+
+
+def test_a_senders_own_leading_zero_is_not_trimmed_away() -> None:
+    # Proves the comparison is string-level, not numeric: "007" and "7" are
+    # the same number but not the same string. A numeric comparison would
+    # wrongly treat these as a match; strip() only removes the fixed-width
+    # padding reconstruction added, never a digit the sender actually sent.
+    from _isa_helpers import ISA_ELEMENTS
+
+    els = list(ISA_ELEMENTS)
+    els[12] = b"007"
+    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*7")
+    result = check_payload(clean_payload(build_isa(elements=els, trailer=trailer)))
+    assert Code.STRUCTURE_CONTROL_NUMBER_MISMATCH in _codes(result.diagnostics)
+
+
 def test_missing_ge() -> None:
     trailer = (
         b"GS*PO*A*B*20240101*1200*1*X*004010~ST*850*1~SE*1*1~"
@@ -101,6 +147,43 @@ def test_transaction_set_count_mismatch() -> None:
     trailer = _CLEAN_TRAILER.replace(b"GE*1*1~", b"GE*2*1~")
     result = check_payload(clean_payload(build_isa(trailer=trailer)))
     assert Code.GS_TRANSACTION_SET_COUNT_MISMATCH in _codes(result.diagnostics)
+
+
+def test_bad_transaction_set_not_counted_even_if_ge01_matches() -> None:
+    # ST 0002 has no matching SE -- bad, excluded from the good count. GE01
+    # is set to 1, which coincidentally matches the *good* count (only 0001
+    # closed cleanly) -- a numeric match alone must not read as "this group
+    # is fine": the bad ST still disqualifies the whole group.
+    trailer = (
+        b"GS*PO*A*B*20240101*1200*1*X*004010~"
+        b"ST*850*0001~BEG*00*NE*PO0001**20240101~SE*3*0001~"
+        b"ST*850*0002~BEG*00*NE*PO0002**20240101~"
+        b"GE*1*1~IEA*1*000000001~"
+    )
+    result = check_payload(clean_payload(build_isa(trailer=trailer)))
+    codes = _codes(result.diagnostics)
+    assert Code.ST_MISSING_SE in codes
+    assert Code.GS_TRANSACTION_SET_COUNT_MISMATCH not in codes
+    assert Code.STRUCTURE_FUNCTIONAL_GROUP_COUNT_MISMATCH in codes
+    # functional_group_count is a fact (a GS was seen, good or bad), not the
+    # validation-only good count -- it stays 1 even though the group is bad.
+    assert result.facts is not None
+    assert result.facts.functional_group_count == 1
+
+
+def test_group_missing_ge_excluded_from_interchange_count() -> None:
+    # A GS with no matching GE must not count toward the interchange's own
+    # good functional-group tally, even though IEA01 says 1 -- a missing
+    # closer means this group can never be certified, so IEA01 can't be
+    # either. The mismatch fires even though functional_group_count (a raw
+    # fact: a GS was seen) still reports 1.
+    trailer = b"GS*PO*A*B*20240101*1200*1*X*004010~ST*850*1~SE*1*1~IEA*1*000000001~"
+    result = check_payload(clean_payload(build_isa(trailer=trailer)))
+    codes = _codes(result.diagnostics)
+    assert Code.GS_MISSING_GE in codes
+    assert Code.STRUCTURE_FUNCTIONAL_GROUP_COUNT_MISMATCH in codes
+    assert result.facts is not None
+    assert result.facts.functional_group_count == 1
 
 
 def test_gs06_not_numeric() -> None:
@@ -309,14 +392,18 @@ def test_check_payload_on_refused_cleanse_returns_empty_result() -> None:
 
 
 def test_tidy_returns_payload_facts_and_all_diagnostics() -> None:
-    result = tidy(build_isa(trailer=_CLEAN_TRAILER))
+    results = tidy(build_isa(trailer=_CLEAN_TRAILER))
+    assert len(results) == 1
+    result = results[0]
     assert result.payload is not None
     assert result.facts is not None
     assert result.was_clean
 
 
 def test_tidy_refuses_cleanly_when_uncleansable() -> None:
-    result = tidy(b"not an edi file at all")
+    results = tidy(b"not an edi file at all")
+    assert len(results) == 1
+    result = results[0]
     assert result.payload is None
     assert result.facts is None
     assert result.diagnostics  # a refusal must say why

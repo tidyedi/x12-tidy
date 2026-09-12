@@ -73,6 +73,7 @@ class Code(Enum):
     ISA_SEGMENT_TERMINATOR_INVALID = "isa.segment-terminator-invalid"
     ISA_SEGMENT_TERMINATOR_STRIPPED = "isa.segment-terminator-stripped"
     ISA_VERSION_UNRECOGNIZED = "isa.version-unrecognized"
+    ISA_VERSION_TOO_OLD = "isa.version-too-old"
     ISA_TRAILING_JUNK = "isa.trailing-junk"
 
     # -- isa: reconstructing the canonical ISA line (Step 2, slice 2) --
@@ -192,13 +193,16 @@ META: dict[Code, CodeMeta] = {
         default_severity="fatal",
         title="No GS header found after the ISA segment",
         explanation=(
-            "x12-tidy locates the end of the ISA line by finding the 'GS' "
-            "functional-group header that follows it (matched as 'GS' plus the "
-            "element separator). The bytes 'GS' + separator do not appear "
-            "anywhere after the ISA segment, so the ISA line cannot be "
-            "bounded. (Contrast isa.separator-count-high, where a 'GS' + "
-            "separator was found but is too far past the ISA segment to be its "
-            "header.)"
+            "x12-tidy locates the end of the ISA line by counting forward to "
+            "the 16th element separator -- the position the standard fixes as "
+            "immediately before ISA16 -- then requiring everything from there "
+            "to a real 'GS' + element separator to be non-alphanumeric (ISA16, "
+            "the segment terminator, tolerated trailing junk such as an "
+            "appended CRLF). No 'GS' + separator was found before either an "
+            "ordinary letter or digit turned up -- proof that whatever comes "
+            "later is the tail of some other field's value, not a real "
+            "segment header -- or the end of the file was reached. The ISA "
+            "line cannot be bounded; not recoverable."
         ),
     ),
     Code.ISA_SEPARATOR_COUNT_LOW: CodeMeta(
@@ -207,25 +211,28 @@ META: dict[Code, CodeMeta] = {
         explanation=(
             "An ISA header carries exactly 16 element separators (ISA*ISA01*.."
             "*ISA16); that count is part of the minimum bar for calling a run "
-            "an ISA line at all. The run before the 'GS' header holds fewer -- "
-            "element separators were removed, or the 'GS' anchored on is a "
-            "false match inside earlier data. Every candidate ISA identifier was "
-            "tried; none produced a 16-separator run. This is not an ISA line "
-            "and is not recoverable."
+            "an ISA line at all. Fewer than 16 element separators appear "
+            "anywhere in the remaining file after this candidate ISA "
+            "identifier -- there is no possible 'GS' header left to find, and "
+            "the segment terminator cannot be determined. Every candidate ISA "
+            "identifier was tried; none produced a 16-separator run. This is "
+            "not an ISA line and is not recoverable."
         ),
     ),
     Code.ISA_SEPARATOR_COUNT_HIGH: CodeMeta(
         default_severity="fatal",
         title="More than 16 element separators before GS",
         explanation=(
-            "An ISA header carries exactly 16 element separators. A 'GS' + "
-            "element separator was found, but the run of bytes up to it holds "
-            "more than 16 -- so that 'GS' is not this ISA segment's header. "
-            "Either there is no GS envelope and the match lies inside a later "
-            "segment's data, or the element separator occurs inside ISA06 / "
-            "ISA08 data (an unparseable segment). The ISA line cannot be "
-            "bounded; not recoverable. Pairs with isa.separator-count-low "
-            "(fewer than 16)."
+            "An ISA header carries exactly 16 element separators. Past the "
+            "16th one, x12-tidy found an extra element-separator byte before "
+            "it could confirm a real 'GS' + element separator -- most often "
+            "the component separator (ISA16) or the segment terminator itself "
+            "colliding with the element separator. That makes the boundary "
+            "between the ISA line and the GS header ambiguous, so it is "
+            "refused rather than guessed. (Contrast isa.gs-not-found, where "
+            "no 'GS' + separator could be found at all, and "
+            "isa.separator-count-low, where fewer than 16 separators exist in "
+            "the first place.)"
         ),
     ),
 
@@ -352,6 +359,20 @@ META: dict[Code, CodeMeta] = {
             "delimiter."
         ),
     ),
+    Code.ISA_VERSION_TOO_OLD: CodeMeta(
+        default_severity="fatal",
+        title="ISA12 declares a release older than the ISA segment itself",
+        explanation=(
+            "ISA12 is a well-formed 5-digit version code below 00304 -- release "
+            "003040, the earliest release for which the ISA segment is "
+            "documented to exist at all (Stedi's per-release segment "
+            "dictionaries report 'Segment ISA is not present in X12 Release "
+            "3010'). x12-tidy has not verified a standard for any release "
+            "before 003040, so the 16-element, 105-byte ISA shape this parse "
+            "assumed cannot be trusted for a file that claims to predate it -- "
+            "refused rather than parsed on an unverified assumption."
+        ),
+    ),
     Code.ISA_TRAILING_JUNK: CodeMeta(
         default_severity="warning",
         title="Unexpected bytes between the segment terminator and GS",
@@ -385,9 +406,12 @@ META: dict[Code, CodeMeta] = {
         title="An ISA element is not its fixed width",
         explanation=(
             "Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is "
-            "9, and so on. This element was shorter (space-padded on the right "
-            "to fit) or longer only by trailing spaces (trimmed). The value "
-            "itself is unchanged. A sender that right-trims blank fixed-width "
+            "9, and so on. This element was shorter (space-padded to fit -- "
+            "on the right for every element except ISA13, which is numeric "
+            "and right-justifies, so it pads on the left; the fill is always "
+            "a space, never an invented digit) or longer only by trailing "
+            "spaces (trimmed). The value itself is otherwise unchanged. A "
+            "sender that right-trims blank fixed-width "
             "fields is the usual cause. This is an error, not a warning: the "
             "ISA line is no longer 105 bytes, and conventional VAN services and "
             "fixed-offset parsers cannot read the interchange at all until it "
@@ -436,8 +460,15 @@ META: dict[Code, CodeMeta] = {
         title="ISA13 does not match IEA02",
         explanation=(
             "The Interchange Control Number set in the ISA segment (ISA13) "
-            "must equal the one echoed back in the IEA segment (IEA02). A "
-            "mismatch usually indicates a corrupted or hand-edited file."
+            "must equal the one echoed back in the IEA segment (IEA02). "
+            "Compared as strings with fixed-width padding trimmed off each "
+            "side, not byte-for-byte and not as numbers -- ISA13 is "
+            "fixed-width (space-padded on the left to 9 bytes if the sender "
+            "sent it short, being numeric) while IEA02 is an ordinary "
+            "delimited field and is typically not padded at all, so e.g. "
+            "'      123' and '123' agree once the padding is trimmed. A "
+            "mismatch usually indicates a corrupted or hand-edited file, not "
+            "a padding difference."
         ),
     ),
     Code.STRUCTURE_FUNCTIONAL_GROUP_COUNT_MISMATCH: CodeMeta(
