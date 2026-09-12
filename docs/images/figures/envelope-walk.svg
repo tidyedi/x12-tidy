@@ -19,8 +19,8 @@
   <g font-size="12">
     <text x="12" y="18" fill="var(--ink-soft)" font-size="10.5" letter-spacing="0.06em">THE SEGMENT LIST, ONE PASS</text>
 
-    <!-- ISA: already resolved before this walk begins -- shown dashed, not
-         part of ".segments", included only so IEA has a visible opener. -->
+    <!-- ISA: already resolved before this walk begins, shown dashed. Not
+         part of ".segments"; included only so IEA has a visible opener. -->
     <g font-size="12.5">
       <rect x="12" y="30" width="70" height="32" rx="4" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" stroke-dasharray="4 3"/>
       <text x="47" y="51" text-anchor="middle" fill="var(--ink-soft)">ISA</text>
