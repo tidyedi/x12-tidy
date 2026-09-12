@@ -49,11 +49,14 @@ A single walk over `.segments` drives every check. It tracks, at any moment,
 at most one open functional group and — inside it — at most one open
 transaction set:
 
-![ISA, already resolved before this walk begins, opens the interchange that
-IEA closes. Then one walk over `.segments`: a small stack tracks the
-currently-open functional group and, inside it, the currently-open
-transaction set. GS opens a group, ST opens a transaction set inside it, SE
-closes the transaction set, GE closes the group.](images/figures/envelope-walk.svg)
+![ISA opens the interchange and IEA closes it, shown with the same kind of
+labeled brace as the other pairs, though ISA (dashed) is already resolved
+before this walk begins and isn't part of `.segments` itself. Then one walk
+over `.segments`: a small stack tracks the currently-open functional group
+and, inside it, the currently-open transaction set. GS opens a group, ST
+opens a transaction set inside it, SE closes the transaction set, GE closes
+the group — though the interchange itself may hold several functional groups
+in sequence, not just one.](images/figures/envelope-walk.svg)
 
 A missing closer doesn't stop the walk either — it's recovered from by
 treating the next recognizable boundary as the assumed end:
