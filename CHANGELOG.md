@@ -29,6 +29,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   standard for anything earlier, so the 16-element, 105-byte ISA shape a
   parse assumes cannot be trusted for a file that claims to predate it.
   (#88)
+- **`isa.required-element-blank`** (error) — fires when ISA09 (Interchange
+  Date) or ISA10 (Interchange Time) is completely empty, not merely shorter
+  than its fixed width. Reported alongside `isa.element-width`, which still
+  fires because the element is also short; both are still space-padded and
+  reconstructed, never refused. Every ISA element carries the "M" (Must Use)
+  designator, but that alone doesn't make blank content wrong — ISA02/ISA04
+  have a documented all-spaces value (RFI #2205; ISA01/ISA03 as `00` is the
+  standard practice now that the Authorization/Security Information
+  mechanism they qualify is obsolete, and nothing downstream reads
+  ISA02/ISA04's content either way). No equivalent exists for ISA09/ISA10 —
+  a date or time has no all-blank form that means anything, so an empty
+  value there is missing required information, not a recognized state.
+  Does not judge whether a *present* ISA09/ISA10 value is a real date or
+  time — that stays deferred, value-level work. (#90)
 
 ### Changed
 
