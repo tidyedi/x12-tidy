@@ -90,6 +90,17 @@ def test_trimmed_blank_fields_are_padded_back() -> None:
     assert result.elements[3] == b" " * 10
 
 
+def test_short_isa13_is_zero_padded_on_the_left_not_space_padded() -> None:
+    # ISA13 is the one ISA element typed numeric (N0). Space-padding a short
+    # value on the right (like every other element) would leave it failing
+    # the downstream numeric-value check for a defect reconstruction itself
+    # introduced -- see structure.control-number-not-numeric.
+    result = clean_isa_line(build_isa(elements=_elements(isa13=b"123")))
+    assert result.isa_line is not None
+    assert _codes(result) == [Code.ISA_ELEMENT_WIDTH]
+    assert result.elements[12] == b"000000123"
+
+
 def test_over_padded_field_is_trimmed() -> None:
     result = clean_isa_line(
         build_isa(elements=_elements(isa6=b"SENDER".ljust(25)))

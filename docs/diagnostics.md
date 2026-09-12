@@ -74,7 +74,7 @@ The 4th byte of the ISA segment -- the element separator -- is a letter or digit
 
 *error* — An ISA element is not its fixed width
 
-Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is 9, and so on. This element was shorter (space-padded on the right to fit) or longer only by trailing spaces (trimmed). The value itself is unchanged. A sender that right-trims blank fixed-width fields is the usual cause. This is an error, not a warning: the ISA line is no longer 105 bytes, and conventional VAN services and fixed-offset parsers cannot read the interchange at all until it is repaired.
+Every ISA element has a fixed width -- ISA06 is 15 bytes, ISA13 is 9, and so on. This element was shorter (padded to fit -- space on the right for every element except ISA13, which is zero-padded on the left because it is the one ISA element typed numeric, N0) or longer only by trailing spaces (trimmed). The value itself is otherwise unchanged. A sender that right-trims blank fixed-width fields is the usual cause. This is an error, not a warning: the ISA line is no longer 105 bytes, and conventional VAN services and fixed-offset parsers cannot read the interchange at all until it is repaired.
 
 ### `isa.gs-not-found`
 

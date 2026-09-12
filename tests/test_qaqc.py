@@ -82,6 +82,20 @@ def test_isa13_not_numeric() -> None:
     assert Code.STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC in _codes(result.diagnostics)
 
 
+def test_short_numeric_isa13_is_not_flagged_not_numeric() -> None:
+    # A short-but-numeric ISA13 must not be turned non-numeric by
+    # reconstruction's own padding (regression: reconstruct.py zero-pads
+    # ISA13 on the left, not space-pads on the right like every other
+    # element -- see test_reconstruct.py).
+    from _isa_helpers import ISA_ELEMENTS
+
+    els = list(ISA_ELEMENTS)
+    els[12] = b"123"
+    trailer = _CLEAN_TRAILER.replace(b"IEA*1*000000001", b"IEA*1*000000123")
+    result = check_payload(clean_payload(build_isa(elements=els, trailer=trailer)))
+    assert Code.STRUCTURE_CONTROL_NUMBER_NOT_NUMERIC not in _codes(result.diagnostics)
+
+
 def test_missing_ge() -> None:
     trailer = (
         b"GS*PO*A*B*20240101*1200*1*X*004010~ST*850*1~SE*1*1~"

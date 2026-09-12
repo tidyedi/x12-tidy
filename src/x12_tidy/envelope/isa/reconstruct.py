@@ -24,7 +24,11 @@ Repairs (each carries a diagnostic so a human can veto):
   delimiters are known, so a byte that *is* a delimiter -- ISA16 (always the
   component separator) and ISA11 when it carries the repetition separator -- is
   left untouched.
-* an element shorter than its fixed width -> space-padded on the right.
+* an element shorter than its fixed width -> space-padded on the right, *except*
+  ISA13 (Interchange Control Number, the one ISA element typed numeric --
+  N0(9)), which is zero-padded on the left: space-padding a numeric field
+  would leave it failing ``structure.control-number-not-numeric`` downstream
+  for a defect reconstruction itself introduced.
 * an element longer than its width by trailing spaces only -> trimmed.
 
 The delimiters are **not** repaired. Which byte serves as the element,
@@ -78,6 +82,10 @@ _LINE_BREAKS = (b"\r", b"\n")
 #: are never rewritten.
 _COMPONENT_SEPARATOR_INDEX = 16
 _REPETITION_SEPARATOR_INDEX = 11
+#: 1-based index of ISA13 (Interchange Control Number) -- the one ISA element
+#: typed numeric (N0). Padded with leading zeros, not trailing spaces, when
+#: short; see structure.control-number-not-numeric.
+_CONTROL_NUMBER_INDEX = 13
 
 
 @dataclass
@@ -191,13 +199,24 @@ def _rebuild(
             value = stitched
 
         if len(value) < width:
-            diagnostics.append(Diagnostic(
-                Code.ISA_ELEMENT_WIDTH,
-                f"{name} is {len(value)} byte(s); padded with spaces to its "
-                f"fixed width of {width}.",
-                offset=base_offset,
-            ))
-            value = value.ljust(width)
+            if index == _CONTROL_NUMBER_INDEX:
+                diagnostics.append(Diagnostic(
+                    Code.ISA_ELEMENT_WIDTH,
+                    f"{name} is {len(value)} byte(s); zero-padded on the left "
+                    f"to its fixed width of {width} (ISA13 is numeric, type "
+                    "N0 -- space-padding would leave it failing the "
+                    "numeric-value check downstream).",
+                    offset=base_offset,
+                ))
+                value = value.rjust(width, b"0")
+            else:
+                diagnostics.append(Diagnostic(
+                    Code.ISA_ELEMENT_WIDTH,
+                    f"{name} is {len(value)} byte(s); padded with spaces to its "
+                    f"fixed width of {width}.",
+                    offset=base_offset,
+                ))
+                value = value.ljust(width)
         elif len(value) > width:
             overflow = value[width:]
             if overflow.strip(b" ") == b"":

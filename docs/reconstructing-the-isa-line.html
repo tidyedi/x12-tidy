@@ -689,7 +689,12 @@ ISA04 10   ISA08 15   ISA12  5   ISA16  1
     </div>
 
     <ul class="plain">
-      <li><b>shorter than its width</b> &rarr; space&#8209;pad on the right.
+      <li><b>shorter than its width</b> &rarr; space&#8209;pad on the right
+        &mdash; except <b>ISA13</b> (Interchange Control Number, the one
+        element typed numeric, N0), which zero&#8209;pads on the left:
+        space&#8209;padding a numeric value would leave it failing the
+        &ldquo;is ISA13 numeric&rdquo; check downstream, for a defect
+        reconstruction itself introduced.
         <code>isa.element-width</code></li>
       <li><b>longer, but only by trailing spaces</b> &rarr; trim.
         <code>isa.element-width</code></li>
