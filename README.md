@@ -24,32 +24,22 @@ searched for, yes, that too.)
 
 ## Docs
 
-**Engineering notes** — the method, then one note per piece of the parse, at
-[docs.tidyedi.com](https://docs.tidyedi.com):
+| Document | What it is |
+| --- | --- |
+| [The x12-tidy Method](https://docs.tidyedi.com/the-x12-tidy-method.html) | The one idea everything else builds on: earn the delimiters from structure first. Read this first. |
+| [Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html) | Locating the ISA line when fixed byte offsets and a regex both fail. |
+| [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html) | Reading the four delimiters from a line whose byte offsets have moved. |
+| [Reconstructing the ISA Line](https://docs.tidyedi.com/reconstructing-the-isa-line.html) | Rebuilding the canonical 105-byte line once the delimiters are trusted. |
+| [Reassembling the Interchange](https://docs.tidyedi.com/reassembling-the-interchange.html) | Splitting the body into segments and rejoining it into one payload. |
+| [Auditing the Envelope](https://docs.tidyedi.com/auditing-the-envelope.html) | Checking whether the interchange's own bookkeeping is honest. |
+| [`using-x12-tidy.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/using-x12-tidy.md) | The CLI, the `tidy()` API, and the lower-level building blocks. |
+| [`design.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/design.md) | The architecture and diagnostic-code scheme — decisions that span modules. |
+| [`diagnostics.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/diagnostics.md) | Every diagnostic code x12-tidy can emit, generated from the code registry. |
+| [`links.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/links.md) | External EDI references — the X12 standard, code lookups, community resources. |
 
-- [The x12-tidy Method](https://docs.tidyedi.com/the-x12-tidy-method.html)
-  — the one idea: earn the delimiters from structure first, then the rest is easy
-- [Finding the Elusive ISA Line](https://docs.tidyedi.com/finding-the-elusive-isa-line.html)
-  — locating the ISA line when fixed byte offsets and a regex both fail
-- [Those Pesky Delimiters](https://docs.tidyedi.com/those-pesky-delimiters.html)
-  — reading the four delimiters from a line whose byte offsets have moved
-- [Reconstructing the ISA Line](https://docs.tidyedi.com/reconstructing-the-isa-line.html)
-  — rebuilding the canonical 105-byte line once the delimiters are trusted
-- [Reassembling the Interchange](https://docs.tidyedi.com/reassembling-the-interchange.html)
-  — splitting the body into segments and rejoining it with the ISA line into one payload
-- [Auditing the Envelope](https://docs.tidyedi.com/auditing-the-envelope.html)
-  — checking whether the interchange's own bookkeeping (pairing, counts, control numbers) is honest
-
-**Using it** — [`docs/using-x12-tidy.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/using-x12-tidy.md):
-the CLI, the `tidy()` one-call API, the lower-level building blocks, and
-formatting your own report.
-
-**Reference** — [`design.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/design.md)
-(architecture, the diagnostic-code scheme) ·
-[`docs/diagnostics.md`](https://github.com/tidyedi/x12-tidy/blob/main/docs/diagnostics.md)
-(every code, generated) ·
+The engineering notes are also served at [docs.tidyedi.com](https://docs.tidyedi.com);
 the [`docs/`](https://github.com/tidyedi/x12-tidy/tree/main/docs) folder holds
-the Markdown sources and PDFs.
+their Markdown sources and PDFs.
 
 ## Status
 
