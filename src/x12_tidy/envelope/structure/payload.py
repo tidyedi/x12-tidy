@@ -20,9 +20,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from x12_tidy.diagnostics import Diagnostic
-from x12_tidy.envelope.isa import ReconstructedIsaLine, clean_isa_line
-from x12_tidy.envelope.structure.segments import drop_empty_segments, split_segments
+from x12_tidy.diagnostics import Code, Diagnostic
+from x12_tidy.envelope.isa import ReconstructedIsaLine, clean_isa_line, decode_utf16
+from x12_tidy.envelope.structure.segments import drop_null_rows, split_segments
 
 
 @dataclass
@@ -38,7 +38,7 @@ class ReconstructedPayload:
     repair happens here. Empty (``()``) on refusal.
 
     ``diagnostics`` is the ISA-phase diagnostics; ``split_segments`` and
-    ``drop_empty_segments`` are purely mechanical and emit none today.
+    ``drop_null_rows`` are purely mechanical and emit none today.
     """
 
     payload: bytes | None
@@ -55,11 +55,22 @@ class ReconstructedPayload:
 def clean_payload(dirty: bytes) -> ReconstructedPayload:
     """Clean the ISA line, split and clean the body, reassemble one payload.
     See the module docstring for scope and the refusal contract."""
-    isa_result = clean_isa_line(dirty)
+    isa_result = clean_isa_line(dirty)  # detects + transcodes UTF-16 itself,
+    # emitting isa.identifier-utf16 -- dirty must stay untranscoded going in,
+    # or that diagnostic never fires.
     if isa_result.isa_line is None:
         return ReconstructedPayload(None, isa_result, (), list(isa_result.diagnostics))
 
-    segments = tuple(drop_empty_segments(split_segments(dirty)))
+    # clean_isa_line already determined whether dirty is UTF-16. If it isn't,
+    # split_segments needs no transcoding at all -- skip calling decode_utf16
+    # a second time on every ordinary (non-UTF-16) file. Only the rare UTF-16
+    # case pays for a second transcode; ReconstructedIsaLine has nowhere to
+    # carry the whole transcoded buffer forward for reuse today.
+    was_utf16 = any(
+        d.code == Code.ISA_IDENTIFIER_UTF16 for d in isa_result.diagnostics
+    )
+    body_source = (decode_utf16(dirty) or dirty) if was_utf16 else dirty
+    segments = tuple(drop_null_rows(split_segments(body_source)))
     terminator = isa_result.segment_terminator
     body = b"".join(segment + terminator for segment in segments)
     payload = isa_result.isa_line + terminator + body
