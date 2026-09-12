@@ -49,20 +49,22 @@ A single walk over `.segments` drives every check. It tracks, at any moment,
 at most one open functional group and — inside it — at most one open
 transaction set:
 
-![One walk over the segment list. A small stack tracks the currently-open
-functional group and, inside it, the currently-open transaction set. GS opens
-a group, ST opens a transaction set inside it, SE closes the transaction set,
-GE closes the group, IEA closes the interchange.](images/figures/envelope-walk.svg)
+![ISA, already resolved before this walk begins, opens the interchange that
+IEA closes. Then one walk over `.segments`: a small stack tracks the
+currently-open functional group and, inside it, the currently-open
+transaction set. GS opens a group, ST opens a transaction set inside it, SE
+closes the transaction set, GE closes the group.](images/figures/envelope-walk.svg)
 
 A missing closer doesn't stop the walk either — it's recovered from by
 treating the next recognizable boundary as the assumed end:
 
-- a second `GS` while one is still open closes the first (missing `GE`), then
-  opens the new one;
-- a second `ST` while one is still open closes the first (missing `SE`), then
-  opens the new one;
+- a second `GS` while one is still open cannot open until the one still open
+  is closed — closing it this way always reports `gs.missing-ge`, since no
+  `GE` was ever found — then the new one opens;
+- a second `ST` while one is still open cannot open until the one still open
+  is closed — always reporting `st.missing-se` — then the new one opens;
 - reaching the end of the segment list with a group or transaction set still
-  open closes it the same way.
+  open closes it the same way, with the same guaranteed finding.
 
 So a broken envelope doesn't hide the segments inside it — everything nested
 inside a group or transaction set that never got closed is still walked and

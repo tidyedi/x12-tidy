@@ -417,7 +417,7 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 &mdash; The walk, one pass</span>
-        <img src="images/figures/envelope-walk.svg" alt="A sequence of segment identifiers: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
+        <img src="images/figures/envelope-walk.svg" alt="ISA, already resolved before this walk begins, opens the interchange that IEA closes. Then a sequence of segment identifiers: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
       </div>
       <figcaption><b>A small stack, not a parser</b> &mdash; one open group,
         one open transaction set, tracked as the walker crosses each opener
@@ -428,12 +428,16 @@
       from by treating the next recognizable boundary as the assumed end:</p>
     </div>
     <ul class="plain">
-      <li>a second <b>GS</b> while one is still open closes the first
-        (missing <code>GE</code>), then opens the new one</li>
-      <li>a second <b>ST</b> while one is still open closes the first
-        (missing <code>SE</code>), then opens the new one</li>
+      <li>a second <b>GS</b> while one is still open cannot open until the one
+        still open is closed &mdash; closing it this way always reports
+        <code>gs.missing-ge</code>, since no <code>GE</code> was ever found
+        &mdash; then the new one opens</li>
+      <li>a second <b>ST</b> while one is still open cannot open until the one
+        still open is closed &mdash; always reporting
+        <code>st.missing-se</code> &mdash; then the new one opens</li>
       <li>reaching the <b>end of the segment list</b> with a group or
-        transaction set still open closes it the same way</li>
+        transaction set still open closes it the same way, with the same
+        guaranteed finding</li>
     </ul>
     <div class="prose">
       <p>So a broken envelope doesn't hide the segments inside it &mdash;
