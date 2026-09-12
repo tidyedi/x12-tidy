@@ -76,10 +76,12 @@ element overrunning its width with real data is `fatal`, not a truncation.
 
 ### Whole-interchange structure (`src/x12_tidy/envelope/structure/`)
 
-`split_segments` / `drop_empty_segments` — purely mechanical transforms over
+`split_segments` / `drop_null_rows` — purely mechanical transforms over
 `bytes`, **no diagnostics, no validation, no refusal**. They split the interchange
-on the recovered segment terminator and drop `~~` empties. `clean_payload` is
-the one-call pipeline built on top of them: clean ISA line + clean (empty-free)
+on the recovered segment terminator and drop the null rows `~~` leaves behind —
+those were never segments, so this isn't dropping an empty *segment*, it's
+recognizing a null row for what it is. `clean_payload` is the one-call
+pipeline built on top of them: clean ISA line + real (null-row-free)
 segments, rejoined on the sender's own terminator into one `ReconstructedPayload`.
 It refuses (propagating the ISA phase's fatal) exactly when there is no ISA line
 to build from; it does no per-segment repair and no envelope judgement — that is

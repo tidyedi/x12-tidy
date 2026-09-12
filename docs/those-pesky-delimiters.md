@@ -185,9 +185,11 @@ if it blocks parsing the interchange outright.
 | repetition separator | repeated elements only | an **error** — fatal at the first repeat |
 
 An alphanumeric element separator is fatal: nothing splits. An alphanumeric
-*component* separator is only a problem if some segment carries a composite
-element — and many interchanges carry none. So `split_isa_line` records it as an
-error and hands the delimiters back. If the body parser later reaches a composite
+*component* separator is always non-conformant — X12 does not permit an
+alphanumeric delimiter, and that does not change — but it only *blocks
+parsing* if some segment carries a composite element, and many interchanges
+carry none. So `split_isa_line` records the violation as an error and hands
+the delimiters back regardless. If the body parser later reaches a composite
 it cannot split, *it* raises the fatal — at that segment, where the evidence is.
 The repetition separator works the same way.
 

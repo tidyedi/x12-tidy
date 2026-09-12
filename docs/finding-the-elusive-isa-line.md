@@ -67,8 +67,10 @@ rb"ISA(.)(?:.*?\1){15}.*?GS\1"
 #        metacharacters included, so it need not be hard-coded
 ```
 
-It compiles. It even matches a clean file. It is still the wrong tool, for four
-reasons — and the first is fatal on its own:
+It compiles. It even matches a clean file. It is still the wrong tool — and
+every reason below traces back to one thing: **a regex can tell you whether
+something matched, never why it didn't.** This tool's whole job is the *why*.
+Four consequences follow, and the first is fatal on its own:
 
 1. **A match cannot carry the reason.** The product of this tool *is* the
    explanation: the terminator was `\r\n`, forty newlines were appended, the file
@@ -365,8 +367,8 @@ def extract_isa_line(dirty: bytes) -> IsaLineResult:
 ```
 
 One guard keeps the fallback honest: the string `isa` occurs inside ordinary
-words. A lowercase candidate is only reported as a identifier if it sits where a segment
-could start.
+words. A lowercase candidate is only reported as an identifier if it sits
+where an ISA "should" start.
 
 ```python
 def _looks_like_segment_start(dirty: bytes, offset: int) -> bool:

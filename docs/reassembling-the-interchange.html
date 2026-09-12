@@ -407,7 +407,7 @@
       <h2><span class="sec-num">02&nbsp;&nbsp;</span>Two purely mechanical transforms</h2>
     </div>
     <div class="prose">
-      <p><code>split_segments</code> and <code>drop_empty_segments</code>
+      <p><code>split_segments</code> and <code>drop_null_rows</code>
       share one property, and the code says so directly:
       <strong>no diagnostics, no validation, no refusal.</strong></p>
     </div>
@@ -435,13 +435,14 @@
       the end. Split on the segment terminator. Left-trim each piece &mdash; a
       segment identifier is alphabetic and first, so leading whitespace is never
       segment content.</p>
-      <p>That produces the <em>raw</em> segments, empties included: two
+      <p>That produces the <em>raw</em> segments, null rows included: two
       terminators in a row (<code>~~</code>) split into an empty string
-      between them, and an empty string is not a segment.</p>
+      between them, and an empty string was never a segment &mdash; it
+      carries no identifier, nothing to judge.</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap"><b>drop_empty_segments</b></p>
-<pre><code><span class="k">def</span> drop_empty_segments(segments: list[bytes]) -> list[bytes]:
+      <p class="code-cap"><b>drop_null_rows</b></p>
+<pre><code><span class="k">def</span> drop_null_rows(segments: list[bytes]) -> list[bytes]:
     <span class="k">return</span> [segment <span class="k">for</span> segment <span class="k">in</span> segments <span class="k">if</span> segment]
 </code></pre>
     </div>
@@ -476,7 +477,7 @@
     <span class="k">if</span> isa_result.isa_line <span class="k">is</span> <span class="k">None</span>:
         <span class="k">return</span> ReconstructedPayload(<span class="k">None</span>, isa_result, (), list(isa_result.diagnostics))
 
-    segments = tuple(drop_empty_segments(split_segments(dirty)))
+    segments = tuple(drop_null_rows(split_segments(dirty)))
     terminator = isa_result.segment_terminator
     body = b<span class="s">""</span>.join(segment + terminator <span class="k">for</span> segment <span class="k">in</span> segments)
     payload = isa_result.isa_line + terminator + body
@@ -538,7 +539,7 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 &mdash; Split, drop, rejoin</span>
-        <img src="images/figures/reassembly-collapse.svg" alt="Three rows: raw split keeps an empty piece between two segments where the sender doubled the terminator; dropping empty segments removes that piece; rejoining puts exactly one terminator after every remaining segment, including the last, regardless of what the sender originally left at the end.">
+        <img src="images/figures/reassembly-collapse.svg" alt="Three rows: raw split keeps an empty piece between two segments where the sender doubled the terminator; that piece was never a segment, so dropping the null row removes it; rejoining puts exactly one terminator after every remaining segment, including the last, regardless of what the sender originally left at the end.">
       </div>
       <figcaption><b>Two terminators in a row produce an empty piece; dropping
         empties removes it; rejoining always ends in exactly one

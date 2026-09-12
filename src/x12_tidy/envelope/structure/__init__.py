@@ -9,10 +9,11 @@ up the rest of the interchange.
 * :func:`split_interchanges` -- split raw bytes into one chunk per
   ``ISA``..``IEA`` interchange, for a flat file holding more than one.
 * :func:`split_segments` -- split *one* interchange into its raw segments.
-* :func:`drop_empty_segments` -- drop the empty pieces two terminators in a row
-  leave behind.
+* :func:`drop_null_rows` -- remove the null rows two terminators in a row
+  leave behind. They were never segments, so this is not dropping an empty
+  *segment*; it is recognizing a null row for what it is.
 * :func:`clean_payload` -- assemble the cleansed whole-file payload: clean ISA
-  line + clean (empty-free) segments, rejoined on the sender's terminator.
+  line + real (null-row-free) segments, rejoined on the sender's terminator.
 
 All but ``clean_payload`` are mechanical transforms: no diagnostics, no
 validation, no refusal. ``clean_payload`` is the one-call pipeline built on
@@ -28,7 +29,7 @@ from __future__ import annotations
 from x12_tidy.envelope.structure.interchanges import split_interchanges
 from x12_tidy.envelope.structure.payload import ReconstructedPayload, clean_payload
 from x12_tidy.envelope.structure.segments import (
-    drop_empty_segments,
+    drop_null_rows,
     split_elements,
     split_segments,
 )
@@ -36,7 +37,7 @@ from x12_tidy.envelope.structure.segments import (
 __all__ = [
     "split_interchanges",
     "split_segments",
-    "drop_empty_segments",
+    "drop_null_rows",
     "split_elements",
     "ReconstructedPayload",
     "clean_payload",

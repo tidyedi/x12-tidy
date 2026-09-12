@@ -26,10 +26,11 @@ the element separator is never touched, so unused elements (``**``) stay inside
 their segment exactly as sent.
 
 :func:`split_segments` keeps the empty pieces that two terminators in a row
-produce -- the split faithfully reflects what was sent. :func:`drop_empty_segments`
-is the next step: an empty piece is not a segment, so it comes out. QA/QC, which
-runs after reconstruction, is where anything is judged. Nothing here raises a
-diagnostic, validates, or refuses.
+produce -- the split faithfully reflects what was sent. :func:`drop_null_rows`
+is the next step: an empty piece was never a segment to begin with -- it is a
+null row the split left behind, not something judged and discarded -- so it
+comes out. QA/QC, which runs after reconstruction, is where anything is
+judged. Nothing here raises a diagnostic, validates, or refuses.
 
 If the ISA line or the segment terminator cannot be recovered, the interchange
 cannot be split and the result is an empty list. The reason is on the ISA-phase
@@ -67,13 +68,15 @@ def split_segments(dirty: bytes) -> list[bytes]:
     return [piece.lstrip(_WHITESPACE) for piece in contents.split(terminator)]
 
 
-def drop_empty_segments(segments: list[bytes]) -> list[bytes]:
-    """Return ``segments`` without the empty entries.
+def drop_null_rows(segments: list[bytes]) -> list[bytes]:
+    """Return ``segments`` without the null rows the split left behind.
 
     Two segment terminators in a row (``~~``) make :func:`split_segments` emit an
-    empty piece -- a faithful record of what was sent, but not a segment. This
-    drops them. Still mechanical: no diagnostic, no judgement about *why* the
-    terminators were doubled -- that is QA/QC's, after reconstruction.
+    empty piece. That piece never was a segment -- it has no identifier, no
+    content, nothing to judge -- so this is not a decision to drop an empty
+    *segment*; it is recognizing a null row for what it is and removing it.
+    Still mechanical: no diagnostic, no judgement about *why* the terminators
+    were doubled -- that is QA/QC's, after reconstruction.
     """
     return [segment for segment in segments if segment]
 

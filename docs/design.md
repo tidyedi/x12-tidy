@@ -312,10 +312,11 @@ cleansed-body variable it assembles from.
   a piece is never touched (a space-padded final element is real data). Empty
   pieces (two terminators in a row) are kept here. **No diagnostics, no
   validation, no refusal** — this step canonicalises nothing and judges nothing.
-* **Drop empty pieces (`x12_tidy.envelope.structure.drop_empty_segments`) — done.** The
-  empty pieces two terminators in a row leave behind are not segments; this
-  removes them. Still mechanical — no judgement about *why* the terminators were
-  doubled.
+* **Drop null rows (`x12_tidy.envelope.structure.drop_null_rows`) — done.** The
+  empty pieces two terminators in a row leave behind were never segments —
+  they carry no identifier, nothing to judge — so this is recognizing a null
+  row for what it is, not deciding to drop an empty *segment*. Still
+  mechanical — no judgement about *why* the terminators were doubled.
 * **Reassemble (`x12_tidy.envelope.structure.clean_payload`) — done.** Cleans the ISA
   line, splits and drops empties from the body, and rejoins everything on the
   sender's own segment terminator into one payload. Refuses exactly when the

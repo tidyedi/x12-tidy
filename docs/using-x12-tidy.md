@@ -295,7 +295,7 @@ p.was_clean      # bool (property)
 that a identifier is real, or validate envelope consistency. That is QA/QC.
 
 There are also two purely mechanical helpers in `x12_tidy.envelope.structure`,
-`split_segments` and `drop_empty_segments` — no diagnostics, no validation, no
+`split_segments` and `drop_null_rows` — no diagnostics, no validation, no
 refusal — plus `split_elements`.
 
 ### Envelope QA/QC

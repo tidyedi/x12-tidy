@@ -40,7 +40,7 @@ earlier steps already trust.**
 
 ## 2. Two purely mechanical transforms
 
-`split_segments` and `drop_empty_segments` share one property, and the code
+`split_segments` and `drop_null_rows` share one property, and the code
 says so directly: **no diagnostics, no validation, no refusal.**
 
 ```python
@@ -64,12 +64,12 @@ line or a doubled closing terminator does not leave a spurious empty piece at
 the end. Split on the segment terminator. Left-trim each piece — a segment identifier
 is alphabetic and first, so leading whitespace is never segment content.
 
-That produces the *raw* segments, empties included: two terminators in a row
-(`~~`) split into an empty string between them, and an empty string is not a
-segment.
+That produces the *raw* segments, null rows included: two terminators in a row
+(`~~`) split into an empty string between them, and an empty string was never
+a segment — it carries no identifier, nothing to judge.
 
 ```python
-def drop_empty_segments(segments: list[bytes]) -> list[bytes]:
+def drop_null_rows(segments: list[bytes]) -> list[bytes]:
     return [segment for segment in segments if segment]
 ```
 
@@ -93,7 +93,7 @@ def clean_payload(dirty: bytes) -> ReconstructedPayload:
     if isa_result.isa_line is None:
         return ReconstructedPayload(None, isa_result, (), list(isa_result.diagnostics))
 
-    segments = tuple(drop_empty_segments(split_segments(dirty)))
+    segments = tuple(drop_null_rows(split_segments(dirty)))
     terminator = isa_result.segment_terminator
     body = b"".join(segment + terminator for segment in segments)
     payload = isa_result.isa_line + terminator + body
@@ -141,9 +141,9 @@ is no diagnostic for it, because nothing about it was wrong. A trailing
 terminator is not preserved information; it is punctuation the join
 regenerates. There is nothing to flag, so nothing is flagged.
 
-![Two terminators in a row produce an empty piece between them; dropping empty
-segments removes it, and rejoining puts exactly one terminator after every
-remaining segment.](images/figures/reassembly-collapse.svg)
+![Two terminators in a row produce an empty piece between them; it was never a
+segment, so dropping the null row removes it, and rejoining puts exactly one
+terminator after every remaining segment.](images/figures/reassembly-collapse.svg)
 
 ---
 
