@@ -22,6 +22,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   strictly a validation-only concept — `EnvelopeFacts.functional_group_count`
   and `.transaction_set_count` remain raw, unconditional tallies of what was
   actually seen, unaffected by this change.
+- **`isa.version-too-old`** (fatal) — refuses an ISA12 release below `00304`
+  (release 003040), the earliest release documented to define the ISA
+  segment at all (Stedi's per-release segment dictionaries report "Segment
+  ISA is not present in X12 Release 3010"). x12-tidy has not verified a
+  standard for anything earlier, so the 16-element, 105-byte ISA shape a
+  parse assumes cannot be trusted for a file that claims to predate it.
+  (#88)
 
 ### Changed
 
@@ -53,6 +60,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   silently satisfy `IEA01` instead of triggering
   `structure.functional-group-count-mismatch`. Fixed as part of the cascade
   above.
+- **ISA13 padding and comparison.** A short ISA13 (Interchange Control
+  Number, the one ISA element typed numeric) is now space-padded on the
+  *left* — right-justified, matching its numeric type — instead of the
+  right like every other ISA element, and never zero-filled: inventing
+  digits to fill it out would assert a value beyond what the sender
+  actually sent. Separately, the ISA13-vs-IEA02 comparison now trims
+  padding and compares as strings, not as numbers — ISA13 is fixed-width
+  while IEA02 is an ordinary delimited field and is typically not padded
+  at all, so a byte-for-byte comparison was spuriously reporting
+  `structure.control-number-mismatch` for control numbers that actually
+  agreed. (#88)
 
 ### Documentation
 
