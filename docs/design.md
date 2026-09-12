@@ -52,7 +52,7 @@ possible later move for speed).
 | term | meaning |
 | --- | --- |
 | `dirty` | the raw file bytes, exactly as received |
-| `cleansed` | `dirty` with everything before the first `ISA` identifier removed |
+| `cleansed` | `dirty` after every repair step the pipeline applies — the ISA line reconstructed, segments split and the empty ones dropped, rejoined on the sender's terminator. The whole repaired payload, not just the leading junk stripped off the front. |
 | *identify* | emit a diagnostic and continue |
 | *identify and exit* | emit a diagnostic and stop (a `fatal`) |
 

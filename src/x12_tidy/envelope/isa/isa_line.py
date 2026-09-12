@@ -68,12 +68,18 @@ of them is not an ISA line: it is reported fatal and does **not** go to the
 recovery path. Recovery only ever sees runs that clear this bar but have other
 problems (wrong length, bad delimiters, bad element content).
 
-Why exactly 16 and not ``>= 16``: accepting ``>= 16`` let a stray ``GS`` deep in
-the transaction body, or leading junk ending in ``ISA`` + a separator-like
-byte, produce a plausible-looking but wrong run with no diagnostic. ``> 16`` is
-unrecoverable by definition -- a segment whose separator appears in its own data
-has no unambiguous parse. Retrying from the next ``ISA`` candidate turns a bad
-first guess into either a clean run or an honest fatal.
+Why exactly 16 and not ``>= 16``: a 17th occurrence of the element separator
+turning up before ``GS`` + separator is confirmed is a delimiter *collision*
+-- ISA16 (the component separator) or the segment terminator equals the
+element separator -- so the boundary is unrecoverable by definition, not
+merely an extra count to tolerate. (A separate danger -- a naive search for
+``GS`` text landing inside a stray ``GS*`` deep in the transaction body, or in
+leading junk, and *coincidentally* counting 16 separators up to that false
+match -- is why Step 1 counts to the 16th separator by *position* before ever
+searching for ``GS``, rather than the reverse; see the worked example in
+``finding-the-elusive-isa-line.md`` §5.3. That is an ordering choice, not this
+16-vs-more-than-16 boundary.) Retrying from the next ``ISA`` candidate turns a
+bad first guess into either a clean run or an honest fatal.
 
 The returned run **includes** the segment terminator and any trailing bytes
 (appended newlines, stray spaces) between it and ``GS``. Splitting that into

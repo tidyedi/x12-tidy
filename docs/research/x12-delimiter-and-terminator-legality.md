@@ -172,8 +172,8 @@ dispositions. In brief:
 | `isa.delimiter-misaligned` | reword: name ISA16, name the "byte equal to the element separator inside ISA06/ISA08" cause | ✅ done |
 | `isa.trailing-newline` | **removed** — a bare CR/LF/CRLF after the ISA terminator is conformant (A7); kept in the tail, out of the canonical line, not flagged | ✅ done |
 | `isa.trailing-junk` | **kept** for genuine foreign bytes only (spaces, comment, transport framing) | ✅ done |
-| `\r\n` terminator | normalise to `\n`, drop the CR as a DOS line ending | ✅ done (item E) |
-| `isa.identifier-utf16` | research no longer blocks the fatal→warning transcode; still gated on a separate owner go-ahead | not started (item F) |
+| `\r\n` terminator | CR immediately followed by LF normalises to LF, CR dropped as DOS framing — **not unconditional**: a lone CR with nothing after it stays as the sender's own 1-byte terminator, untouched; whether the standard treats a CR/LF *suffix* differently from CR/LF *as* the terminator itself is still unresolved (see "Not obtained" above) | ✅ done |
+| `isa.identifier-utf16` | fatal → **warning** — a UTF-16 buffer is transcoded to single-byte (byte order from the BOM or which "ISA" marker is found) and re-parsed rather than refused | ✅ done |
 
 A concrete artifact that exercises `isa.separator-count-high` (and, before its
 removal, `isa.trailing-newline`) is checked in at
