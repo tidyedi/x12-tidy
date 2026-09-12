@@ -19,8 +19,9 @@ import sys
 from pathlib import Path
 
 from x12_tidy.diagnostics import Code, Diagnostic, all_codes, meta, resolved_severity
+from x12_tidy.envelope.isa import decode_utf16, extract_isa_line
 from x12_tidy.envelope.qaqc import EnvelopeFacts, check_payload
-from x12_tidy.envelope.structure import clean_payload
+from x12_tidy.envelope.structure import clean_payload, split_interchanges
 
 
 def _report(diags: list[Diagnostic]) -> bool:
@@ -54,7 +55,37 @@ def _cmd_check(path: Path) -> int:
         print(f"cannot read {path}: {exc}", file=sys.stderr)
         return 2
 
-    cleaned = clean_payload(data)
+    chunks = split_interchanges(data)
+    if not chunks:
+        # Nothing recoverable at all -- still exactly one report, same as a
+        # single interchange that never yields an ISA line.
+        return 1 if _check_one(decode_utf16(data) or data) else 0
+
+    worst_problem = False
+    multiple = len(chunks) > 1
+    for i, chunk in enumerate(chunks, start=1):
+        if multiple:
+            print(f"=== interchange {i} of {len(chunks)} ===")
+        worst_problem |= _check_one(chunk)
+
+    # chunks are always contiguous and gap-free (see split_interchanges), so
+    # this is exactly how far into data it got.
+    consumed = sum(len(c) for c in chunks)
+    trailing = (decode_utf16(data) or data)[consumed:]
+    if trailing.strip():
+        # Real, un-recovered content after the last interchange -- report why
+        # rather than silently dropping it. Pure trailing whitespace (a
+        # newline after the last IEA) is not this and stays silent.
+        print(f"=== interchange {len(chunks) + 1} of {len(chunks) + 1} (unrecovered) ===")
+        worst_problem |= _check_one(trailing)
+
+    return 1 if worst_problem else 0
+
+
+def _check_one(chunk: bytes) -> bool:
+    """Run the full pipeline on one interchange's bytes and print its report.
+    Returns True if a fatal or error finding was seen."""
+    cleaned = clean_payload(chunk)
     qaqc = check_payload(cleaned) if cleaned.payload is not None else None
 
     diagnostics = list(cleaned.diagnostics)
@@ -73,14 +104,14 @@ def _cmd_check(path: Path) -> int:
         )
 
     if cleaned.payload is None:
-        return 1 if worst_problem else 0
+        return worst_problem
 
     print(f"payload ({len(cleaned.payload)} bytes): {cleaned.payload!r}")
     if qaqc is not None and qaqc.facts is not None:
         _print_facts(qaqc.facts)
     if not diagnostics:
         print("was_clean: yes")
-    return 1 if worst_problem else 0
+    return worst_problem
 
 
 def _cmd_codes(area: str | None) -> int:

@@ -63,7 +63,7 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
                          b"0", b"P"]),
      [], True),
     ("only 14 element separators in the ISA",
-     build_isa(elements=ISA_ELEMENTS[:13]), [Code.ISA_SEPARATOR_COUNT_LOW], False),
+     build_isa(elements=ISA_ELEMENTS[:13]), [Code.ISA_GS_NOT_FOUND], False),
     ("no GS segment after the ISA",
      build_isa(trailer=b"ST*850*0001~BEG*00*NE*PO1**20240101~SE*2*0001~"
                        b"GE*1*1~IEA*1*000000001~ZZZZZZZZZZZZZZZZZZZZ~"),
@@ -98,10 +98,10 @@ CASES: list[tuple[str, bytes, list[Code], bool]] = [
     # --- retry exhausted: no candidate yields a 16-separator line ---
     ("no GS envelope, only a stray REF*GS* deep in the data",
      isa_segment() + b"~ST*850*1~REF*GS*99~SE*1*1~GE*1*1~IEA*1*1~" + b"P" * 60,
-     [Code.ISA_SEPARATOR_COUNT_HIGH], False),
+     [Code.ISA_GS_NOT_FOUND], False),
     ("only 14 element separators, every candidate tried",
      build_isa(elements=ISA_ELEMENTS[:13]),
-     [Code.ISA_SEPARATOR_COUNT_LOW], False),
+     [Code.ISA_GS_NOT_FOUND], False),
 
     # --- lowercase / wide-encoding ---
     ("lowercase 'isa' segment identifier",

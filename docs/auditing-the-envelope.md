@@ -91,6 +91,25 @@ the next group's open, a closer with nothing open to close, or a second `IEA`
 once the interchange is already closed. It is one code because it is one
 shape of problem, no matter which of those forms it takes.
 
+**"Stated counts match the real count" means the real count of *good*
+children, not a raw tally — and that's contagious upward.** An envelope is
+only good if it closed, its stated count matches the real count of good
+children, and its closer's control number matches its opener's. Count alone
+isn't enough — two envelopes whose segments got interleaved can still show a
+numerically correct count while being the wrong segments entirely, which the
+control-number check is what catches. A bad `ST`/`SE` is excluded from its
+`GS`'s good count outright, which is also why a `GS` containing even one bad
+`ST` is itself never good even if `GE01` happens to numerically match what's
+left after excluding it — a coincidence, not evidence the group is sound. The
+same repeats one level up: a bad `GS` is excluded from the interchange's own
+good functional-group count, so `IEA01` can't be certified either. This is
+tracked explicitly at each level (a `GS`/`ISA` knows whether every child it
+contains is good), not inferred from a downstream mismatch — inferring it
+would miss the rare case where the numbers still coincidentally add up. This
+"good count" is strictly internal to the count-agreement checks; it's never
+what §4's `EnvelopeFacts` reports — a fact is still true regardless of whether
+the envelope it describes is good.
+
 Deliberately **not** checked, because no decision has been made yet:
 `ISA05`/`ISA07` qualifier codes, `ISA14`, `GS01`, `ST01` shape, date/time
 format, `TA1`, `BIN`/`BDS`, and more than one interchange in a single file.

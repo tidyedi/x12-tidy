@@ -706,86 +706,107 @@
       <h2><span class="sec-num">05&nbsp;&nbsp;</span>Five techniques</h2>
     </div>
 
-    <h3>5.1&nbsp;&nbsp;Anchor on <code>GS</code>, not on a byte number</h3>
+    <h3>5.1&nbsp;&nbsp;Count separators first, then verify <code>GS</code> — not the other way around</h3>
     <div class="prose">
       <p>The end of the ISA line is wherever the <code>GS</code> functional&#8209;group
       header begins. Byte&nbsp;106 is used only as a shortcut that produces the
       identical answer when the file happens to be conformant; when it doesn't,
-      the code searches for the header by content.</p>
-      <p><code>find</code> is not a validator, though. <code>GS</code> + the
-      separator can occur <em>inside</em> the ISA line — a sender ID (ISA06) or
-      receiver ID (ISA08) ending in <code>GS</code>, followed by the element
-      separator, is enough. When the fast&#8209;path offset check has already
-      failed and <code>find</code> lands on one of those, the anchor is too early.
-      That is caught in 5.2, not here.</p>
+      the code needs another way to find it.</p>
+      <p>An earlier version searched the buffer for <code>GS</code> + the element
+      separator first, then checked how many separators preceded the match. That
+      order has a real flaw: <code>GS</code> + the separator can occur
+      <em>inside</em> the ISA line itself (a sender ID ending in <code>GS</code>)
+      or inside a <em>later segment's own data</em> (<code>REF*GS*</code> deep in
+      a transaction set, or some other segment's own field happening to end in
+      <code>GS</code> right before its own next separator) — and a plain text
+      search cannot tell a genuine header from either coincidence. Worse: when the
+      ISA is itself short a couple of elements, the search can land past the true
+      boundary, inside the real <code>GS</code> segment's own fields, and
+      <em>still</em> count out to exactly 16 separators leading up to it —
+      accepting a wrong parse with no diagnostic at all. See the worked example
+      below.</p>
+      <p>So the order is reversed. Count forward to the <b>16th</b> occurrence of
+      the element separator first — the position the standard fixes as
+      immediately before <code>ISA16</code> — and only <em>then</em> look at what
+      follows:</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, steps b–c</p>
-      <pre><code><span class="c"># b. the element separator is, by rule, the 4th byte of the ISA segment</span>
-element_separator = cleansed[3:4]
-gs_identifier     = GS_IDENTIFIER + element_separator
-
-<span class="c"># c. find where the ISA line ends == where the GS segment starts</span>
+      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, step c</p>
+      <pre><code><span class="c"># c. find where the ISA line ends == where the GS segment starts</span>
 <span class="k">if</span> hay[STANDARD_GS_OFFSET:STANDARD_GS_OFFSET + 3] == needle:
     gs_pos = STANDARD_GS_OFFSET          <span class="c"># fast path: GS at the standard offset</span>
 <span class="k">else</span>:
-    gs_pos = hay.find(needle)
+    sixteenth_sep = _nth_occurrence(hay, element_separator, ISA_ELEMENT_SEPARATORS)
+    <span class="k">if</span> sixteenth_sep == -1:
+        <span class="k">return</span> _Attempt(None, Diagnostic(Code.ISA_SEPARATOR_COUNT_LOW, ...))
+    gs_pos = _gs_after_boundary(hay, sixteenth_sep + 1, needle)
     <span class="k">if</span> gs_pos == -1:
         <span class="k">if</span> element_separator.isalnum():
-            <span class="c"># byte 3 is a letter/digit -- element data, not a delimiter,</span>
-            <span class="c"># so `GS` + that byte was never a real search token</span>
-            <span class="k">return</span> _Attempt(None, Diagnostic(
-                Code.ISA_ELEMENT_SEPARATOR_INVALID, ...,
-                offset=isa_start + 3,
-            ))
-        <span class="k">return</span> _Attempt(None, Diagnostic(
-            Code.ISA_GS_NOT_FOUND,
-            <span class="s">f"no {gs_identifier!r} functional-group header after the ISA "</span>
-            <span class="s">f"segment; cannot locate the end of the ISA line."</span>,
-            offset=isa_start,
-        ))</code></pre>
+            <span class="k">return</span> _Attempt(None, Diagnostic(Code.ISA_ELEMENT_SEPARATOR_INVALID, ...))
+        <span class="k">return</span> _Attempt(None, Diagnostic(Code.ISA_GS_NOT_FOUND, ...))</code></pre>
     </div>
     <div class="prose">
-      <p>The <code>isalnum</code> check earns its place. A file with its element
-      separators stripped out — pasted from a PDF, mangled by a mail gateway —
-      leaves byte 3 holding the first digit of <code>ISA01</code> instead of a
-      <code>*</code>. The search token becomes <code>GS0</code>, which is
-      nowhere, and the honest diagnosis is "byte 3 is not a delimiter", not
-      "there is no GS header" — the <code>GS</code> segment is usually sitting
-      right there in the file. This is the one delimiter judgement Step&nbsp;1
-      makes, and only because without it the downstream stage that would raise
-      <code>isa.element-separator-invalid</code> never runs.</p>
+      <p>Counting first means the content of any element — before <em>or</em>
+      after the 16th separator — is never even examined as a candidate for
+      <code>GS</code>; the search for <code>GS</code> only ever starts once 16
+      real separators have already gone by.</p>
     </div>
 
-    <h3>5.2&nbsp;&nbsp;Require <em>exactly</em> 16 separators — not "at least"</h3>
+    <h3>5.2&nbsp;&nbsp;Everything before <code>GS</code> must be non-alphanumeric</h3>
     <div class="prose">
-      <p>Once a candidate <code>GS</code> is found, the bytes before it are counted.
-      An early version accepted <code>&gt;= 16</code>. That let three false anchors
-      through silently: a stray <code>GS*</code> deep in transaction data, leading
-      junk that ended in <code>ISA*</code>, and a <code>GS*</code> sitting inside
-      the ISA line's own ISA06/ISA08 data. Requiring the count to be <em>exact</em>
-      catches all three — and the diagnostic names the structural fault, not the
-      count:</p>
-      <ul style="margin:0.8rem 0 0; padding-left:1.2rem; font-family:'IBM Plex Serif',serif;">
-        <li>a <code>GS*</code> matched <b>inside</b> the ISA line (5.1) cuts the
-          run short → fewer than 16 separators → <code>isa.separator-count-low</code>;</li>
-        <li>a <code>GS*</code> matched <b>past</b> the real header (downstream, or a
-          decoy <code>ISA*</code> prefix) overshoots → more than 16 separators →
-          <code>isa.separator-count-high</code>.</li>
-      </ul>
+      <p>Counting to the 16th separator only fixes <em>where to start looking</em>;
+      it doesn't yet confirm <code>GS</code> is really there. What follows must be
+      <code>ISA16</code> (or, tolerated, no <code>ISA16</code> at all — Step&nbsp;2's
+      job to flag), the segment terminator, and only non-alphanumeric trailing
+      junk (appended <code>\r\n</code>, a stray space) before <code>GS</code> +
+      separator turns up. The moment an ordinary letter or digit is found that
+      isn't itself the start of <code>GS</code> + separator, the search stops and
+      refuses — that byte is proof whatever comes later is the tail of some other
+      field's value, not a real token:</p>
     </div>
     <div class="code-fig">
-      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_try_candidate</b>, step d</p>
-      <pre><code><span class="c"># d. the run must hold exactly 16 element separators</span>
-isa_line        = cleansed[:gs_pos]
-separator_count = isa_line.count(element_separator)
-
-<span class="k">if</span> separator_count &lt; ISA_ELEMENT_SEPARATORS:
-    <span class="k">return</span> _Attempt(None, Diagnostic(Code.ISA_SEPARATOR_COUNT_LOW, ...))
-<span class="k">if</span> separator_count &gt; ISA_ELEMENT_SEPARATORS:
-    <span class="k">return</span> _Attempt(None, Diagnostic(Code.ISA_NO_FUNCTIONAL_GROUP, ...))
-
-<span class="k">return</span> _Attempt(isa_line, None)          <span class="c"># a real ISA line</span></code></pre>
+      <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_gs_after_boundary</b></p>
+      <pre><code><span class="k">def</span> _gs_after_boundary(haystack: bytes, start: int, needle: bytes) -&gt; int:
+    pos = start
+    <span class="k">while</span> pos &lt; len(haystack):
+        <span class="k">if</span> haystack[pos:pos + len(needle)] == needle:
+            <span class="k">return</span> pos
+        <span class="k">if</span> haystack[pos:pos + 1].isalnum():
+            <span class="k">return</span> -1
+        pos += 1
+    <span class="k">return</span> -1</code></pre>
+    </div>
+    <div class="prose">
+      <p><b>Worked example — the case that motivated the reordering.</b> An ISA
+      missing two elements (13 present instead of 15), immediately followed by a
+      real <code>GS*PO*SENDERGS*RECEIVERID*...</code> segment. Counting to "the
+      16th separator" overshoots into <code>GS</code>'s own first two fields,
+      landing partway through <code>SENDERGS</code>. <code>SENDERGS*</code> does
+      contain the literal bytes <code>GS*</code> — a plain search from there
+      would find it, and the separator count leading up to that match would still
+      read exactly 16 (14 real ones, plus <code>GS</code>'s own first two) —
+      silently passing a naive "exactly 16" check with no diagnostic at all. The
+      alphanumeric check is what actually catches this: the byte immediately
+      before the <code>GS*</code> match is <code>R</code>, an ordinary letter —
+      not <code>ISA16</code>, not a terminator, not tolerated junk — so
+      <code>_gs_after_boundary</code> stops there and returns <code>-1</code>.
+      The candidate is refused (<code>isa.gs-not-found</code>), not silently
+      accepted.</p>
+      <ul style="margin:0.8rem 0 0; padding-left:1.2rem; font-family:'IBM Plex Serif',serif;">
+        <li>No 16th separator anywhere in the remaining buffer at all (it runs
+          out first) → <code>isa.separator-count-low</code> — there is no
+          <code>GS</code> to be found and the segment terminator cannot be
+          determined.</li>
+        <li>A 16th separator is found, but nothing reaches <code>GS</code> +
+          separator before either an alphanumeric byte or the end of the buffer
+          → <code>isa.gs-not-found</code>. This now also covers what used to be
+          a separate <code>isa.separator-count-high</code> case (a stray
+          <code>GS*</code> with no real envelope at all, deep in the transaction
+          body) — there simply is no real <code>GS</code> header anywhere, which
+          <code>isa.gs-not-found</code> names directly.</li>
+      </ul>
+      <p>Both are fatal and terminal, same as before: a run that fails either
+      does not go to recovery.</p>
     </div>
 
     <h3>5.3&nbsp;&nbsp;Try every <code>ISA</code>, keep the first that parses</h3>
@@ -796,6 +817,20 @@ separator_count = isa_line.count(element_separator)
       bar wins; the bytes before it become an <code>isa.leading-bytes</code>
       warning. If none clear it, the first candidate's failure is what gets
       reported.</p>
+      <p><b>This is single-interchange behavior, not a general "pick the right
+      <code>ISA</code>" policy.</b> A flat file can legitimately contain more
+      than one <code>ISA</code>...<code>IEA</code> interchange concatenated
+      back to back — each self-delimited, each free to declare its own
+      delimiters — and every one of them is real data, not junk to discard in
+      favor of "the" interchange. Today's "first that parses" retry exists to
+      skip genuine junk (a BOM, an email header, a stray <code>ISA</code>
+      inside a filename) ahead of the one real interchange this function is
+      asked to locate; it is not yet the right model for a file that holds
+      several real interchanges in a row — that requires calling this same
+      logic again on whatever bytes remain after each interchange concludes,
+      keeping <em>every</em> one that's found, not just the first. That loop
+      is tracked separately (see <code>auditing-the-envelope.md</code> §7) and
+      not yet built.</p>
     </div>
     <div class="code-fig">
       <p class="code-cap">x12_tidy/envelope/isa/isa_line.py &nbsp;·&nbsp; <b>_isa_offsets</b> &amp; the candidate loop</p>
@@ -995,7 +1030,7 @@ separator_count = isa_line.count(element_separator)
           <tr>
             <td>No <code>GS</code> envelope; a <code>REF*GS*</code> deep in the data</td>
             <td class="verdict v-flag">fatal</td>
-            <td><code>isa.separator-count-high</code></td>
+            <td><code>isa.gs-not-found</code></td>
           </tr>
           <tr>
             <td>Two interchanges concatenated, first <code>GS</code> missing</td>
