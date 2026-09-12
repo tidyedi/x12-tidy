@@ -417,7 +417,7 @@
     <figure>
       <div class="fig-frame">
         <span class="fig-label">Fig. 1 &mdash; The walk, one pass</span>
-        <img src="images/figures/envelope-walk.svg" alt="ISA, already resolved before this walk begins, opens the interchange that IEA closes. Then a sequence of segment identifiers: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk.">
+        <img src="images/figures/envelope-walk.svg" alt="ISA opens the interchange and IEA closes it, shown with the same kind of labeled brace as the other pairs, though ISA (dashed) is already resolved before this walk begins and isn't part of .segments itself. Then a sequence of segment identifiers: GS, ST, SE, ST, SE, GE, IEA. A brace beneath GS through GE spans the open functional group. Two shorter braces beneath each ST-through-SE pair span the open transaction set. The stack holds at most one open group and, inside it, at most one open transaction set at any point in the walk -- the interchange itself may hold several functional groups in sequence, not just one.">
       </div>
       <figcaption><b>A small stack, not a parser</b> &mdash; one open group,
         one open transaction set, tracked as the walker crosses each opener
