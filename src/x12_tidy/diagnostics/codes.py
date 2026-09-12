@@ -73,6 +73,7 @@ class Code(Enum):
     ISA_SEGMENT_TERMINATOR_INVALID = "isa.segment-terminator-invalid"
     ISA_SEGMENT_TERMINATOR_STRIPPED = "isa.segment-terminator-stripped"
     ISA_VERSION_UNRECOGNIZED = "isa.version-unrecognized"
+    ISA_VERSION_TOO_OLD = "isa.version-too-old"
     ISA_TRAILING_JUNK = "isa.trailing-junk"
 
     # -- isa: reconstructing the canonical ISA line (Step 2, slice 2) --
@@ -356,6 +357,20 @@ META: dict[Code, CodeMeta] = {
             "5-digit code. Whether ISA11 is a repetition separator depends on "
             "this value, so ISA11 is left opaque and not treated as a "
             "delimiter."
+        ),
+    ),
+    Code.ISA_VERSION_TOO_OLD: CodeMeta(
+        default_severity="fatal",
+        title="ISA12 declares a release older than the ISA segment itself",
+        explanation=(
+            "ISA12 is a well-formed 5-digit version code below 00304 -- release "
+            "003040, the earliest release for which the ISA segment is "
+            "documented to exist at all (Stedi's per-release segment "
+            "dictionaries report 'Segment ISA is not present in X12 Release "
+            "3010'). x12-tidy has not verified a standard for any release "
+            "before 003040, so the 16-element, 105-byte ISA shape this parse "
+            "assumed cannot be trusted for a file that claims to predate it -- "
+            "refused rather than parsed on an unverified assumption."
         ),
     ),
     Code.ISA_TRAILING_JUNK: CodeMeta(

@@ -31,6 +31,7 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.separator-count-low` | fatal | Fewer than 16 element separators before GS |
 | `isa.trailing-junk` | warning | Unexpected bytes between the segment terminator and GS |
 | `isa.usage-indicator-invalid` | error | ISA15 is not a recognized usage indicator |
+| `isa.version-too-old` | fatal | ISA12 declares a release older than the ISA segment itself |
 | `isa.version-unrecognized` | warning | ISA12 is not a recognised version code |
 
 ### `isa.component-separator-invalid`
@@ -170,6 +171,12 @@ Bytes that are not line breaks sit between the ISA segment terminator and the GS
 *error* — ISA15 is not a recognized usage indicator
 
 ISA15 (Usage Indicator) must be 'T' (Test), 'P' (Production), or 'I' (Information) -- all three are legitimate values, so this only fires when it is none of them. Which of the three is present is not itself a defect and is reported separately as an informational fact, not a diagnostic.
+
+### `isa.version-too-old`
+
+*fatal* — ISA12 declares a release older than the ISA segment itself
+
+ISA12 is a well-formed 5-digit version code below 00304 -- release 003040, the earliest release for which the ISA segment is documented to exist at all (Stedi's per-release segment dictionaries report 'Segment ISA is not present in X12 Release 3010'). x12-tidy has not verified a standard for any release before 003040, so the 16-element, 105-byte ISA shape this parse assumed cannot be trusted for a file that claims to predate it -- refused rather than parsed on an unverified assumption.
 
 ### `isa.version-unrecognized`
 
