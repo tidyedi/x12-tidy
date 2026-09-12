@@ -52,6 +52,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `isa.gs-not-found`, which names the actual problem. `isa.separator-count-high`
   still fires for a genuine delimiter collision between the 16th separator and
   the real `GS` header.
+- **Breaking:** `x12_tidy.envelope.structure.drop_empty_segments` renamed to
+  `drop_null_rows`. An empty split result was never a segment — no
+  identifier, no content, nothing to judge — it is a null row the split left
+  behind (two terminators in a row, `~~`); the old name implied deciding
+  something qualified as a segment and then discarding it. Anyone importing
+  `drop_empty_segments` directly needs to update to `drop_null_rows`; its
+  behavior is unchanged. (#93)
 
 ### Fixed
 
@@ -85,6 +92,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   at all, so a byte-for-byte comparison was spuriously reporting
   `structure.control-number-mismatch` for control numbers that actually
   agreed. (#88)
+- **Redundant UTF-16 re-transcoding in `clean_payload`.** `clean_isa_line`
+  already detects and transcodes a UTF-16 file, emitting
+  `isa.identifier-utf16`. `clean_payload` was then handing `split_segments`
+  the original, untranscoded bytes, which independently re-detected and
+  re-transcoded the whole file from scratch — a real O(n) decode+encode cost
+  paid twice for every UTF-16 input. Now skipped entirely for the common
+  (non-UTF-16) case; only genuine UTF-16 input still pays for a second
+  transcode. (#93)
 
 ### Documentation
 
