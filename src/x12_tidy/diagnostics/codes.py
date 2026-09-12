@@ -80,6 +80,7 @@ class Code(Enum):
     ISA_ELEMENT_EMBEDDED_NEWLINE = "isa.element-embedded-newline"
     ISA_ELEMENT_WIDTH = "isa.element-width"
     ISA_ELEMENT_OVERFLOW = "isa.element-overflow"
+    ISA_REQUIRED_ELEMENT_BLANK = "isa.required-element-blank"
 
     # -- isa: QA/QC on a standalone ISA element value (post-reconstruction) --
     ISA_USAGE_INDICATOR_INVALID = "isa.usage-indicator-invalid"
@@ -428,6 +429,28 @@ META: dict[Code, CodeMeta] = {
             "fields, or the sender may have overrun the field. Guessing either "
             "way risks corrupting an identifier, so the ISA line is not "
             "reconstructed."
+        ),
+    ),
+    Code.ISA_REQUIRED_ELEMENT_BLANK: CodeMeta(
+        default_severity="error",
+        title="A required ISA element has no value at all",
+        explanation=(
+            "ISA09 (Interchange Date) or ISA10 (Interchange Time) is completely "
+            "empty -- not merely shorter than its fixed width, but zero bytes. "
+            "Every ISA element carries the 'M' (Must Use) designator, but that "
+            "alone does not make blank content wrong: ISA02/ISA04 have a "
+            "documented value for when their content is all spaces (RFI #2205 -- "
+            "with ISA01/ISA03 as '00', the now-standard practice since the "
+            "Authorization/Security Information mechanism they qualify has "
+            "fallen out of use), so an empty ISA02/ISA04 is not flagged here. "
+            "No equivalent applies to ISA09/ISA10 -- a date or time has no "
+            "all-blank form that means anything, so an empty value is simply "
+            "missing required information, not a recognized state. Reported "
+            "alongside isa.element-width, which still fires for the same "
+            "element because it is also short; this finding is about the total "
+            "absence of content, not the fixed-width mechanics. Does not judge "
+            "whether a *present* value is a real date or time -- that is "
+            "deferred, value-level work."
         ),
     ),
     # -- isa: QA/QC on a standalone ISA element value --

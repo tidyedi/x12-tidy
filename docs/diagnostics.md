@@ -25,6 +25,7 @@ Every finding x12-tidy can emit. Codes are `area.specific`; the `area` is the su
 | `isa.no-identifier` | fatal | No ISA segment in the file |
 | `isa.repetition-separator-invalid` | error | The repetition separator is not a usable delimiter |
 | `isa.repetition-separator-missing` | error | No repetition separator for a version that has one |
+| `isa.required-element-blank` | error | A required ISA element has no value at all |
 | `isa.segment-terminator-invalid` | fatal | The segment terminator is a letter or digit |
 | `isa.segment-terminator-stripped` | fatal | No segment terminator after ISA16 |
 | `isa.separator-count-high` | fatal | More than 16 element separators before GS |
@@ -135,6 +136,12 @@ ISA11 -- the repetition separator, for ISA12 version 00403 and later -- is an al
 *error* — No repetition separator for a version that has one
 
 ISA12 is version 00403 or later, where ISA11 is the repetition separator, but ISA11 is blank or still holds the old standards identifier 'U'. Repeated data elements cannot be parsed; downstream must treat repetition as unsupported.
+
+### `isa.required-element-blank`
+
+*error* — A required ISA element has no value at all
+
+ISA09 (Interchange Date) or ISA10 (Interchange Time) is completely empty -- not merely shorter than its fixed width, but zero bytes. Every ISA element carries the 'M' (Must Use) designator, but that alone does not make blank content wrong: ISA02/ISA04 have a documented value for when their content is all spaces (RFI #2205 -- with ISA01/ISA03 as '00', the now-standard practice since the Authorization/Security Information mechanism they qualify has fallen out of use), so an empty ISA02/ISA04 is not flagged here. No equivalent applies to ISA09/ISA10 -- a date or time has no all-blank form that means anything, so an empty value is simply missing required information, not a recognized state. Reported alongside isa.element-width, which still fires for the same element because it is also short; this finding is about the total absence of content, not the fixed-width mechanics. Does not judge whether a *present* value is a real date or time -- that is deferred, value-level work.
 
 ### `isa.segment-terminator-invalid`
 
