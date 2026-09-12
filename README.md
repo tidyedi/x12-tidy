@@ -22,6 +22,11 @@ The audience is a developer who received a bad file from a trading partner and
 needs to know exactly what is non-conformant. (If "X12 linter" is what you
 searched for, yes, that too.)
 
+Every piece ships with an adversarial fuzz sweep — tens to hundreds of
+thousands of mutated, truncated, mis-encoded inputs per step — checked
+against one invariant: no crash, and either a clean refusal or a result that
+satisfies the phase's contract. No silent wrong answer, no partial parse.
+
 ## Docs
 
 | Document | What it is |
